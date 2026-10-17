@@ -2,8 +2,7 @@
 
 [中文](clinical-boundaries.zh-CN.md)
 
-> This is a research prototype. It is not a medical device and must not be used
-> for diagnosis, treatment decisions, triage, or legal purposes.
+> **Research prototype, not a medical device.** This project is not certified by NMPA / FDA / CE, and outputs must not be used for clinical diagnosis, treatment decisions, or medico-legal purposes. All data in demo mode is procedurally synthesized.
 
 ## 1. Human-in-the-loop
 
@@ -73,7 +72,8 @@ software registration in China, or FDA/CE equivalent) including software life
 cycle, risk management, clinical evaluation, and post-market surveillance.
 Nothing in this repository substitutes for that process.
 
-API disclaimer text keeps this English sentence in full: "Research prototype.
-Not for clinical diagnosis or treatment decisions." A Chinese response repeats
-that sentence and then the Chinese equivalent. It does not replace the English
-sentence or soften it.
+An English report draft stores this disclaimer in full: "Research prototype, not a medical device. This project is not certified by NMPA / FDA / CE, and outputs must not be used for clinical diagnosis, treatment decisions, or medico-legal purposes. All data in demo mode is procedurally synthesized."
+
+A Chinese report draft stores the original wording in full: "研究原型，不是医疗器械。本项目未取得 NMPA / FDA / CE 认证，输出不得用于临床诊断、治疗决策或医疗法律用途。演示模式中的数据全部为程序化合成数据。"
+
+Neither wording replaces or shortens the other. The draft keeps the language it was generated in.

@@ -4,7 +4,7 @@
 
 An **open-source research prototype** for cardiovascular imaging: upload a raw CCTA DICOM series → de-identification and volume reconstruction → 3D segmentation and modeling → traceable quantitative measurements → a structured report draft → clinician review and audit.
 
-> **Research prototype. Not a medical device.** This project is not cleared by NMPA, FDA, or CE. Outputs must not be used for clinical diagnosis, treatment decisions, or medico-legal purposes. All data in demo mode is procedurally synthesized.
+> **Research prototype, not a medical device.** This project is not certified by NMPA / FDA / CE, and outputs must not be used for clinical diagnosis, treatment decisions, or medico-legal purposes. All data in demo mode is procedurally synthesized.
 
 ---
 
@@ -95,7 +95,7 @@ queued → validating → anonymizing → building_volume
        → succeeded | failed
 ```
 
-`stage` stays this stable code. The human-readable `message` follows `Accept-Language`.
+`stage` stays this stable step id. `message` is `{"code": "STAGE_SUCCEEDED", "params": {}}` (and the same shape for the other steps). The server does not translate it.
 
 ### Coordinates and units
 
@@ -112,22 +112,26 @@ Every measurement includes:
 
 ```js
 {
-  code, label, value, unit,
+  code,                 // LV_EF, LV_VOLUME, ...
+  label,                // {"code": "LV_EF", "params": {}}
+  value, unit,
   method,               // voxel_count / model inference / ...
   source,               // synthetic_ground_truth / model id
   validationStatus,     // synthetic / research / validated
   status,               // computed / not_computed
-  reason                // human-readable reason when not_computed
+  reason                // null, or {"code": "LV_EF_REQUIRES_TWO_PHASES", "params": {}}
 }
 ```
 
-`label` and `reason` are rendered in the request language. `code`, `method`, `source`, `status`, and `value` are not translated.
+`label`, `reason`, pipeline `message`, series-selection `reasons`, and error `detail` are `{code, params}` objects. The frontend owns the wording.
 
 ---
 
 ## API (M1)
 
-Send `Accept-Language: en` or `Accept-Language: zh` on every request. A missing or unrecognized value, including `zh-CN`, returns English. Enums, `code` values, field names, and numbers are never translated.
+The backend does not read `Accept-Language`.
+
+Errors, `not_computed` reasons, pipeline messages, series-selection reasons, and measurement labels are objects such as `{"code": "LV_EF_REQUIRES_TWO_PHASES", "params": {}}`. Enums (`stage`, `status`, `method`, `source`) stay as they are.
 
 | Method | Path | Description |
 | --- | --- | --- |
@@ -146,9 +150,19 @@ Send `Accept-Language: en` or `Accept-Language: zh` on every request. A missing 
 | GET | `/api/models` | Model registry and licence status |
 | POST | `/api/studies/{id}/reports/{reportId}/approve` | Clinician approves the report |
 
-A report is stored in the language of the request that generated it (`content.language` is `en` or `zh`). Later reads do not rewrite it. Labels, `not_computed` reasons, pipeline messages, and errors follow the current request. A legacy Chinese-only report is returned as stored. If it has no language field, the response marks `zh-CN` and does not write that mark back.
+A structured report is created by `POST /api/studies`, `POST /api/studies/demo`, `POST /api/studies/{id}/select-series`, and `POST /api/studies/{id}/pipeline`. Pass the draft language as a query parameter: `lang=en` or `lang=zh`. Omitting it means `en`. Any other value is HTTP 400 `{"detail": {"code": "INVALID_LANG", "params": {"lang": "<value>"}}}`.
 
-For `zh`, disclaimer text repeats the full English sentence and then the Chinese sentence. The English sentence is not shortened.
+Example: `POST /api/studies/demo?lang=zh`.
+
+The draft is stored with `content.lang` and is not rewritten on later reads or after approval. A stored report that has no `lang` field is returned as stored. The audit chain still records only the report id, actor, and action.
+
+English disclaimer, stored when `lang=en`:
+
+> Research prototype, not a medical device. This project is not certified by NMPA / FDA / CE, and outputs must not be used for clinical diagnosis, treatment decisions, or medico-legal purposes. All data in demo mode is procedurally synthesized.
+
+Chinese disclaimer, stored when `lang=zh`, is the original wording:
+
+> 研究原型，不是医疗器械。本项目未取得 NMPA / FDA / CE 认证，输出不得用于临床诊断、治疗决策或医疗法律用途。演示模式中的数据全部为程序化合成数据。
 
 Interactive docs: after the backend is running, open `http://127.0.0.1:8000/docs`.
 
@@ -186,7 +200,8 @@ src/                        React frontend
 server/                     FastAPI backend
   app/imaging/              DICOM parsing, volumes, segmentation, marching cubes
   app/routes/               studies / assets / reports
-  app/i18n.py               en/zh text and Accept-Language lookup
+  app/codes.py              stable {code, params} values
+  app/reporting.py          report draft text (en / zh), frozen at generation
   app/pipeline.py           asynchronous pipeline
   app/audit.py              audit hash chain
   scripts/                  synthetic DICOM generator
@@ -231,4 +246,4 @@ See [`docs/roadmap.md`](docs/roadmap.md) and [`docs/architecture.md`](docs/archi
 
 ## Disclaimer
 
-This project is a research prototype. It is not a medical device and it does not provide clinical diagnosis or treatment advice. All demo data is synthetic. Every model output must be reviewed by a physician.
+This project is a research prototype, is not a medical device, and does not provide clinical diagnosis or treatment advice. All demo data is synthetic; every model output must be reviewed by a physician.

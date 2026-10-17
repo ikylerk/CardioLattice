@@ -2,9 +2,9 @@
 
 [English](clinical-boundaries.md)
 
-> **Research prototype. Not a medical device.** It must not be used for diagnosis, treatment decisions, triage, or legal purposes.
+> **Research prototype, not a medical device.** This project is not certified by NMPA / FDA / CE, and outputs must not be used for clinical diagnosis, treatment decisions, or medico-legal purposes. All data in demo mode is procedurally synthesized.
 >
-> **研究原型，不是医疗器械。** 不得用于诊断、治疗决策、分诊或法律用途。
+> **研究原型，不是医疗器械。** 本项目未取得 NMPA / FDA / CE 认证，输出不得用于临床诊断、治疗决策或医疗法律用途。演示模式中的数据全部为程序化合成数据。
 
 ## 1. 人在回路中
 
@@ -60,4 +60,8 @@
 
 临床部署需要单独的监管路径（例如中国的 NMPA 软件注册，或 FDA/CE 的同等路径），包括软件生命周期、风险管理、临床评价和上市后监督。本仓库中的任何内容都不能代替该过程。
 
-API 免责声明完整保留这句英文：“Research prototype. Not for clinical diagnosis or treatment decisions.” 中文响应会重复该英文句子，然后再给出中文等价句。不会用中文替换英文，也不会减弱英文的含义。
+`lang=en` 的报告草稿完整保存这句英文：“Research prototype, not a medical device. This project is not certified by NMPA / FDA / CE, and outputs must not be used for clinical diagnosis, treatment decisions, or medico-legal purposes. All data in demo mode is procedurally synthesized.”
+
+`lang=zh` 的报告草稿完整保存原文：“研究原型，不是医疗器械。本项目未取得 NMPA / FDA / CE 认证，输出不得用于临床诊断、治疗决策或医疗法律用途。演示模式中的数据全部为程序化合成数据。”
+
+两种文本互不替换、互不缩短。草稿保持生成时的语言。

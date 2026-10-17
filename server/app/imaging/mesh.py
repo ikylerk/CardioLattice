@@ -8,6 +8,7 @@ import trimesh
 from scipy import ndimage
 from skimage import measure
 
+from ..codes import CodedError
 from .dicom import PreviewVolume
 from .segmentation import LABELS
 
@@ -109,14 +110,14 @@ def build_glb(
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     if len(scene.geometry) == 0:
-        raise ValueError("error.no_labelled_structures")
+        raise CodedError("NO_LABELLED_STRUCTURES")
     scene.export(str(out_path), file_type="glb")
     transform = {
         "scale": scale,
         "center_mm": center.tolist(),
         "source": "RAS_mm",
         "target": "scene_units",
-        "note": "note.glb_scene_units",
+        "note": "NOTE_GLB_SCENE_UNITS",
     }
     return infos, transform
 

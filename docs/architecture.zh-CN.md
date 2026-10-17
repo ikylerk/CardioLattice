@@ -128,10 +128,14 @@ queued → validating → anonymizing → building_volume → segmenting
 
 ## 10. 语言
 
-给人阅读的响应跟随 `Accept-Language`。唯一识别的值是 `en` 和 `zh`。缺失的请求头、`zh-CN` 或其他标签都返回英文。
+API 不读取 `Accept-Language`。
 
-翻译范围限于报告正文、测量标签、`not_computed` 原因、序列选择原因、流水线消息、模型说明和错误信息。`code`、字段名、枚举（`status`、`stage`、`method`、`source`）和数字保持不变。
+错误、`not_computed` 原因、流水线 `message`、序列选择原因、测量标签、标记标签、分割警告，以及模型的 `intendedUse` / `license`，都是 `{"code", "params"}` 对象。这些文案由前端负责。`stage` 仍是步骤 id（`validating`、`succeeded` 等）。
 
-新生成的报告按该次请求的语言保存（`content.language` 为 `en` 或 `zh`），之后的读取不再翻译。检查包里的标签和原因跟随当前请求，因此英文请求不会收到中文标签或原因。仅有中文的旧报告按保存内容原样返回。若没有 `language` 字段，响应将其标记为 `zh-CN`，且不把该标记写回数据库。已批准的报告文档不会被改写。
+报告草稿由上传、演示、选择序列和重新运行流水线的请求生成。查询参数为 `lang=en` 或 `lang=zh`。省略则为 `en`。其他值返回 HTTP 400 `{"detail": {"code": "INVALID_LANG", "params": {"lang": "<value>"}}}`。
 
-`zh` 的免责声明先重复完整英文句子，再给出中文句子。英文句子不会被缩短。
+草稿写入 `content.lang`，读取和批准都不会改写。没有 `lang` 字段的已存报告按保存内容原样返回。审计链仍只记录报告 id、操作者和动作。
+
+`lang=en` 保存：“Research prototype, not a medical device. This project is not certified by NMPA / FDA / CE, and outputs must not be used for clinical diagnosis, treatment decisions, or medico-legal purposes. All data in demo mode is procedurally synthesized.”
+
+`lang=zh` 保存原文：“研究原型，不是医疗器械。本项目未取得 NMPA / FDA / CE 认证，输出不得用于临床诊断、治疗决策或医疗法律用途。演示模式中的数据全部为程序化合成数据。”

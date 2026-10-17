@@ -136,22 +136,25 @@ implementations can be added without changing the imaging pipeline.
 
 ## 10. Languages
 
-Human-readable responses follow the `Accept-Language` header. The only
-recognized values are `en` and `zh`. A missing header, `zh-CN`, or any other
-tag returns English.
+The API does not read `Accept-Language`.
 
-Translated text is limited to report prose, measurement labels, `not_computed`
-reasons, series-selection reasons, pipeline messages, model descriptions, and
-error messages. `code` values, field names, enums (`status`, `stage`, `method`,
-`source`), and numbers are unchanged.
+Errors, `not_computed` reasons, pipeline `message`s, series-selection reasons,
+measurement labels, marker labels, segmentation warnings, and model
+`intendedUse` / `license` are `{"code", "params"}` objects. The frontend owns
+those strings. `stage` stays the step id (`validating`, `succeeded`, …).
 
-A newly generated report is stored in the request language (`content.language`
-is `en` or `zh`) and is not translated on later reads. Labels and reasons in a
-study bundle follow the current request, so an English request does not receive
-Chinese labels or reasons. A legacy report that is Chinese-only is returned
-unchanged. If it has no `language` field, the response marks it `zh-CN` without
-writing that mark back to the database. Approved report documents are not
-rewritten.
+A report draft is created by the upload, demo, select-series, and pipeline
+requests. The query parameter is `lang=en` or `lang=zh`. Omitting it means
+`en`. Any other value is HTTP 400
+`{"detail": {"code": "INVALID_LANG", "params": {"lang": "<value>"}}}`.
 
-For `zh`, the disclaimer repeats the full English sentence and then the Chinese
-sentence. The English sentence is not shortened.
+The draft is stored with `content.lang` and is not rewritten on read or after
+approval. A stored report with no `lang` field is returned as stored. The audit
+chain still records the report id, actor, and action.
+
+`lang=en` stores: "Research prototype, not a medical device. This project is
+not certified by NMPA / FDA / CE, and outputs must not be used for clinical
+diagnosis, treatment decisions, or medico-legal purposes. All data in demo mode
+is procedurally synthesized."
+
+`lang=zh` stores the original: "研究原型，不是医疗器械。本项目未取得 NMPA / FDA / CE 认证，输出不得用于临床诊断、治疗决策或医疗法律用途。演示模式中的数据全部为程序化合成数据。"

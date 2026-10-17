@@ -4,7 +4,7 @@
 
 面向心血管影像的**开源研究原型**：上传原始 CCTA DICOM → 去标识与体数据重建 → 3D 分割建模 → 可追溯的定量测量 → 结构化报告草稿 → 医生复核与审计。
 
-> **Research prototype. Not a medical device.** This project is not cleared by NMPA, FDA, or CE. Outputs must not be used for clinical diagnosis, treatment decisions, or medico-legal purposes. All data in demo mode is procedurally synthesized.
+> **Research prototype, not a medical device.** This project is not certified by NMPA / FDA / CE, and outputs must not be used for clinical diagnosis, treatment decisions, or medico-legal purposes. All data in demo mode is procedurally synthesized.
 >
 > **研究原型，不是医疗器械。** 本项目未取得 NMPA / FDA / CE 认证，输出不得用于临床诊断、治疗决策或医疗法律用途。演示模式中的数据全部为程序化合成数据。
 
@@ -97,7 +97,7 @@ queued → validating → anonymizing → building_volume
        → succeeded | failed
 ```
 
-`stage` 保持上述稳定代码。给人阅读的 `message` 跟随 `Accept-Language`。
+`stage` 保持上述稳定步骤 id。`message` 为 `{"code": "STAGE_SUCCEEDED", "params": {}}`（其他步骤同形）。服务端不翻译它。
 
 ### 坐标与单位
 
@@ -114,22 +114,26 @@ queued → validating → anonymizing → building_volume
 
 ```js
 {
-  code, label, value, unit,
+  code,                 // LV_EF、LV_VOLUME 等
+  label,                // {"code": "LV_EF", "params": {}}
+  value, unit,
   method,               // voxel_count / model inference / ...
   source,               // synthetic_ground_truth / model id
   validationStatus,     // synthetic / research / validated
   status,               // computed / not_computed
-  reason                // not_computed 时的人可读原因
+  reason                // null，或 {"code": "LV_EF_REQUIRES_TWO_PHASES", "params": {}}
 }
 ```
 
-`label` 与 `reason` 按请求语言返回。`code`、`method`、`source`、`status` 和 `value` 不翻译。
+`label`、`reason`、流水线 `message`、序列选择 `reasons` 和错误 `detail` 都是 `{code, params}`。文案由前端负责。
 
 ---
 
 ## API（M1）
 
-每次请求发送 `Accept-Language: en` 或 `Accept-Language: zh`。缺失或无法识别的值（包括 `zh-CN`）返回英文。枚举、`code`、字段名和数字一律不翻译。
+后端不读取 `Accept-Language`。
+
+错误、`not_computed` 原因、流水线消息、序列选择原因和测量标签都是对象，例如 `{"code": "LV_EF_REQUIRES_TWO_PHASES", "params": {}}`。枚举（`stage`、`status`、`method`、`source`）保持原样。
 
 | Method | Path | 说明 |
 | --- | --- | --- |
@@ -148,9 +152,19 @@ queued → validating → anonymizing → building_volume
 | GET | `/api/models` | 模型注册表与授权状态 |
 | POST | `/api/studies/{id}/reports/{reportId}/approve` | 医生批准报告 |
 
-报告按生成该草稿的请求语言保存（`content.language` 为 `en` 或 `zh`），之后的读取不会改写正文。标签、`not_computed` 原因、流水线消息和错误信息跟随当前请求。仅有中文的旧报告按保存内容原样返回；若没有 language 字段，响应中标记为 `zh-CN`，且不把该标记写回数据库。
+结构化报告由 `POST /api/studies`、`POST /api/studies/demo`、`POST /api/studies/{id}/select-series` 和 `POST /api/studies/{id}/pipeline` 生成。用查询参数指定草稿语言：`lang=en` 或 `lang=zh`。省略则为 `en`。其他值返回 HTTP 400 `{"detail": {"code": "INVALID_LANG", "params": {"lang": "<value>"}}}`。
 
-`zh` 的免责声明先重复完整英文句子，再给出中文句子。英文句子不会被缩短。
+示例：`POST /api/studies/demo?lang=zh`。
+
+草稿写入 `content.lang`，之后的读取和批准都不会改写正文。没有 `lang` 字段的已存报告按保存内容原样返回。审计链仍只记录报告 id、操作者和动作。
+
+`lang=en` 时保存的英文免责声明：
+
+> Research prototype, not a medical device. This project is not certified by NMPA / FDA / CE, and outputs must not be used for clinical diagnosis, treatment decisions, or medico-legal purposes. All data in demo mode is procedurally synthesized.
+
+`lang=zh` 时保存的是原文：
+
+> 研究原型，不是医疗器械。本项目未取得 NMPA / FDA / CE 认证，输出不得用于临床诊断、治疗决策或医疗法律用途。演示模式中的数据全部为程序化合成数据。
 
 交互式文档：启动后端后访问 `http://127.0.0.1:8000/docs`。
 
@@ -188,7 +202,8 @@ src/                        React 前端
 server/                     FastAPI 后端
   app/imaging/              DICOM 解析、体数据、分割、marching cubes
   app/routes/               studies / assets / reports
-  app/i18n.py               en/zh 文案与 Accept-Language 查找
+  app/codes.py              稳定的 {code, params}
+  app/reporting.py          报告草稿正文（en / zh），生成时冻结
   app/pipeline.py           异步流水线
   app/audit.py              审计哈希链
   scripts/                  合成 DICOM 生成器
@@ -233,6 +248,6 @@ docs/                       架构、临床边界、路线图
 
 ## 免责声明
 
-> **Research prototype. Not a medical device.** This project does not provide clinical diagnosis or treatment advice. All demo data is synthetic. Every model output must be reviewed by a physician.
+> This project is a research prototype, is not a medical device, and does not provide clinical diagnosis or treatment advice. All demo data is synthetic; every model output must be reviewed by a physician.
 >
 > 本项目是研究原型，不构成医疗器械，不提供临床诊断或治疗建议。所有演示数据均为合成数据；所有模型输出均需医生复核。

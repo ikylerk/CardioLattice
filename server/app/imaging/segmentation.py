@@ -5,6 +5,7 @@ from pathlib import Path
 
 import numpy as np
 
+from ..codes import CodedError
 from ..config import settings
 from .dicom import PreviewVolume, align_labels_to_preview, load_label_image
 
@@ -42,7 +43,7 @@ def segment_synthetic(study, preview: PreviewVolume) -> SegmentationResult:
     meta = study.fixture_meta or {}
     labels_path = meta.get("labels_path")
     if not labels_path or not Path(labels_path).exists():
-        raise ValueError("error.labels_path_required")
+        raise CodedError("LABELS_PATH_REQUIRED")
 
     array, _ = load_label_image(Path(labels_path), resample_mm=settings.resample_mm)
     aligned = align_labels_to_preview(array, preview)
@@ -51,7 +52,7 @@ def segment_synthetic(study, preview: PreviewVolume) -> SegmentationResult:
     quality = {
         "label_values_present": present,
         "voxels": int(np.count_nonzero(aligned)),
-        "warnings": ["quality.synthetic_ground_truth"],
+        "warnings": ["QUALITY_SYNTHETIC_GROUND_TRUTH"],
     }
     return SegmentationResult(
         label_array=aligned,
@@ -63,7 +64,7 @@ def segment_synthetic(study, preview: PreviewVolume) -> SegmentationResult:
         provenance={
             "algorithm": "synthetic_ground_truth",
             "labels_path": str(labels_path),
-            "note": "note.synthetic_fixture",
+            "note": "NOTE_SYNTHETIC_FIXTURE",
         },
     )
 
@@ -107,6 +108,6 @@ def segment_totalsegmentator(hu_nifti: Path, preview: PreviewVolume) -> Segmenta
         model_id="totalsegmentator",
         model_version="2.4.0",
         validation_status="research",
-        quality={"warnings": ["quality.totalsegmentator_research"]},
+        quality={"warnings": ["QUALITY_TOTALSEGMENTATOR_RESEARCH"]},
         provenance={"algorithm": "totalsegmentator", "task": "heartchambers_highres"},
     )

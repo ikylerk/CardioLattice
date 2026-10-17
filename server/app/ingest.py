@@ -17,6 +17,7 @@ from .imaging.dicom import (
     safe_extract_zip,
     subject_from_headers,
 )
+from .codes import CodedError
 from .models import Job, Series, Study, Subject, new_id
 from .pipeline import make_pipeline_job, run_pipeline
 from .storage import storage
@@ -44,7 +45,7 @@ def prepare_upload(files, *, study_id: str) -> tuple[Path, list[Path]]:
             while chunk := upload.file.read(1024 * 1024):
                 total += len(chunk)
                 if total > max_bytes:
-                    raise ValueError("error.upload_too_large")
+                    raise CodedError("UPLOAD_TOO_LARGE")
                 handle.write(chunk)
         safe_extract_zip(archive_path, extracted, max_bytes)
     else:
@@ -56,12 +57,12 @@ def prepare_upload(files, *, study_id: str) -> tuple[Path, list[Path]]:
                 while chunk := upload.file.read(1024 * 1024):
                     total += len(chunk)
                     if total > max_bytes:
-                        raise ValueError("error.upload_too_large")
+                        raise CodedError("UPLOAD_TOO_LARGE")
                     handle.write(chunk)
 
     paths = collect_dicom_paths(extracted)
     if not paths:
-        raise ValueError("error.no_dicom_in_upload")
+        raise CodedError("NO_DICOM_IN_UPLOAD")
     return extracted, paths
 
 
@@ -74,17 +75,17 @@ def create_study_from_paths(
     source: str,
     fixture_meta: dict | None,
     background_tasks: BackgroundTasks | None,
-    language: str = "en",
+    lang: str = "en",
 ) -> tuple[Study, Job | None]:
     series_infos = inspect_files(paths)
     if not series_infos:
-        raise ValueError("error.no_ct_series")
+        raise CodedError("NO_CT_SERIES")
     meta = read_study_meta(paths)
     subject_info = subject_from_headers(paths, salt=settings.deid_salt)
 
     existing = db.scalar(select(Study).where(Study.study_uid == meta["study_uid"]))
     if existing is not None:
-        raise ValueError("error.study_already_uploaded")
+        raise CodedError("STUDY_ALREADY_UPLOADED")
 
     subject = db.scalar(select(Subject).where(Subject.patient_id_hash == subject_info.patient_id_hash))
     if subject is None:
@@ -142,7 +143,7 @@ def create_study_from_paths(
 
     best, ambiguous = choose_series(series_infos)
     if best is None:
-        raise ValueError("error.no_plausible_ccta")
+        raise CodedError("NO_PLAUSIBLE_CCTA")
 
     selected = next(row for row in rows if row.series_uid == best.series_uid)
     selected.is_selected = True
@@ -152,7 +153,7 @@ def create_study_from_paths(
         study.status = "needs_series_selection"
     else:
         study.status = "queued"
-        job = make_pipeline_job(study_id, language)
+        job = make_pipeline_job(study_id, lang)
         db.add(job)
 
     audit.record(

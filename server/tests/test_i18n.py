@@ -1,295 +1,227 @@
+"""Codes for API text, and report language chosen at generation."""
+
 from __future__ import annotations
 
-import json
 import re
 from pathlib import Path
 from types import SimpleNamespace
 
 from fastapi.testclient import TestClient
+from sqlalchemy.orm import attributes
 
+from app.codes import coded
 from app.db import SessionLocal
-from app.i18n import DISCLAIMER_EN, negotiate, t
 from app.main import app
 from app.models import Report
-from app.reporting import annotate_report_language, template_report
+from app.reporting import DISCLAIMER_EN, DISCLAIMER_ZH, template_report
 
-CJK = re.compile(r"[\u4e00-\u9fff]")
+_CJK = re.compile(r"[\u4e00-\u9fff]")
 SERVER_ROOT = Path(__file__).resolve().parents[1]
-SKIP_DIRS = {".venv", "venv", "__pycache__", ".pytest_cache", "var", ".uv"}
-
-
-def _assert_no_cjk(payload) -> None:
-    text = json.dumps(payload, ensure_ascii=False)
-    match = CJK.search(text)
-    assert match is None, text[max(0, match.start() - 80) : match.end() + 80]
 
 
 def _study():
+    subject = SimpleNamespace(pseudonym="SUBJ-1", sex="F", age_years=60)
     return SimpleNamespace(
         id="stu_test",
         description="Cardiac CTA",
         modality="CT",
         source="demo",
-        study_date="20261017",
-        subject=SimpleNamespace(pseudonym="SUBJ-TEST", sex="M", age_years=40),
+        study_date="20260101",
+        subject=subject,
     )
 
 
-def _item(**overrides):
-    values = {
-        "id": "mea_1",
-        "status": "not_computed",
-        "value": None,
-        "label": "SHOULD_NOT_LEAK",
-        "reason": "SHOULD_NOT_LEAK",
-        "code": "LV_EF",
-        "unit": None,
-        "method": "not_available",
-    }
-    values.update(overrides)
-    return SimpleNamespace(**values)
+def _measurement(**kwargs):
+    defaults = dict(
+        id="mea_1",
+        code="LV_VOLUME",
+        label="SHOULD_NOT_LEAK",
+        value=10.0,
+        unit="mL",
+        method="voxel_count",
+        status="computed",
+        reason="SHOULD_NOT_LEAK",
+    )
+    defaults.update(kwargs)
+    return SimpleNamespace(**defaults)
 
 
-def test_negotiate_only_exact_zh_selects_chinese():
-    assert negotiate(None) == "en"
-    assert negotiate("") == "en"
-    assert negotiate("en") == "en"
-    assert negotiate("EN") == "en"
-    assert negotiate("zh") == "zh"
-    assert negotiate("ZH") == "zh"
-    assert negotiate("zh,en;q=0.5") == "zh"
-    assert negotiate("zh;q=0.9") == "zh"
-    assert negotiate("zh-CN") == "en"
-    assert negotiate("zh-Hans") == "en"
-    assert negotiate("fr") == "en"
-    assert negotiate("en-US,en;q=0.9") == "en"
-
-
-def test_template_report_languages_do_not_leak_stored_labels():
+def test_template_report_is_frozen_in_the_requested_language():
     study = _study()
     measurements = [
-        _item(
-            id="mea_vol",
-            status="computed",
-            value=12.5,
-            code="LV_VOLUME",
-            unit="mL",
-            method="voxel_count",
-            reason=None,
+        _measurement(),
+        _measurement(
+            id="mea_ef",
+            code="LV_EF",
+            value=None,
+            unit=None,
+            method="not_available",
+            status="not_computed",
         ),
-        _item(),
     ]
     english = template_report(study, measurements, "en")
     chinese = template_report(study, measurements, "zh")
 
-    assert english["language"] == "en"
-    assert chinese["language"] == "zh"
+    assert english["lang"] == "en"
+    assert chinese["lang"] == "zh"
+    assert english["provenance"]["lang"] == "en"
+    assert chinese["provenance"]["lang"] == "zh"
     assert english["disclaimer"] == DISCLAIMER_EN
-    assert chinese["disclaimer"].startswith(DISCLAIMER_EN)
-    assert "不得用于临床诊断或治疗决策" in chinese["disclaimer"]
-    assert "SHOULD_NOT_LEAK" not in json.dumps(english)
-    assert "SHOULD_NOT_LEAK" not in json.dumps(chinese, ensure_ascii=False)
-    _assert_no_cjk(english)
-    assert CJK.search(json.dumps(chinese, ensure_ascii=False))
-    assert "LV_EF" not in english["sections"][2]["claims"][0]["text"]
-    assert english["sections"][2]["claims"][0]["text"].startswith(
-        "Left ventricular ejection fraction (EF) was not computed:"
-    )
-    assert "单时相 CTA 不可计算" in chinese["sections"][2]["claims"][0]["text"]
-    assert english["impression"][0]["status"] == "research_only"
-    assert chinese["impression"][0]["status"] == "research_only"
-    assert english["study"]["source"] == "demo"
-    assert chinese["study"]["source"] == "demo"
+    assert chinese["disclaimer"] == DISCLAIMER_ZH
+    assert "不是医疗器械" in chinese["disclaimer"]
+    assert "NMPA / FDA / CE" in english["disclaimer"]
+    assert "medico-legal" in english["disclaimer"]
+    assert "SHOULD_NOT_LEAK" not in str(english)
+    assert "SHOULD_NOT_LEAK" not in str(chinese)
+    assert _CJK.search(str(english)) is None
+    assert _CJK.search(chinese["disclaimer"])
 
 
-def test_legacy_report_language_is_marked_without_mutating_the_document():
-    legacy = {"sections": [{"title": "检查摘要", "claims": [{"text": "旧版中文报告"}]}]}
-    marked = annotate_report_language(legacy)
-    assert "language" not in legacy
-    assert marked["language"] == "zh-CN"
-    assert marked["sections"] == legacy["sections"]
-
-    english = {"sections": [{"title": "Study summary"}]}
-    assert annotate_report_language(english)["language"] == "en"
-    assert "language" not in english
-
-    stored = {"language": "zh-CN", "disclaimer": "研究原型。不得用于临床诊断或治疗决策。"}
-    assert annotate_report_language(stored) is stored
-
-
-def test_error_root_and_models_follow_accept_language():
+def test_codes_params_and_report_lang_query():
     files = {"files": ("notes.txt", b"this is not a dicom file", "text/plain")}
     with TestClient(app) as client:
         missing = client.post("/api/studies", files=files)
-        english = client.post("/api/studies", files=files, headers={"Accept-Language": "en"})
-        chinese = client.post("/api/studies", files=files, headers={"Accept-Language": "zh"})
-        region = client.post("/api/studies", files=files, headers={"Accept-Language": "zh-CN"})
-        french = client.post("/api/studies", files=files, headers={"Accept-Language": "fr"})
+        header_only = client.post("/api/studies", files=files, headers={"Accept-Language": "zh"})
+        invalid = client.post("/api/studies/demo?lang=fr")
+        region = client.post("/api/studies/demo?lang=zh-CN")
+        assert missing.status_code == 400
+        assert header_only.status_code == 400
+        assert missing.json()["detail"] == coded("NO_CT_SERIES")
+        assert header_only.json()["detail"] == coded("NO_CT_SERIES")
+        assert invalid.status_code == 400
+        assert invalid.json()["detail"] == coded("INVALID_LANG", lang="fr")
+        assert region.json()["detail"] == coded("INVALID_LANG", lang="zh-CN")
 
-        assert missing.status_code == english.status_code == chinese.status_code == 400
-        assert missing.json()["detail"] == english.json()["detail"] == region.json()["detail"]
-        assert french.json()["detail"] == english.json()["detail"]
-        assert english.json()["detail"] == t("error.no_ct_series", "en")
-        assert chinese.json()["detail"] == t("error.no_ct_series", "zh")
-        _assert_no_cjk(english.json())
-        assert CJK.search(chinese.json()["detail"])
-
-        not_found = client.get("/api/studies/stu_missing")
-        not_found_zh = client.get("/api/studies/stu_missing", headers={"Accept-Language": "zh"})
+        not_found = client.get("/api/studies/stu_missing", headers={"Accept-Language": "zh"})
         assert not_found.status_code == 404
-        assert not_found.json()["detail"] == "Study not found."
-        assert not_found_zh.json()["detail"] == "未找到该检查。"
+        assert not_found.json()["detail"] == coded("STUDY_NOT_FOUND")
 
-        root_missing = client.get("/")
-        root_en = client.get("/", headers={"Accept-Language": "en"})
-        root_zh = client.get("/", headers={"Accept-Language": "zh"})
-        assert root_missing.json()["warning"] == root_en.json()["warning"] == DISCLAIMER_EN
-        assert root_zh.json()["warning"].startswith(DISCLAIMER_EN)
-        assert "不得用于临床诊断或治疗决策" in root_zh.json()["warning"]
-        assert root_zh.json()["status"] == "ok"
+        root = client.get("/", headers={"Accept-Language": "zh"})
+        assert root.json()["warning"] == DISCLAIMER_EN
+        assert _CJK.search(root.json()["warning"]) is None
 
-        models_en = client.get("/api/models", headers={"Accept-Language": "en"})
-        models_zh = client.get("/api/models", headers={"Accept-Language": "zh"})
-        assert models_en.json()["models"][2]["regulatoryStatus"] == "not_computed"
-        assert models_zh.json()["models"][2]["regulatoryStatus"] == "not_computed"
-        assert models_en.json()["models"][2]["intendedUse"] == "Not configured."
-        assert models_zh.json()["models"][2]["intendedUse"] == "未配置。"
-        _assert_no_cjk(models_en.json())
+        models = client.get("/api/models", headers={"Accept-Language": "zh"}).json()["models"]
+        assert models[0]["intendedUse"] == coded("MODEL_SYNTHETIC_INTENDED_USE")
+        assert models[2]["license"] == coded("MODEL_LUMEN_LICENSE")
 
 
-def _bundle_text(bundle: dict) -> str:
-    return json.dumps(bundle, ensure_ascii=False)
+def _assert_codes(bundle: dict):
+    job = bundle["jobs"][-1]
+    assert job["stage"] == "succeeded"
+    assert job["message"] == coded("STAGE_SUCCEEDED")
+    assert job["error"] is None
+    reasons = bundle["series"][0]["reasons"]
+    assert coded("SERIES_CT_MODALITY") in reasons
+    assert coded("SERIES_AXIAL_GEOMETRY") in reasons
+    assert all(isinstance(item, dict) and "params" in item for item in reasons)
+    measurements = {item["code"]: item for item in bundle["measurements"]}
+    assert measurements["LV_VOLUME"]["label"] == coded("LV_VOLUME")
+    assert measurements["LV_VOLUME"]["reason"] is None
+    assert measurements["LV_EF"]["label"] == coded("LV_EF")
+    assert measurements["LV_EF"]["reason"] == coded("LV_EF_REQUIRES_TWO_PHASES")
+    assert measurements["STENOSIS_LAD"]["reason"] == coded("NO_VALIDATED_LUMEN_MODEL")
+    assert measurements["FFR_CT"]["reason"] == coded("FFR_CT_REQUIRES_MODEL")
+    assert measurements["CALCIUM_SCORE"]["reason"] == coded("CALCIUM_SCORE_REQUIRES_NONCONTRAST")
+    assert measurements["AHA_SEGMENTS"]["reason"] == coded("AHA_NOT_FROM_CTA")
+    marker = bundle["volumes"][0]["markers"][0]["label"]
+    assert marker == coded("MARKER_CALCIFICATION_SYNTHETIC")
+    warning = bundle["segmentations"][0]["quality"]["warnings"][0]
+    assert warning == coded("QUALITY_SYNTHETIC_GROUND_TRUTH")
+    assert bundle["segmentations"][0]["provenance"]["note"] == coded("NOTE_SYNTHETIC_FIXTURE")
+    assert bundle["meshes"][0]["sceneTransform"]["note"] == coded("NOTE_GLB_SCENE_UNITS")
+    return measurements
 
 
-def test_demo_accept_language_en_has_no_chinese():
+def test_demo_lang_en_zh_default_and_legacy_report():
     with TestClient(app) as client:
-        response = client.post("/api/studies/demo", headers={"Accept-Language": "en"})
-        assert response.status_code == 202, response.text
-        payload = response.json()
-        _assert_no_cjk(payload)
-        assert payload["job"]["stage"] == "succeeded"
-        assert payload["job"]["message"] == "Pipeline completed"
-        study_id = payload["study"]["study"]["id"]
-        bundle = payload["study"]
-        measurements = {item["code"]: item for item in bundle["measurements"]}
-        assert measurements["LV_EF"]["status"] == "not_computed"
-        assert measurements["LV_EF"]["reason"] == t("measurement.LV_EF.reason", "en")
-        assert measurements["STENOSIS_LAD"]["label"] == "LAD stenosis severity"
-        assert measurements["FFR_CT"]["code"] == "FFR_CT"
-        report = bundle["reports"][0]["content"]
-        assert report["language"] == "en"
-        assert report["disclaimer"] == DISCLAIMER_EN
-        assert any(reason == "CT modality" for reason in bundle["series"][0]["reasons"])
-        marker_labels = [marker["label"] for marker in bundle["volumes"][0]["markers"]]
-        assert "Calcified focus (synthetic)" in marker_labels
-        assert bundle["segmentations"][0]["provenance"]["note"] == t("note.synthetic_fixture", "en")
-        assert bundle["meshes"][0]["sceneTransform"]["note"] == t("note.glb_scene_units", "en")
+        default = client.post("/api/studies/demo", headers={"Accept-Language": "zh"})
+        assert default.status_code == 202, default.text
+        default_bundle = default.json()["study"]
+        _assert_codes(default_bundle)
+        default_report = default_bundle["reports"][0]["content"]
+        assert default_report["lang"] == "en"
+        assert default_report["disclaimer"] == DISCLAIMER_EN
+        assert _CJK.search(str(default_bundle["measurements"])) is None
+        assert _CJK.search(str(default_bundle["jobs"])) is None
 
-        again = client.get(f"/api/studies/{study_id}", headers={"Accept-Language": "fr"})
-        assert again.status_code == 200
-        _assert_no_cjk(again.json())
+        explicit = client.post("/api/studies/demo?lang=en")
+        assert explicit.json()["study"]["reports"][0]["content"]["lang"] == "en"
+        assert explicit.json()["study"]["reports"][0]["content"]["disclaimer"] == DISCLAIMER_EN
 
-
-def test_demo_zh_keeps_stored_report_and_localizes_labels():
-    with TestClient(app) as client:
-        created = client.post("/api/studies/demo", headers={"Accept-Language": "zh"})
+        created = client.post("/api/studies/demo?lang=zh", headers={"Accept-Language": "en"})
         assert created.status_code == 202, created.text
-        payload = created.json()
-        assert payload["job"]["stage"] == "succeeded"
-        assert payload["job"]["message"] == "流水线已完成"
-        bundle = payload["study"]
+        bundle = created.json()["study"]
+        _assert_codes(bundle)
+        content = bundle["reports"][0]["content"]
+        assert content["lang"] == "zh"
+        assert content["provenance"]["lang"] == "zh"
+        assert content["disclaimer"] == DISCLAIMER_ZH
+        assert "本检查为程序化合成的 DICOM 夹具" in str(content)
         study_id = bundle["study"]["id"]
-        measurements = {item["code"]: item for item in bundle["measurements"]}
-        assert measurements["LV_EF"]["code"] == "LV_EF"
-        assert measurements["LV_EF"]["status"] == "not_computed"
-        assert measurements["LV_EF"]["reason"] == t("measurement.LV_EF.reason", "zh")
-        assert measurements["LV_VOLUME"]["label"] == "左心室腔容积（采集时相）"
-        assert measurements["CALCIUM_SCORE"]["label"] == "Agatston 钙化积分"
         report = bundle["reports"][0]
-        content = report["content"]
-        assert content["language"] == "zh"
-        assert content["disclaimer"].startswith(DISCLAIMER_EN)
-        assert "不得用于临床诊断或治疗决策" in content["disclaimer"]
-        assert "本检查为程序化合成的 DICOM 夹具" in _bundle_text(content)
-        assert any("心脏协议描述" == reason or "CT 模态" == reason for reason in bundle["series"][0]["reasons"])
-        assert bundle["segmentations"][0]["provenance"]["note"] == "由与该 DICOM 夹具相同的体模定义生成。"
-        assert bundle["meshes"][0]["sceneTransform"]["note"] == "GLB 坐标已经是场景单位。"
-        frozen = json.loads(json.dumps(content))
 
-        english = client.get(f"/api/studies/{study_id}", headers={"Accept-Language": "en"})
-        assert english.status_code == 200
-        english_bundle = english.json()
-        english_report = english_bundle["reports"][0]["content"]
-        assert english_report == frozen
-        english_measurements = {item["code"]: item for item in english_bundle["measurements"]}
-        assert english_measurements["LV_EF"]["reason"] == t("measurement.LV_EF.reason", "en")
-        assert english_measurements["LV_VOLUME"]["label"] == t("measurement.LV_VOLUME.label", "en")
-        _assert_no_cjk(english_measurements)
-        _assert_no_cjk(english_bundle["jobs"])
-        _assert_no_cjk(english_bundle["series"])
-        assert english_bundle["jobs"][-1]["message"] == "Pipeline completed"
-        assert english_bundle["jobs"][-1]["stage"] == "succeeded"
-
-        missing = client.get(f"/api/studies/{study_id}")
-        missing_measurements = {item["code"]: item for item in missing.json()["measurements"]}
-        assert missing_measurements["LV_EF"]["reason"] == t("measurement.LV_EF.reason", "en")
-        assert missing.json()["reports"][0]["content"] == frozen
+        again = client.get(f"/api/studies/{study_id}", headers={"Accept-Language": "en"})
+        again_content = again.json()["reports"][0]["content"]
+        assert again_content == content
+        assert again.json()["measurements"]
+        assert {item["code"]: item["reason"] for item in again.json()["measurements"]}[
+            "LV_EF"
+        ] == coded("LV_EF_REQUIRES_TWO_PHASES")
 
         approved = client.post(
             f"/api/studies/{study_id}/reports/{report['id']}/approve",
             json={"approvedBy": "dr.test"},
-            headers={"Accept-Language": "en"},
         )
         assert approved.status_code == 200
-        assert approved.json()["status"] == "approved"
-        assert approved.json()["content"] == frozen
-        audit = client.get(f"/api/studies/{study_id}/audit").json()
-        assert audit["verified"] is True
+        assert approved.json()["content"]["disclaimer"] == DISCLAIMER_ZH
+        assert approved.json()["content"]["lang"] == "zh"
 
         db = SessionLocal()
-        row = db.get(Report, report["id"])
-        legacy = {
-            "schema_version": "report/v1",
-            "sections": [{"id": "summary", "title": "检查摘要", "claims": [{"text": "旧版中文报告，不得改写。"}]}],
-            "disclaimer": "研究原型。不得用于临床诊断或治疗决策。",
-        }
-        row.content = legacy
-        db.commit()
-        db.close()
+        try:
+            row = db.get(Report, report["id"])
+            legacy = {
+                "schema_version": "report/v1",
+                "study_id": study_id,
+                "status": "approved",
+                "disclaimer": "研究原型。不得用于临床诊断或治疗决策。",
+                "impression": [{"text": "旧报告原文"}],
+            }
+            assert "lang" not in legacy
+            row.content = legacy
+            attributes.flag_modified(row, "content")
+            db.commit()
+            stored_copy = dict(row.content)
+        finally:
+            db.close()
 
-        legacy_response = client.get(f"/api/studies/{study_id}", headers={"Accept-Language": "en"})
-        legacy_content = legacy_response.json()["reports"][0]["content"]
-        assert legacy_content["language"] == "zh-CN"
-        assert legacy_content["sections"] == legacy["sections"]
-        assert legacy_content["disclaimer"] == legacy["disclaimer"]
-        legacy_labels = {item["code"]: item["label"] for item in legacy_response.json()["measurements"]}
-        assert legacy_labels["LV_EF"] == t("measurement.LV_EF.label", "en")
+        legacy_response = client.get(f"/api/studies/{study_id}")
+        assert legacy_response.json()["reports"][0]["content"] == stored_copy
+        assert "lang" not in legacy_response.json()["reports"][0]["content"]
 
         db = SessionLocal()
-        row = db.get(Report, report["id"])
-        assert "language" not in row.content
-        assert row.content["sections"] == legacy["sections"]
-        assert row.content["disclaimer"] == legacy["disclaimer"]
-        db.close()
+        try:
+            row = db.get(Report, report["id"])
+            assert row.content == stored_copy
+        finally:
+            db.close()
         assert client.get(f"/api/studies/{study_id}/audit").json()["verified"] is True
 
 
-def test_cjk_in_server_is_confined_to_the_zh_catalog_and_tests():
+def test_cjk_outside_report_templates_is_limited_to_dicom_keywords():
     offenders = []
-    for path in SERVER_ROOT.rglob("*"):
-        if not path.is_file():
-            continue
-        if any(part in SKIP_DIRS for part in path.parts):
+    for path in SERVER_ROOT.rglob("*.py"):
+        if "__pycache__" in path.parts or ".venv" in path.parts or path.name == "test_i18n.py":
             continue
         relative = path.relative_to(SERVER_ROOT).as_posix()
-        if relative == "app/i18n.py" or relative.startswith("tests/"):
+        if relative == "app/reporting.py" or relative.startswith("tests/"):
             continue
-        if path.suffix.lower() in {".png", ".dcm", ".nii", ".gz", ".glb", ".u8", ".pyc"}:
+        text = path.read_text(encoding="utf-8")
+        if not _CJK.search(text):
             continue
-        try:
-            text = path.read_text(encoding="utf-8")
-        except (UnicodeDecodeError, OSError):
+        if relative == "app/imaging/dicom.py":
+            stripped = text.replace("冠脉", "").replace("心脏", "")
+            if _CJK.search(stripped):
+                offenders.append(relative)
             continue
-        if CJK.search(text):
-            offenders.append(relative)
+        offenders.append(relative)
     assert offenders == []

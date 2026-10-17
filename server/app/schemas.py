@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from .i18n import measurement_label, measurement_reason, normalize_lang, present
+from .codes import as_coded, label_coded, reason_coded
 from .models import Job, MeshRecord, Measurement, Report, Segmentation, Series, Study, VolumeRecord
-from .reporting import annotate_report_language
 
 
 def subject_out(subject) -> dict | None:
@@ -16,12 +15,11 @@ def subject_out(subject) -> dict | None:
     }
 
 
-def _texts(values: list | None, lang: str) -> list:
-    return [present(item, lang) if isinstance(item, str) else item for item in (values or [])]
+def _coded_list(values: list | None) -> list:
+    return [as_coded(item) if isinstance(item, str) else item for item in (values or [])]
 
 
-def series_out(series: Series, lang: str = "en") -> dict:
-    language = normalize_lang(lang)
+def series_out(series: Series) -> dict:
     return {
         "id": series.id,
         "seriesUid": series.series_uid,
@@ -38,11 +36,11 @@ def series_out(series: Series, lang: str = "en") -> dict:
         "contrastAgent": series.contrast_agent,
         "isSelected": series.is_selected,
         "candidateScore": series.candidate_score,
-        "reasons": _texts(series.reasons, language),
+        "reasons": _coded_list(series.reasons),
     }
 
 
-def _markers(markers: list | None, lang: str) -> list:
+def _markers(markers: list | None) -> list:
     output = []
     for marker in markers or []:
         if not isinstance(marker, dict):
@@ -51,23 +49,22 @@ def _markers(markers: list | None, lang: str) -> list:
         item = dict(marker)
         label = item.get("label")
         if isinstance(label, str):
-            item["label"] = present(label, lang)
+            item["label"] = as_coded(label)
         output.append(item)
     return output
 
 
-def _quality(quality: dict | None, lang: str) -> dict | None:
+def _quality(quality: dict | None) -> dict | None:
     if not isinstance(quality, dict):
         return quality
     cloned = dict(quality)
     warnings = cloned.get("warnings")
     if isinstance(warnings, list):
-        cloned["warnings"] = _texts(warnings, lang)
+        cloned["warnings"] = _coded_list(warnings)
     return cloned
 
 
-def volume_out(volume: VolumeRecord, lang: str = "en") -> dict:
-    language = normalize_lang(lang)
+def volume_out(volume: VolumeRecord) -> dict:
     return {
         "id": volume.id,
         "studyId": volume.study_id,
@@ -89,7 +86,7 @@ def volume_out(volume: VolumeRecord, lang: str = "en") -> dict:
             volume.dims[2] * volume.spacing[2] / 2,
         ],
         "defaultSlices": volume.default_slices,
-        "markers": _markers(volume.markers, language),
+        "markers": _markers(volume.markers),
         "stats": volume.stats,
         "bytes": volume.bytes,
         "dataUrl": f"/api/volumes/{volume.id}/data",
@@ -97,8 +94,17 @@ def volume_out(volume: VolumeRecord, lang: str = "en") -> dict:
     }
 
 
-def segmentation_out(segmentation: Segmentation, lang: str = "en") -> dict:
-    language = normalize_lang(lang)
+def _note_dict(value: dict | None) -> dict | None:
+    if not isinstance(value, dict):
+        return value
+    cloned = dict(value)
+    note = cloned.get("note")
+    if isinstance(note, str):
+        cloned["note"] = as_coded(note)
+    return cloned
+
+
+def segmentation_out(segmentation: Segmentation) -> dict:
     return {
         "id": segmentation.id,
         "studyId": segmentation.study_id,
@@ -108,23 +114,12 @@ def segmentation_out(segmentation: Segmentation, lang: str = "en") -> dict:
         "modelVersion": segmentation.model_version,
         "status": segmentation.status,
         "labelMap": segmentation.label_map,
-        "quality": _quality(segmentation.quality, language),
-        "provenance": _note_dict(segmentation.provenance, language),
+        "quality": _quality(segmentation.quality),
+        "provenance": _note_dict(segmentation.provenance),
     }
 
 
-def _note_dict(value: dict | None, lang: str) -> dict | None:
-    if not isinstance(value, dict):
-        return value
-    cloned = dict(value)
-    note = cloned.get("note")
-    if isinstance(note, str):
-        cloned["note"] = present(note, lang)
-    return cloned
-
-
-def mesh_out(mesh: MeshRecord, lang: str = "en") -> dict:
-    language = normalize_lang(lang)
+def mesh_out(mesh: MeshRecord) -> dict:
     return {
         "id": mesh.id,
         "studyId": mesh.study_id,
@@ -135,37 +130,35 @@ def mesh_out(mesh: MeshRecord, lang: str = "en") -> dict:
         "vertexCount": mesh.vertex_count,
         "triangleCount": mesh.triangle_count,
         "bbox": mesh.bbox,
-        "sceneTransform": _note_dict(mesh.scene_transform, language),
-        "provenance": _note_dict(mesh.provenance, language),
+        "sceneTransform": _note_dict(mesh.scene_transform),
+        "provenance": _note_dict(mesh.provenance),
     }
 
 
-def measurement_out(item: Measurement, lang: str = "en") -> dict:
-    language = normalize_lang(lang)
+def measurement_out(item: Measurement) -> dict:
     return {
         "id": item.id,
         "code": item.code,
-        "label": measurement_label(item.code, language, item.label),
+        "label": label_coded(item.code),
         "value": item.value,
         "unit": item.unit,
         "method": item.method,
         "source": item.source,
         "validationStatus": item.validation_status,
         "status": item.status,
-        "reason": measurement_reason(item.code, language, item.reason),
+        "reason": reason_coded(item.code, item.status, item.reason),
         "segmentAha": item.segment_aha,
         "provenance": item.provenance,
     }
 
 
-def report_out(report: Report, lang: str = "en") -> dict:
-    """Return the stored report. ``lang`` does not translate ``content``."""
-    _ = lang
+def report_out(report: Report) -> dict:
+    """Return the stored report document. Content is not translated on read."""
     return {
         "id": report.id,
         "studyId": report.study_id,
         "status": report.status,
-        "content": annotate_report_language(report.content),
+        "content": report.content,
         "generator": report.generator,
         "model": report.model,
         "promptVersion": report.prompt_version,
@@ -175,8 +168,7 @@ def report_out(report: Report, lang: str = "en") -> dict:
     }
 
 
-def job_out(job: Job, lang: str = "en") -> dict:
-    language = normalize_lang(lang)
+def job_out(job: Job) -> dict:
     return {
         "id": job.id,
         "studyId": job.study_id,
@@ -184,8 +176,8 @@ def job_out(job: Job, lang: str = "en") -> dict:
         "state": job.state,
         "progress": job.progress,
         "stage": job.stage,
-        "message": present(job.message, language),
-        "error": present(job.error, language),
+        "message": as_coded(job.message),
+        "error": as_coded(job.error),
     }
 
 
@@ -203,8 +195,7 @@ def availability_out(study: Study) -> dict:
     }
 
 
-def study_summary(study: Study, lang: str = "en") -> dict:
-    language = normalize_lang(lang)
+def study_summary(study: Study) -> dict:
     return {
         "id": study.id,
         "subject": subject_out(study.subject),
@@ -214,21 +205,20 @@ def study_summary(study: Study, lang: str = "en") -> dict:
         "modality": study.modality,
         "source": study.source,
         "status": study.status,
-        "error": present(study.error, language),
+        "error": as_coded(study.error),
         "createdAt": study.created_at.isoformat() if study.created_at else None,
         "availability": availability_out(study),
     }
 
 
-def study_bundle(study: Study, lang: str = "en") -> dict:
-    language = normalize_lang(lang)
+def study_bundle(study: Study) -> dict:
     return {
-        "study": study_summary(study, language),
-        "series": [series_out(item, language) for item in sorted(study.series, key=lambda s: (s.series_number or 0))],
-        "volumes": [volume_out(item, language) for item in study.volumes],
-        "segmentations": [segmentation_out(item, language) for item in study.segmentations],
-        "meshes": [mesh_out(item, language) for item in study.meshes],
-        "measurements": [measurement_out(item, language) for item in study.measurements],
-        "reports": [report_out(item, language) for item in study.reports],
-        "jobs": [job_out(item, language) for item in sorted(study.jobs, key=lambda j: j.created_at)],
+        "study": study_summary(study),
+        "series": [series_out(item) for item in sorted(study.series, key=lambda s: (s.series_number or 0))],
+        "volumes": [volume_out(item) for item in study.volumes],
+        "segmentations": [segmentation_out(item) for item in study.segmentations],
+        "meshes": [mesh_out(item) for item in study.meshes],
+        "measurements": [measurement_out(item) for item in study.measurements],
+        "reports": [report_out(item) for item in study.reports],
+        "jobs": [job_out(item) for item in sorted(study.jobs, key=lambda j: j.created_at)],
     }
