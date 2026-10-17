@@ -136,6 +136,8 @@ queued → validating → anonymizing → building_volume
 
 > 这些是**标准参考几何**，用于方位、教学、配准占位和界面标准化；不是患者解剖，不能用于诊断。后续可逐个替换为有明确授权的真实器官 GLB，而不改变编码和前端契约。
 
+当前版本提供标准目录、可视化和编码映射；把图谱配准到患者体数据（atlas-to-patient registration）属于后续工作，并且只能用于方位/质控，不能用于推导患者测量。
+
 详见 [`docs/organ-library.md`](docs/organ-library.md)。
 
 ---
