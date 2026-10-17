@@ -3,6 +3,7 @@ import { Copy, Download, Printer, Sparkles, X } from 'lucide-react'
 import Brand from './Brand.jsx'
 import StructuredReport from './report/StructuredReport.jsx'
 import { useStudy } from '../study/StudyContext.jsx'
+import { errorDetail, serverText, useI18n } from '../i18n.js'
 
 function MiniVrt() {
   return (
@@ -68,6 +69,7 @@ function MiniEcho() {
 }
 
 export default function ReportDrawer({ open, onClose, notify }) {
+  const { t } = useI18n()
   const { study, isApi, reports, approve } = useStudy()
   const [approveBusy, setApproveBusy] = React.useState(false)
   if (!open) return null
@@ -78,25 +80,27 @@ export default function ReportDrawer({ open, onClose, notify }) {
   const content = report?.content
 
   const copySummary = async () => {
+    const sections = (content?.sections || []).map((section) => t('report.sectionJoin', {
+      title: section.title,
+      text: (section.claims || []).map((claim) => claim.text).join(' '),
+    })).join('\n')
     const summary = structured && content
-      ? `CardioScope Pro｜结构化影像报告（研究原型）
-受试者：${content.subject?.pseudonym || '—'} ${content.subject?.sex || ''} ${content.subject?.age_years ?? ''}
-检查：${content.study?.description || '—'}
-生成方式：${report.generator}${report.model ? ` · ${report.model}` : ''} · 状态：${report.status}
-${(content.sections || []).map((section) => `${section.title}：${(section.claims || []).map((claim) => claim.text).join(' ')}`).join('\n')}
-（研究原型，非临床诊断依据。）`
-      : `CardioScope Pro｜合成演示报告
-患者：陈立群 男 58 岁（合成演示）
-检查：CCTA + ICA/QCA + Echocardiography
-核心发现：LAD 中段 70% 狭窄，MLD 0.96 mm，RVD 3.20 mm，病变长度 18 mm；FFR-CT 0.78。
-左心室 EF 54%，GLS -16.8%；AHA 17 段显示前壁及心尖部可逆性缺血，缺血负荷 12%，存活心肌 91%。
-结论：合成演示数据，不构成任何临床结论。
-（教学与产品演示用途，非临床诊断。）`
+      ? t('report.copyStructured', {
+        name: content.subject?.pseudonym || '—',
+        sex: content.subject?.sex || '',
+        age: content.subject?.age_years ?? '',
+        description: content.study?.description || '—',
+        generator: report.generator,
+        model: report.model ? ` · ${report.model}` : '',
+        status: report.status,
+        sections,
+      })
+      : t('report.copyDemo')
     try {
       await navigator.clipboard.writeText(summary)
-      notify('报告摘要已复制到剪贴板')
+      notify(t('report.copied'))
     } catch (error) {
-      notify('当前环境禁止剪贴板访问，请使用打印 / PDF')
+      notify(t('report.clipboardBlocked'))
     }
   }
 
@@ -105,9 +109,9 @@ ${(content.sections || []).map((section) => `${section.title}：${(section.claim
     setApproveBusy(true)
     try {
       await approve(report.id, 'local-researcher')
-      notify('报告已批准，批准动作已写入审计链')
+      notify(t('report.approvedToast'))
     } catch (error) {
-      notify(error.message || '批准失败')
+      notify(serverText(errorDetail(error)) || t('report.approveFailed'))
     } finally {
       setApproveBusy(false)
     }
@@ -116,16 +120,16 @@ ${(content.sections || []).map((section) => `${section.title}：${(section.claim
   return (
     <>
       <div className="drawer-backdrop" onClick={onClose} />
-      <aside className="report-drawer" aria-label="结构化诊断报告">
+      <aside className="report-drawer" aria-label={t('report.drawerAria')}>
         <header className="report-toolbar">
           <div className="report-toolbar-title">
             <span>{structured ? 'STRUCTURED REPORT · RESEARCH' : 'SYNTHETIC DEMO REPORT'}</span>
-            <b>{structured ? (subject?.pseudonym ? `${subject.pseudonym} · 结构化报告` : '结构化报告') : '冠状动脉综合影像评估报告'}</b>
+            <b>{structured ? (subject?.pseudonym ? t('report.structuredNamed', { name: subject.pseudonym }) : t('report.structuredTitle')) : t('report.demoTitle')}</b>
           </div>
           <div className="report-toolbar-actions">
-            <button type="button" onClick={copySummary} title="复制摘要"><Copy size={14} /> 复制</button>
-            <button type="button" onClick={() => window.print()} title="打印或导出 PDF"><Printer size={14} /> 打印 / PDF</button>
-            <button type="button" className="report-close" onClick={onClose} aria-label="关闭报告"><X size={16} /></button>
+            <button type="button" onClick={copySummary} title={t('report.copyTitle')}><Copy size={14} /> {t('report.copy')}</button>
+            <button type="button" onClick={() => window.print()} title={t('report.printTitle')}><Printer size={14} /> {t('report.print')}</button>
+            <button type="button" className="report-close" onClick={onClose} aria-label={t('report.close')}><X size={16} /></button>
           </div>
         </header>
 
@@ -153,130 +157,110 @@ ${(content.sections || []).map((section) => `${section.title}：${(section.claim
 
             <div className="report-title">
               <span className="report-title-kicker">MULTIMODAL CARDIAC IMAGING</span>
-              <h1>冠状动脉综合影像评估报告</h1>
+              <h1>{t('report.demoTitle')}</h1>
               <p>Coronary CTA · Invasive Coronary Angiography · Transthoracic Echocardiography</p>
             </div>
 
             <div className="report-patient">
-              <div><span>姓名</span><b>陈立群</b></div>
-              <div><span>性别 / 年龄</span><b>男 / 58 岁</b></div>
-              <div><span>检查号</span><b>CV-2026-0417</b></div>
-              <div><span>检查日期</span><b>2026-10-17</b></div>
-              <div><span>临床科室</span><b>心血管内科</b></div>
-              <div><span>检查项目</span><b>CCTA + ICA + TTE</b></div>
-              <div><span>心率</span><b>72 BPM · 窦性</b></div>
-              <div><span>对比剂</span><b>320 mgI/mL · 60 mL</b></div>
+              <div><span>{t('report.name')}</span><b>{t('report.nameValue')}</b></div>
+              <div><span>{t('report.sexAge')}</span><b>{t('report.sexAgeValue')}</b></div>
+              <div><span>{t('workbench.accession')}</span><b>CV-2026-0417</b></div>
+              <div><span>{t('report.studyDate')}</span><b>2026-10-17</b></div>
+              <div><span>{t('report.dept')}</span><b>{t('report.deptValue')}</b></div>
+              <div><span>{t('report.exam')}</span><b>CCTA + ICA + TTE</b></div>
+              <div><span>{t('report.rhythm')}</span><b>{t('report.rhythmValue')}</b></div>
+              <div><span>{t('cta.contrast')}</span><b>{t('report.contrastValue')}</b></div>
             </div>
 
             <section className="report-section">
-              <h2><span>01</span> 检查摘要</h2>
-              <p>
-                本页为程序化合成演示报告，不是真实检查，也不代表任何 AI 分析结果。演示界面中的
-                冠脉、QCA、AHA 与超声数值均为预先编写的合成数据，仅用于展示报告排版与交互。
-              </p>
+              <h2><span>01</span> {t('report.summary')}</h2>
+              <p>{t('report.summaryBody')}</p>
               <div className="report-key-findings">
-                <div><span>责任病变</span><b>LAD 中段</b><em>70% DS</em></div>
-                <div><span>FFR-CT</span><b>0.78</b><em>血流动力学阳性</em></div>
-                <div><span>缺血负荷</span><b>12%</b><em>AHA 17 段</em></div>
-                <div><span>左室射血分数</span><b>54%</b><em>Simpson 双平面</em></div>
+                <div><span>{t('report.culprit')}</span><b>{t('report.culpritValue')}</b><em>70% DS</em></div>
+                <div><span>FFR-CT</span><b>0.78</b><em>{t('report.ffrHint')}</em></div>
+                <div><span>{t('report.burden')}</span><b>12%</b><em>{t('report.ahaSource')}</em></div>
+                <div><span>{t('report.ef')}</span><b>54%</b><em>{t('report.simpson')}</em></div>
               </div>
             </section>
 
             <section className="report-section">
-              <h2><span>02</span> 影像所见</h2>
+              <h2><span>02</span> {t('report.findings')}</h2>
               <div className="report-finding">
-                <h3>冠状动脉 CTA 与造影</h3>
-                <p>
-                  冠状动脉右优势型。左主干管腔通畅。左前降支（LAD）中段可见混合性钙化斑块，管腔重度狭窄，
-                  参考血管直径 3.20 mm，最小管腔直径 0.96 mm，直径狭窄 70%，面积狭窄 84%，病变长度 18 mm；
-                  病变远端 TIMI 3 级血流。左回旋支（LCx）近段可见轻度钙化斑块，约 22% 狭窄。右冠状动脉
-                  （RCA）近段可见非阻塞性钙化斑块，约 30% 狭窄。SYNTAX 评分 12。
-                </p>
+                <h3>{t('report.coronaryTitle')}</h3>
+                <p>{t('report.coronaryBody')}</p>
                 <div className="report-severity-row">
-                  <span className="report-sev severe">LAD 中段 · 重度</span>
-                  <span className="report-sev mild">LCx 近段 · 轻度</span>
-                  <span className="report-sev mild">RCA 近段 · 轻度</span>
+                  <span className="report-sev severe">{t('report.sevLad')}</span>
+                  <span className="report-sev mild">{t('report.sevLcx')}</span>
+                  <span className="report-sev mild">{t('report.sevRca')}</span>
                 </div>
               </div>
               <div className="report-finding">
-                <h3>心肌与心脏功能</h3>
-                <p>
-                  左心室舒张末容积 142 mL，收缩末容积 65 mL，每搏量 77 mL，LVEF 54%。二维斑点追踪
-                  GLS -16.8%，心尖段及前壁中间段收缩期纵向应变轻度减低。AHA 17 段分析提示前壁及心尖部
-                  可逆性灌注缺损，缺血负荷约 12%，存活心肌约 91%。右室收缩功能正常，TAPSE 22 mm，
-                  RVSP 28 mmHg。
-                </p>
+                <h3>{t('report.functionTitle')}</h3>
+                <p>{t('report.functionBody')}</p>
               </div>
               <div className="report-finding">
-                <h3>瓣膜与心腔结构</h3>
-                <p>
-                  二尖瓣微量反流，主动脉瓣三叶、轻度钙化，三尖瓣轻度反流（TR Vmax 2.4 m/s）。左房容积指数
-                  正常，右房大小正常，未见心包积液。升主动脉及主动脉弓管径在正常范围。
-                </p>
+                <h3>{t('report.valveTitle')}</h3>
+                <p>{t('report.valveBody')}</p>
               </div>
             </section>
 
             <section className="report-section">
-              <h2><span>03</span> 影像附件</h2>
+              <h2><span>03</span> {t('report.attachments')}</h2>
               <div className="report-thumb-grid">
-                <figure><MiniVrt /><figcaption>3D 心脏 VRT · 冠脉树</figcaption></figure>
-                <figure><MiniQca /><figcaption>LAD 中段 QCA · 70% DS</figcaption></figure>
-                <figure><MiniAha /><figcaption>AHA 17 段灌注图</figcaption></figure>
-                <figure><MiniEcho /><figcaption>心尖四腔 · 彩色多普勒</figcaption></figure>
+                <figure><MiniVrt /><figcaption>{t('report.capVrt')}</figcaption></figure>
+                <figure><MiniQca /><figcaption>{t('report.capQca')}</figcaption></figure>
+                <figure><MiniAha /><figcaption>{t('report.capAha')}</figcaption></figure>
+                <figure><MiniEcho /><figcaption>{t('report.capEcho')}</figcaption></figure>
               </div>
             </section>
 
             <section className="report-section">
-              <h2><span>04</span> 定量测量汇总</h2>
+              <h2><span>04</span> {t('report.table')}</h2>
               <table className="report-table">
                 <thead>
-                  <tr><th>指标</th><th>测量值</th><th>参考 / 判读</th><th>来源</th></tr>
+                  <tr><th>{t('report.colMetric')}</th><th>{t('report.colValue')}</th><th>{t('report.colRef')}</th><th>{t('report.colSource')}</th></tr>
                 </thead>
                 <tbody>
-                  <tr><td>LAD 直径狭窄</td><td>70%</td><td>重度</td><td>QCA</td></tr>
-                  <tr><td>最小管腔直径 MLD</td><td>0.96 mm</td><td>&lt; 1.2 mm</td><td>QCA</td></tr>
-                  <tr><td>参考血管直径 RVD</td><td>3.20 mm</td><td>—</td><td>QCA</td></tr>
-                  <tr><td>FFR-CT</td><td>0.78</td><td>阳性（≤ 0.80）</td><td>AI CCTA</td></tr>
-                  <tr><td>钙化积分</td><td>286</td><td>中等钙化</td><td>CCTA</td></tr>
-                  <tr><td>LVEF</td><td>54%</td><td>正常下限</td><td>Echo</td></tr>
-                  <tr><td>GLS</td><td>-16.8%</td><td>轻度减低</td><td>Echo</td></tr>
-                  <tr><td>缺血负荷</td><td>12%</td><td>可逆性缺血</td><td>AHA 17 段</td></tr>
+                  <tr><td>{t('report.rowDs')}</td><td>70%</td><td>{t('report.severe')}</td><td>QCA</td></tr>
+                  <tr><td>{t('report.rowMld')}</td><td>0.96 mm</td><td>&lt; 1.2 mm</td><td>QCA</td></tr>
+                  <tr><td>{t('report.rowRvd')}</td><td>3.20 mm</td><td>—</td><td>QCA</td></tr>
+                  <tr><td>{t('report.rowFfr')}</td><td>0.78</td><td>{t('report.positive')}</td><td>AI CCTA</td></tr>
+                  <tr><td>{t('report.rowCalcium')}</td><td>286</td><td>{t('report.moderateCalcium')}</td><td>CCTA</td></tr>
+                  <tr><td>{t('report.rowEf')}</td><td>54%</td><td>{t('report.lowNormal')}</td><td>Echo</td></tr>
+                  <tr><td>{t('report.rowGls')}</td><td>-16.8%</td><td>{t('report.mildlyReduced')}</td><td>Echo</td></tr>
+                  <tr><td>{t('report.rowBurden')}</td><td>12%</td><td>{t('report.reversibleIschemia')}</td><td>{t('report.ahaSource')}</td></tr>
                 </tbody>
               </table>
             </section>
 
             <section className="report-section report-conclusion">
-              <h2><span>05</span> 诊断意见</h2>
+              <h2><span>05</span> {t('report.impressionTitle')}</h2>
               <ol>
-                <li>左前降支中段重度狭窄（70%），FFR-CT 0.78，解剖学与血流动力学缺血一致；前壁及心尖部可逆性缺血。</li>
-                <li>左回旋支近段、右冠状动脉近段轻度非阻塞性病变；右优势型冠脉分布。</li>
-                <li>左心室收缩功能处于正常下限，GLS 轻度减低，存活心肌比例良好。</li>
+                <li>{t('report.imp1')}</li>
+                <li>{t('report.imp2')}</li>
+                <li>{t('report.imp3')}</li>
               </ol>
             </section>
 
             <section className="report-section">
-              <h2><span>06</span> 建议</h2>
+              <h2><span>06</span> {t('report.recTitle')}</h2>
               <ul className="report-recommendations">
-                <li><b>有创 FFR 复核</b>：对 LAD 中段病变行压力导丝测量，目标 FFR ≤ 0.80。</li>
-                <li><b>血运重建评估</b>：若 FFR 阳性，建议心脏团队讨论 LAD PCI（虚拟支架 3.0 × 18 mm）与 CABG 风险。</li>
-                <li><b>优化药物治疗</b>：高强度他汀、抗血小板、β 受体阻滞剂及危险因素控制。</li>
-                <li><b>随访</b>：3 个月临床随访，必要时复查负荷影像或冠脉 CTA。</li>
+                <li>{t('report.rec1')}</li>
+                <li>{t('report.rec2')}</li>
+                <li>{t('report.rec3')}</li>
+                <li>{t('report.rec4')}</li>
               </ul>
             </section>
 
             <div className="report-signatures">
-              <div><span>报告医师</span><b>影像科 · 心血管组</b><em>电子签名</em></div>
-              <div><span>审核医师</span><b>—</b><em>待审核</em></div>
-              <div><span>报告时间</span><b>2026-10-17 10:18</b><em>合成演示 · 未复核</em></div>
+              <div><span>{t('report.signReport')}</span><b>{t('report.signReportValue')}</b><em>{t('report.signElectronic')}</em></div>
+              <div><span>{t('report.signReview')}</span><b>—</b><em>{t('report.signPending')}</em></div>
+              <div><span>{t('report.signTime')}</span><b>2026-10-17 10:18</b><em>{t('report.signDemo')}</em></div>
             </div>
 
             <div className="report-disclaimer">
               <Sparkles size={12} />
-              <p>
-                本报告为 CardioScope Pro 教学与产品演示生成，采用程序化解剖模型与合成影像数据，非真实患者资料，
-                不得用于临床诊断、治疗决策或医疗法律用途。3D 解剖表面基于 “Realistic Human Heart” by neshallads，
-                依据 CC BY 4.0 使用。
-              </p>
+              <p>{t('disclaimer.body')}</p>
             </div>
             <div className="report-pagefoot">
               <span>CardioScope Pro · Cardiovascular Imaging Suite</span>

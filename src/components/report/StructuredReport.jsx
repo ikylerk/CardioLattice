@@ -1,18 +1,12 @@
 import React from 'react'
 import { CheckCircle2, CircleAlert, FileSignature, ShieldCheck } from 'lucide-react'
 import { Badge, Button } from '../ui.jsx'
+import { enumLabel, useI18n } from '../../i18n.js'
 
-const STATUS_LABEL = {
-  draft: '草稿',
-  clinician_reviewed: '医生已编辑',
-  approved: '已批准',
-  amended: '已修订',
-}
-
-function generatorLabel(report) {
-  if (report.generator === 'claude') return `AI 草稿 · ${report.model || 'Claude'}`
-  if (report.generator === 'human') return '医生编辑'
-  return '模板生成'
+function generatorLabel(report, t) {
+  if (report.generator === 'claude') return t('report.aiDraft', { model: report.model || 'Claude' })
+  if (report.generator === 'human') return t('report.human')
+  return t('report.template')
 }
 
 function citationLabel(ref, measurementMap) {
@@ -21,12 +15,13 @@ function citationLabel(ref, measurementMap) {
 }
 
 export default function StructuredReport({ report, study, onApprove, approveBusy }) {
+  const { t } = useI18n()
   if (!report) {
     return (
       <div className="report-empty">
         <CircleAlert size={22} />
-        <b>尚无报告草稿</b>
-        <span>运行检查流水线后，服务端会生成一份可追溯的结构化报告草稿。</span>
+        <b>{t('report.emptyTitle')}</b>
+        <span>{t('report.emptyBody')}</span>
       </div>
     )
   }
@@ -47,29 +42,29 @@ export default function StructuredReport({ report, study, onApprove, approveBusy
         <div className="report-number">
           <span>REPORT NO.</span>
           <b>{report.id.replace(/^rep_/, 'R-').toUpperCase()}</b>
-          <em>{STATUS_LABEL[report.status] || report.status} · {generatorLabel(report)}</em>
+          <em>{enumLabel('status', report.status)} · {generatorLabel(report, t)}</em>
         </div>
       </div>
 
       <div className="report-title">
         <span className="report-title-kicker">RESEARCH STRUCTURED REPORT</span>
-        <h1>心血管影像结构化报告</h1>
+        <h1>{t('report.docTitle')}</h1>
         <p>{studyMeta.description || 'CCTA'} · {studyMeta.modalities?.join(' / ') || studyMeta.modalities || '—'}</p>
       </div>
 
       <div className="report-patient">
-        <div><span>受试者</span><b>{subject.pseudonym || '—'}</b></div>
-        <div><span>性别 / 年龄</span><b>{subject.sex || '—'} / {subject.age_years ?? '—'}</b></div>
-        <div><span>检查日期</span><b>{studyMeta.date || '—'}</b></div>
-        <div><span>数据来源</span><b>{studyMeta.source || '—'}</b></div>
-        <div><span>报告状态</span><b>{STATUS_LABEL[report.status] || report.status}</b></div>
-        <div><span>生成方式</span><b>{generatorLabel(report)}</b></div>
+        <div><span>{t('report.subject')}</span><b>{subject.pseudonym || '—'}</b></div>
+        <div><span>{t('report.sexAge')}</span><b>{subject.sex || '—'} / {subject.age_years ?? '—'}</b></div>
+        <div><span>{t('report.studyDate')}</span><b>{studyMeta.date || '—'}</b></div>
+        <div><span>{t('report.dataSource')}</span><b>{studyMeta.source || '—'}</b></div>
+        <div><span>{t('report.reportStatus')}</span><b>{enumLabel('status', report.status)}</b></div>
+        <div><span>{t('report.generator')}</span><b>{generatorLabel(report, t)}</b></div>
       </div>
 
       {isAi ? (
         <div className="report-ai-banner">
           <CircleAlert size={13} />
-          AI 生成草稿：仅对结构化测量进行语言化，所有数值需医生逐条核对；未批准前不得作为正式报告。
+          {t('report.aiBanner')}
         </div>
       ) : null}
 
@@ -88,18 +83,18 @@ export default function StructuredReport({ report, study, onApprove, approveBusy
               ) : null}
             </div>
           ))}
-          {!section.claims?.length ? <p className="report-muted">本节无内容。</p> : null}
+          {!section.claims?.length ? <p className="report-muted">{t('report.emptySection')}</p> : null}
         </section>
       ))}
 
       {content.impression?.length ? (
         <section className="report-section report-conclusion">
-          <h2><span>{String(sections.length + 1).padStart(2, '0')}</span> 印象</h2>
+          <h2><span>{String(sections.length + 1).padStart(2, '0')}</span> {t('report.impression')}</h2>
           <ol>
             {content.impression.map((item) => (
               <li key={item.id}>
                 {item.text}
-                {item.status === 'research_only' ? <Badge tone="amber">研究</Badge> : null}
+                {item.status === 'research_only' ? <Badge tone="amber">{t('common.research')}</Badge> : null}
               </li>
             ))}
           </ol>
@@ -108,7 +103,7 @@ export default function StructuredReport({ report, study, onApprove, approveBusy
 
       {content.recommendations?.length ? (
         <section className="report-section">
-          <h2><span>{String(sections.length + 2).padStart(2, '0')}</span> 建议</h2>
+          <h2><span>{String(sections.length + 2).padStart(2, '0')}</span> {t('report.recommendations')}</h2>
           <ul className="report-recommendations">
             {content.recommendations.map((item) => <li key={item.id}>{item.text}</li>)}
           </ul>
@@ -117,7 +112,7 @@ export default function StructuredReport({ report, study, onApprove, approveBusy
 
       {content.limitations?.length ? (
         <section className="report-section">
-          <h2>局限</h2>
+          <h2>{t('report.limitations')}</h2>
           <ul className="report-recommendations">
             {content.limitations.map((item, index) => <li key={index}>{item}</li>)}
           </ul>
@@ -129,8 +124,12 @@ export default function StructuredReport({ report, study, onApprove, approveBusy
         <div>
           <b>Provenance</b>
           <span>
-            生成方式：{report.generator} · 模型：{report.model || '—'} · 模板：{report.promptVersion || '—'} ·
-            测量引用：{(content.provenance?.measurement_ids || []).length} 项
+            {t('report.provenance', {
+              generator: report.generator,
+              model: report.model || '—',
+              prompt: report.promptVersion || '—',
+              count: (content.provenance?.measurement_ids || []).length,
+            })}
           </span>
         </div>
       </div>
@@ -140,7 +139,7 @@ export default function StructuredReport({ report, study, onApprove, approveBusy
           <>
             <CheckCircle2 size={15} />
             <div>
-              <b>已批准</b>
+              <b>{t('report.approved')}</b>
               <span>{report.approvedBy || '—'} · {report.approvedAt ? new Date(report.approvedAt).toLocaleString() : '—'}</span>
             </div>
           </>
@@ -148,11 +147,11 @@ export default function StructuredReport({ report, study, onApprove, approveBusy
           <>
             <FileSignature size={15} />
             <div>
-              <b>待医生复核</b>
-              <span>批准后才会标记为最终报告；批准动作写入审计链。</span>
+              <b>{t('report.pending')}</b>
+              <span>{t('report.pendingHint')}</span>
             </div>
             <Button variant="primary" size="sm" onClick={onApprove} disabled={approveBusy}>
-              {approveBusy ? '批准中…' : '批准报告'}
+              {approveBusy ? t('report.approving') : t('report.approve')}
             </Button>
           </>
         )}
@@ -161,7 +160,7 @@ export default function StructuredReport({ report, study, onApprove, approveBusy
       <div className="report-disclaimer">
         <CircleAlert size={12} />
         <p>
-          {content.disclaimer || '研究原型。不可用于临床诊断或治疗决策。'}
+          {content.disclaimer || t('disclaimer.body')}
         </p>
       </div>
       <div className="report-pagefoot">

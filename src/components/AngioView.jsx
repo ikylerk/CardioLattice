@@ -20,48 +20,49 @@ import AngleMap from './AngleMap.jsx'
 import CarmDiagram from './CarmDiagram.jsx'
 import { Badge, Button, IconButton, Section, Segmented, Slider, Stat, Toggle } from './ui.jsx'
 import AngioEngine from '../three/AngioEngine.js'
+import { useI18n } from '../i18n.js'
 
 const SIDE_OPTIONS = [
-  { value: 'left', label: '左冠 LCA' },
-  { value: 'right', label: '右冠 RCA' },
-  { value: 'both', label: '双侧' },
+  { value: 'left', labelKey: 'angio.left' },
+  { value: 'right', labelKey: 'angio.right' },
+  { value: 'both', labelKey: 'angio.both' },
 ]
 
 const MODE_OPTIONS = [
-  { value: 'fluoro', label: '透视' },
-  { value: 'dsa', label: 'DSA' },
-  { value: 'bone', label: '骨骼' },
+  { value: 'fluoro', labelKey: 'angio.fluoro' },
+  { value: 'dsa', labelKey: 'angio.dsa' },
+  { value: 'bone', labelKey: 'angio.bone' },
 ]
 
 const PRESETS = {
   left: [
-    { label: 'LAO Cranial', sub: 'LAD / 分叉', rot: 30, tilt: 30 },
-    { label: 'RAO Cranial', sub: 'LAD / 间隔', rot: -30, tilt: 30 },
-    { label: 'LAO Caudal', sub: 'LCx / 主干', rot: 45, tilt: -30 },
-    { label: 'RAO Caudal', sub: 'LCx / 远端', rot: -30, tilt: -30 },
-    { label: 'Spider', sub: '左主干分叉', rot: 45, tilt: -35 },
-    { label: 'AP Cranial', sub: 'LAD 中远段', rot: 0, tilt: 30 },
+    { label: 'LAO Cranial', subKey: 'angio.subLadBif', rot: 30, tilt: 30 },
+    { label: 'RAO Cranial', subKey: 'angio.subLadSeptal', rot: -30, tilt: 30 },
+    { label: 'LAO Caudal', subKey: 'angio.subLcxLm', rot: 45, tilt: -30 },
+    { label: 'RAO Caudal', subKey: 'angio.subLcxDistal', rot: -30, tilt: -30 },
+    { label: 'Spider', subKey: 'angio.subSpider', rot: 45, tilt: -35 },
+    { label: 'AP Cranial', subKey: 'angio.subLadMid', rot: 0, tilt: 30 },
   ],
   right: [
-    { label: 'LAO', sub: 'RCA 近中段', rot: 30, tilt: 0 },
-    { label: 'RAO', sub: 'RCA 中段', rot: -30, tilt: 0 },
-    { label: 'AP', sub: 'RCA 开口', rot: 0, tilt: 0 },
-    { label: 'AP Cranial', sub: 'RCA 远端', rot: 0, tilt: 30 },
-    { label: 'LAO Cranial', sub: 'RCA / PDA', rot: 30, tilt: 30 },
-    { label: 'RAO Caudal', sub: 'RCA / PL', rot: -30, tilt: -30 },
+    { label: 'LAO', subKey: 'angio.subRcaProx', rot: 30, tilt: 0 },
+    { label: 'RAO', subKey: 'angio.subRcaMid', rot: -30, tilt: 0 },
+    { label: 'AP', subKey: 'angio.subRcaOstium', rot: 0, tilt: 0 },
+    { label: 'AP Cranial', subKey: 'angio.subRcaDistal', rot: 0, tilt: 30 },
+    { label: 'LAO Cranial', subKey: 'angio.subRcaPda', rot: 30, tilt: 30 },
+    { label: 'RAO Caudal', subKey: 'angio.subRcaPl', rot: -30, tilt: -30 },
   ],
 }
 
 const ANALYSIS_STEPS = [
-  '提取血管中心线',
-  '拟合参考直径',
-  '测量最小管腔直径',
-  '估算血流动力学',
+  'angio.stepCenterline',
+  'angio.stepRef',
+  'angio.stepMld',
+  'angio.stepHemo',
 ]
 
 const QCA_RESULTS = {
   left: {
-    vessel: 'LAD 中段',
+    vesselKey: 'angio.ladMid',
     segment: 'AHA 7',
     ds: 70,
     mld: 0.96,
@@ -76,7 +77,7 @@ const QCA_RESULTS = {
     residual: 6,
   },
   right: {
-    vessel: 'RCA 近段',
+    vesselKey: 'angio.rcaProx',
     segment: 'AHA 1',
     ds: 30,
     mld: 2.8,
@@ -106,6 +107,7 @@ function downloadDataUrl(dataUrl, name) {
 }
 
 export default function AngioView({ playing, setPlaying, notify }) {
+  const { t } = useI18n()
   const [side, setSide] = React.useState('left')
   const [mode, setMode] = React.useState('fluoro')
   const [rot, setRot] = React.useState(30)
@@ -131,7 +133,7 @@ export default function AngioView({ playing, setPlaying, notify }) {
       })
     } catch (err) {
       console.error(err)
-      setError('当前环境无法初始化造影渲染。请启用 WebGL 后重试。')
+      setError('webgl')
     }
     return () => {
       engineRef.current?.dispose()
@@ -208,13 +210,16 @@ export default function AngioView({ playing, setPlaying, notify }) {
 
   const currentPresets = PRESETS[side === 'right' ? 'right' : 'left']
   const result = QCA_RESULTS[side === 'right' ? 'right' : 'left']
+  const vesselName = t(result.vesselKey)
+  const sideOptions = SIDE_OPTIONS.map((item) => ({ ...item, label: t(item.labelKey) }))
+  const modeOptions = MODE_OPTIONS.map((item) => ({ ...item, label: t(item.labelKey) }))
   const presetActive = (preset) => preset.rot === rot && preset.tilt === tilt
 
   const capture = () => {
     const url = engineRef.current?.capture()
     if (url) {
       downloadDataUrl(url, `Angio_${side}_${rot}_${tilt}.png`)
-      notify('造影影像已保存为 PNG')
+      notify(t('angio.exportToast'))
     }
   }
 
@@ -223,23 +228,23 @@ export default function AngioView({ playing, setPlaying, notify }) {
       <ViewHeader
         index="02"
         eyebrow="CORONARY ANGIOGRAPHY"
-        title="冠脉造影"
+        title={t('angio.title')}
         titleSuffix="FLUOROSCOPY"
-        description="三维冠脉树实时投照 · C 臂角度模拟 · QCA 定量狭窄分析"
+        description={t('angio.description')}
         meta={
           <>
             <span>LCA / RCA</span>
             <i />
-            <span>右优势型</span>
+            <span>{t('angio.dominance')}</span>
             <i />
             <span>15 FPS CINE</span>
           </>
         }
         actions={
           <>
-            <Badge tone="amber" dot>模拟透视</Badge>
+            <Badge tone="amber" dot>{t('angio.simulated')}</Badge>
             <Button variant="outline" size="sm" icon={<Camera size={14} />} onClick={capture}>
-              导出影像
+              {t('angio.export')}
             </Button>
           </>
         }
@@ -247,21 +252,21 @@ export default function AngioView({ playing, setPlaying, notify }) {
 
       <div className="module-body">
         <div className="viewer angio-viewer">
-          {error ? <div className="webgl-error">{error}</div> : null}
+          {error ? <div className="webgl-error">{t('angio.webgl')}</div> : null}
           <div className="angio-viewer-grid" />
           <div className="angio-viewer-head">
             <div className="angio-system-tabs">
-              <Segmented options={SIDE_OPTIONS} value={side} onChange={setSide} ariaLabel="冠脉系统" />
+              <Segmented options={sideOptions} value={side} onChange={setSide} ariaLabel={t('angio.sideAria')} />
             </div>
             <div className="angio-head-right">
               <div className="angio-display-tabs">
-                <Segmented options={MODE_OPTIONS} value={mode} onChange={setMode} ariaLabel="影像模式" />
+                <Segmented options={modeOptions} value={mode} onChange={setMode} ariaLabel={t('angio.modeAria')} />
               </div>
               <div className="floating-toolbar">
-                <IconButton label="冠脉标签" className={labels ? 'active' : ''} onClick={() => setLabels((v) => !v)}>
+                <IconButton label={t('angio.labels')} className={labels ? 'active' : ''} onClick={() => setLabels((v) => !v)}>
                   <Tag size={15} />
                 </IconButton>
-                <IconButton label="重新注射造影剂" onClick={() => engineRef.current?.inject()}>
+                <IconButton label={t('angio.reinject')} onClick={() => engineRef.current?.inject()}>
                   <Syringe size={15} />
                 </IconButton>
               </div>
@@ -305,7 +310,7 @@ export default function AngioView({ playing, setPlaying, notify }) {
 
             <div className="angio-console">
               <div className="cine-controls">
-                <button type="button" className="console-play" onClick={() => setPlaying(!playing)} aria-label={playing ? '暂停电影回放' : '播放电影回放'}>
+                <button type="button" className="console-play" onClick={() => setPlaying(!playing)} aria-label={playing ? t('angio.pause') : t('angio.play')}>
                   {playing ? <Pause size={13} /> : <Play size={13} />}
                 </button>
                 <div className="cine-copy">
@@ -323,7 +328,7 @@ export default function AngioView({ playing, setPlaying, notify }) {
                   <span className="bolus-marker" style={{ animationPlayState: playing ? 'running' : 'paused' }} />
                 </div>
                 <button type="button" onClick={() => engineRef.current?.inject()}>
-                  <Syringe size={11} /> 注射
+                  <Syringe size={11} /> {t('angio.inject')}
                 </button>
               </div>
               <button type="button" className="console-qca" onClick={runQca}>
@@ -344,12 +349,12 @@ export default function AngioView({ playing, setPlaying, notify }) {
             <div>
               <span className="selection-eyebrow">ACTIVE PROJECTION</span>
               <h2>{angleLabel(rot, tilt)}</h2>
-              <p>{side === 'right' ? '右冠状动脉 · 右优势型' : side === 'left' ? '左冠状动脉 · 右优势型' : '双侧冠状动脉 · 综合观察'}</p>
+              <p>{side === 'right' ? t('angio.rightSystem') : side === 'left' ? t('angio.leftSystem') : t('angio.bothSystem')}</p>
             </div>
             <span className="projection-id">PROJ · 04</span>
           </div>
 
-          <Section title="投照角度" code="C-ARM ANGLES" right={<Gauge size={13} />} className="projection-section">
+          <Section title={t('angio.angles')} code="C-ARM ANGLES" right={<Gauge size={13} />} className="projection-section">
             <div className="angle-pair">
               <div>
                 <span>HORIZONTAL</span>
@@ -384,7 +389,7 @@ export default function AngioView({ playing, setPlaying, notify }) {
             </div>
           </Section>
 
-          <Section title="标准体位" code="PRESETS" right={<span className="section-hint">{currentPresets.length} 组</span>} className="presets-section">
+          <Section title={t('angio.presets')} code="PRESETS" right={<span className="section-hint">{t('common.presets', { count: currentPresets.length })}</span>} className="presets-section">
             <div className="angio-presets">
               {currentPresets.map((preset) => (
                 <button
@@ -397,7 +402,7 @@ export default function AngioView({ playing, setPlaying, notify }) {
                   }}
                 >
                   <b>{preset.label}</b>
-                  <small>{preset.sub}</small>
+                  <small>{t(preset.subKey)}</small>
                   <em>
                     {preset.rot >= 0 ? 'LAO' : 'RAO'} {Math.abs(preset.rot)} · {preset.tilt >= 0 ? 'CRA' : 'CAU'} {Math.abs(preset.tilt)}
                   </em>
@@ -416,23 +421,23 @@ export default function AngioView({ playing, setPlaying, notify }) {
           </Section>
 
           <Section
-            title="QCA 定量分析"
+            title={t('angio.qca')}
             code="AUTOMATED QCA"
             className="qca-section"
-            right={<Badge tone={qca === 'done' ? (result.severity === 'critical' ? 'red' : 'teal') : 'neutral'}>{qca === 'done' ? '完成' : qca === 'analyzing' ? '分析中' : '待分析'}</Badge>}
+            right={<Badge tone={qca === 'done' ? (result.severity === 'critical' ? 'red' : 'teal') : 'neutral'}>{qca === 'done' ? t('angio.qcaDone') : qca === 'analyzing' ? t('angio.qcaRunning') : t('angio.qcaIdle')}</Badge>}
           >
             {qca === 'idle' ? (
               <div className="qca-idle">
                 <div className="qca-idle-visual">
                   <span className="qca-target"><Target size={18} /></span>
                   <div>
-                    <b>{result.vessel} · {result.segment}</b>
-                    <small>自动中心线与参考直径拟合</small>
+                    <b>{vesselName} · {result.segment}</b>
+                    <small>{t('angio.qcaFit')}</small>
                   </div>
                 </div>
-                <p>在舒张末期帧上检测病变段、最小管腔直径与参考血管直径，并估算 FFR-CT。</p>
+                <p>{t('angio.qcaIdleBody')}</p>
                 <Button variant="primary" size="sm" onClick={runQca} icon={<ScanLine size={14} />}>
-                  运行 QCA 分析
+                  {t('angio.runQca')}
                 </Button>
               </div>
             ) : null}
@@ -441,7 +446,7 @@ export default function AngioView({ playing, setPlaying, notify }) {
               <div className="qca-analyzing">
                 <div className="analyzing-head">
                   <Loader2 size={14} className="spin" />
-                  <b>正在分析 {result.vessel}</b>
+                  <b>{t('angio.analyzing', { vessel: vesselName })}</b>
                   <span>{Math.min(100, Math.round((qcaStep / ANALYSIS_STEPS.length) * 100))}%</span>
                 </div>
                 <div className="analysis-progress">
@@ -451,7 +456,7 @@ export default function AngioView({ playing, setPlaying, notify }) {
                   {ANALYSIS_STEPS.map((step, index) => (
                     <div key={step} className={index < qcaStep ? 'done' : index === qcaStep ? 'active' : ''}>
                       <span>{index < qcaStep ? <Check size={10} /> : index + 1}</span>
-                      {step}
+                      {t(step)}
                     </div>
                   ))}
                 </div>
@@ -466,7 +471,7 @@ export default function AngioView({ playing, setPlaying, notify }) {
                     <strong>{result.ds}<small>%</small></strong>
                   </div>
                   <Badge tone={result.severity === 'critical' ? 'red' : 'teal'} dot>
-                    {result.severity === 'critical' ? '显著狭窄' : '轻度狭窄'}
+                    {result.severity === 'critical' ? t('angio.severe') : t('angio.mild')}
                   </Badge>
                 </div>
                 <div className="stenosis-track">
@@ -476,68 +481,64 @@ export default function AngioView({ playing, setPlaying, notify }) {
                 <div className="qca-metric-grid">
                   <Stat label="MLD" value={result.mld.toFixed(2)} unit="mm" />
                   <Stat label="RVD" value={result.rvd.toFixed(2)} unit="mm" />
-                  <Stat label="面积狭窄" value={result.area} unit="%" />
-                  <Stat label="病变长度" value={result.length} unit="mm" />
+                  <Stat label={t('angio.area')} value={result.area} unit="%" />
+                  <Stat label={t('angio.length')} value={result.length} unit="mm" />
                   <Stat label="FFR-CT" value={result.ffr.toFixed(2)} accent={result.ffr < 0.8 ? 'amber' : undefined} />
-                  <Stat label="置信度" value={result.confidence} unit="%" />
+                  <Stat label={t('angio.confidence')} value={result.confidence} unit="%" />
                 </div>
                 <div className="qca-meta">
                   <span>LVEF 54%</span>
                   <span>SYNTAX {result.syntax}</span>
-                  <span>参考帧 ED</span>
+                  <span>{t('angio.refFrame')}</span>
                 </div>
                 <div className="qca-conclusion">
                   <CircleAlert size={14} />
                   <p>
-                    {result.severity === 'critical'
-                      ? 'LAD 中段重度狭窄，FFR-CT < 0.80，建议有创 FFR 复核并评估血运重建。'
-                      : 'RCA 近段轻度狭窄，血流动力学意义不显著，建议药物治疗与随访。'}
+                    {result.severity === 'critical' ? t('angio.conclusionSevere') : t('angio.conclusionMild')}
                   </p>
                 </div>
                 {result.stent ? (
                   <div className="stent-plan">
                     <div>
-                      <span>虚拟 PCI 规划</span>
+                      <span>{t('angio.virtualPci')}</span>
                       <b>{result.stent}</b>
                     </div>
                     <ChevronRight size={14} />
                     <div>
-                      <span>预计残余狭窄</span>
+                      <span>{t('angio.residual')}</span>
                       <b>{result.residual}%</b>
                     </div>
                   </div>
                 ) : null}
                 <div className="qca-actions">
-                  <Button variant="outline" size="sm" onClick={runQca}>重新分析</Button>
-                  <Button variant="ghost" size="sm" onClick={() => notify('QCA 结果已加入结构化报告')}>加入报告</Button>
+                  <Button variant="outline" size="sm" onClick={runQca}>{t('angio.reanalyze')}</Button>
+                  <Button variant="ghost" size="sm" onClick={() => notify(t('angio.addReportToast'))}>{t('angio.addReport')}</Button>
                 </div>
               </div>
             ) : null}
           </Section>
 
-          <Section title="C 臂几何" code="EQUIPMENT GEOMETRY" right={<Crosshair size={13} />} className="carm-section">
+          <Section title={t('angio.geometry')} code="EQUIPMENT GEOMETRY" right={<Crosshair size={13} />} className="carm-section">
             <CarmDiagram rot={rot} tilt={tilt} />
             <div className="carm-meta">
-              <span><i className="dot-source" /> X 射线源</span>
-              <span><i className="dot-detector" /> 平板探测器</span>
+              <span><i className="dot-source" /> {t('angio.source')}</span>
+              <span><i className="dot-detector" /> {t('angio.detector')}</span>
               <span className="carm-sdd">SID 950 mm</span>
             </div>
           </Section>
 
-          <Section title="病变摘要" code="LESION SUMMARY" right={<Activity size={13} />} className="lesion-section">
+          <Section title={t('angio.summary')} code="LESION SUMMARY" right={<Activity size={13} />} className="lesion-section">
             <div className="lesion-summary">
               <div className="lesion-summary-head">
                 <span className={`severity-dot ${result.severity}`} />
                 <div>
-                  <b>{result.vessel}</b>
-                  <small>{result.segment} · 右优势型</small>
+                  <b>{vesselName}</b>
+                  <small>{result.segment} · {t('angio.dominanceShort')}</small>
                 </div>
                 <strong>{result.ds}%</strong>
               </div>
               <p>
-                {result.severity === 'critical'
-                  ? '中度钙化斑块，狭窄段长度 18 mm，远端 TIMI 3 级血流（模拟）。'
-                  : '近段偏心性斑块，未见明显负性重构，远端血流正常（模拟）。'}
+                {result.severity === 'critical' ? t('angio.summarySevere') : t('angio.summaryMild')}
               </p>
             </div>
           </Section>

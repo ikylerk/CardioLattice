@@ -1,6 +1,8 @@
 import React from 'react'
+import { useI18n } from '../i18n.js'
 
 export default function AngleMap({ rot, tilt, presets = [], onPick }) {
+  const { t } = useI18n()
   const width = 260
   const height = 138
   const padX = 30
@@ -11,7 +13,7 @@ export default function AngleMap({ rot, tilt, presets = [], onPick }) {
   const y = yOf(tilt)
 
   return (
-    <svg className="angle-map" viewBox={`0 0 ${width} ${height}`} role="img" aria-label="投照角度图">
+    <svg className="angle-map" viewBox={`0 0 ${width} ${height}`} role="img" aria-label={t('angio.angleMap')}>
       <defs>
         <linearGradient id="angleMapBg" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stopColor="#0a121a" />
