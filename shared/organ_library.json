@@ -68,7 +68,1338 @@
         "MYO"
       ],
       "source": "BodyParts3D 4.0 (DBCLS, CC BY 4.0); selected surfaces, simplified",
-      "note": "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md."
+      "note": "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md.",
+      "detailAsset": "organs/HEART_detail.glb",
+      "parts": [
+        {
+          "code": "HEART_PART_001",
+          "name": "Left anterior cusp of pulmonary valve",
+          "kind": "valve",
+          "node": "HEART_PART_001",
+          "centerMm": [
+            -35.6,
+            47.4,
+            136.3
+          ],
+          "sizeMm": [
+            17.8,
+            20.0,
+            16.6
+          ]
+        },
+        {
+          "code": "HEART_PART_002",
+          "name": "Anterolateral head of lateral papillary muscle of left ventricle",
+          "kind": "muscle",
+          "node": "HEART_PART_002",
+          "centerMm": [
+            -47.6,
+            40.1,
+            91.3
+          ],
+          "sizeMm": [
+            25.0,
+            35.5,
+            32.8
+          ]
+        },
+        {
+          "code": "HEART_PART_003",
+          "name": "Anterior papillary muscle of right ventricle",
+          "kind": "muscle",
+          "node": "HEART_PART_003",
+          "centerMm": [
+            -33.2,
+            59.8,
+            77.5
+          ],
+          "sizeMm": [
+            35.1,
+            21.6,
+            29.3
+          ]
+        },
+        {
+          "code": "HEART_PART_004",
+          "name": "Anterior leaflet of mitral valve",
+          "kind": "valve",
+          "node": "HEART_PART_004",
+          "centerMm": [
+            -32.4,
+            15.2,
+            103.3
+          ],
+          "sizeMm": [
+            34.1,
+            48.5,
+            31.4
+          ]
+        },
+        {
+          "code": "HEART_PART_005",
+          "name": "Anterior leaflet of tricuspid valve",
+          "kind": "valve",
+          "node": "HEART_PART_005",
+          "centerMm": [
+            -4.6,
+            40.6,
+            100.3
+          ],
+          "sizeMm": [
+            44.3,
+            27.1,
+            38.1
+          ]
+        },
+        {
+          "code": "HEART_PART_006",
+          "name": "Cavity of left ventricle",
+          "kind": "chamber",
+          "node": "HEART_PART_006",
+          "centerMm": [
+            -41.9,
+            20.3,
+            100.9
+          ],
+          "sizeMm": [
+            63.8,
+            72.1,
+            67.5
+          ]
+        },
+        {
+          "code": "HEART_PART_007",
+          "name": "Cavity of right ventricle",
+          "kind": "chamber",
+          "node": "HEART_PART_007",
+          "centerMm": [
+            -20.4,
+            42.2,
+            102.9
+          ],
+          "sizeMm": [
+            71.4,
+            58.2,
+            80.5
+          ]
+        },
+        {
+          "code": "HEART_PART_008",
+          "name": "Cavity of right atrium",
+          "kind": "chamber",
+          "node": "HEART_PART_008",
+          "centerMm": [
+            11.9,
+            20.9,
+            114.5
+          ],
+          "sizeMm": [
+            37.4,
+            61.0,
+            92.2
+          ]
+        },
+        {
+          "code": "HEART_PART_009",
+          "name": "Cavity of left atrium",
+          "kind": "chamber",
+          "node": "HEART_PART_009",
+          "centerMm": [
+            -17.5,
+            -3.3,
+            120.5
+          ],
+          "sizeMm": [
+            68.7,
+            55.8,
+            61.8
+          ]
+        },
+        {
+          "code": "HEART_PART_010",
+          "name": "Left posterior cusp of aortic valve",
+          "kind": "valve",
+          "node": "HEART_PART_010",
+          "centerMm": [
+            -28.1,
+            14.4,
+            131.0
+          ],
+          "sizeMm": [
+            15.8,
+            20.2,
+            14.4
+          ]
+        },
+        {
+          "code": "HEART_PART_011",
+          "name": "Posterior cusp of pulmonary valve",
+          "kind": "valve",
+          "node": "HEART_PART_011",
+          "centerMm": [
+            -35.6,
+            32.8,
+            136.5
+          ],
+          "sizeMm": [
+            17.0,
+            14.6,
+            16.4
+          ]
+        },
+        {
+          "code": "HEART_PART_012",
+          "name": "Lateral papillary muscle of left ventricle",
+          "kind": "muscle",
+          "node": "HEART_PART_012",
+          "centerMm": [
+            -64.1,
+            23.7,
+            86.4
+          ],
+          "sizeMm": [
+            28.1,
+            42.2,
+            29.8
+          ]
+        },
+        {
+          "code": "HEART_PART_013",
+          "name": "Posterior papillary muscle of right ventricle",
+          "kind": "muscle",
+          "node": "HEART_PART_013",
+          "centerMm": [
+            -25.5,
+            44.0,
+            68.7
+          ],
+          "sizeMm": [
+            29.6,
+            28.5,
+            14.4
+          ]
+        },
+        {
+          "code": "HEART_PART_014",
+          "name": "Right posterior cusp of aortic valve",
+          "kind": "valve",
+          "node": "HEART_PART_014",
+          "centerMm": [
+            -18.0,
+            12.2,
+            125.1
+          ],
+          "sizeMm": [
+            17.6,
+            19.0,
+            17.1
+          ]
+        },
+        {
+          "code": "HEART_PART_015",
+          "name": "Posterior leaflet of mitral valve",
+          "kind": "valve",
+          "node": "HEART_PART_015",
+          "centerMm": [
+            -41.8,
+            2.2,
+            98.7
+          ],
+          "sizeMm": [
+            49.3,
+            37.8,
+            32.1
+          ]
+        },
+        {
+          "code": "HEART_PART_016",
+          "name": "Posterior leaflet of tricuspid valve",
+          "kind": "valve",
+          "node": "HEART_PART_016",
+          "centerMm": [
+            -2.3,
+            27.3,
+            85.5
+          ],
+          "sizeMm": [
+            35.4,
+            31.5,
+            27.5
+          ]
+        },
+        {
+          "code": "HEART_PART_017",
+          "name": "Right anterior cusp of pulmonary valve",
+          "kind": "valve",
+          "node": "HEART_PART_017",
+          "centerMm": [
+            -21.7,
+            42.7,
+            139.8
+          ],
+          "sizeMm": [
+            18.8,
+            24.0,
+            17.2
+          ]
+        },
+        {
+          "code": "HEART_PART_018",
+          "name": "Anterior cusp of aortic valve",
+          "kind": "valve",
+          "node": "HEART_PART_018",
+          "centerMm": [
+            -20.4,
+            23.6,
+            126.8
+          ],
+          "sizeMm": [
+            19.7,
+            13.5,
+            18.0
+          ]
+        },
+        {
+          "code": "HEART_PART_019",
+          "name": "Septal leaflet of tricuspid valve",
+          "kind": "valve",
+          "node": "HEART_PART_019",
+          "centerMm": [
+            -15.1,
+            23.5,
+            107.9
+          ],
+          "sizeMm": [
+            36.0,
+            24.2,
+            23.3
+          ]
+        },
+        {
+          "code": "HEART_PART_020",
+          "name": "Septal papillary muscle of right ventricle",
+          "kind": "muscle",
+          "node": "HEART_PART_020",
+          "centerMm": [
+            -26.1,
+            33.8,
+            109.9
+          ],
+          "sizeMm": [
+            19.3,
+            15.4,
+            26.7
+          ]
+        },
+        {
+          "code": "HEART_PART_021",
+          "name": "Wall of left atrium",
+          "kind": "chamber",
+          "node": "HEART_PART_021",
+          "centerMm": [
+            -23.8,
+            8.5,
+            119.0
+          ],
+          "sizeMm": [
+            86.0,
+            80.8,
+            72.8
+          ]
+        },
+        {
+          "code": "HEART_PART_022",
+          "name": "Wall of right atrium",
+          "kind": "chamber",
+          "node": "HEART_PART_022",
+          "centerMm": [
+            11.2,
+            27.3,
+            114.4
+          ],
+          "sizeMm": [
+            43.0,
+            66.2,
+            96.4
+          ]
+        },
+        {
+          "code": "HEART_PART_023",
+          "name": "Trunk of anterior interventricular branch of left coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_023",
+          "centerMm": [
+            -52.1,
+            41.9,
+            101.7
+          ],
+          "sizeMm": [
+            30.5,
+            47.9,
+            78.1
+          ]
+        },
+        {
+          "code": "HEART_PART_024",
+          "name": "First right anterior branch of anterior interventricular branch of left coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_024",
+          "centerMm": [
+            -51.0,
+            63.7,
+            112.7
+          ],
+          "sizeMm": [
+            4.9,
+            4.4,
+            1.8
+          ]
+        },
+        {
+          "code": "HEART_PART_025",
+          "name": "Diagonal branch of anterior descending branch of left coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_025",
+          "centerMm": [
+            -75.5,
+            28.6,
+            106.6
+          ],
+          "sizeMm": [
+            12.4,
+            20.4,
+            26.5
+          ]
+        },
+        {
+          "code": "HEART_PART_026",
+          "name": "Diagonal branch of anterior descending branch of left coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_026",
+          "centerMm": [
+            -75.7,
+            23.3,
+            113.9
+          ],
+          "sizeMm": [
+            2.9,
+            11.4,
+            6.3
+          ]
+        },
+        {
+          "code": "HEART_PART_027",
+          "name": "Diagonal branch of anterior descending branch of left coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_027",
+          "centerMm": [
+            -63.9,
+            60.3,
+            87.9
+          ],
+          "sizeMm": [
+            14.0,
+            11.4,
+            45.6
+          ]
+        },
+        {
+          "code": "HEART_PART_028",
+          "name": "Diagonal branch of anterior descending branch of left coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_028",
+          "centerMm": [
+            -64.6,
+            62.9,
+            95.2
+          ],
+          "sizeMm": [
+            3.4,
+            4.4,
+            14.6
+          ]
+        },
+        {
+          "code": "HEART_PART_029",
+          "name": "Diagonal branch of anterior descending branch of left coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_029",
+          "centerMm": [
+            -69.4,
+            55.1,
+            67.3
+          ],
+          "sizeMm": [
+            5.8,
+            8.1,
+            2.9
+          ]
+        },
+        {
+          "code": "HEART_PART_030",
+          "name": "Diagonal branch of anterior descending branch of left coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_030",
+          "centerMm": [
+            -77.0,
+            54.3,
+            78.8
+          ],
+          "sizeMm": [
+            5.1,
+            10.6,
+            6.6
+          ]
+        },
+        {
+          "code": "HEART_PART_031",
+          "name": "Diagonal branch of anterior descending branch of left coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_031",
+          "centerMm": [
+            -75.7,
+            46.9,
+            69.2
+          ],
+          "sizeMm": [
+            2.1,
+            9.0,
+            5.0
+          ]
+        },
+        {
+          "code": "HEART_PART_032",
+          "name": "Diagonal branch of anterior descending branch of left coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_032",
+          "centerMm": [
+            -73.9,
+            47.6,
+            67.1
+          ],
+          "sizeMm": [
+            5.8,
+            7.5,
+            9.1
+          ]
+        },
+        {
+          "code": "HEART_PART_033",
+          "name": "Third right anterior branch of anterior interventricular branch of left coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_033",
+          "centerMm": [
+            -54.0,
+            61.6,
+            76.7
+          ],
+          "sizeMm": [
+            8.4,
+            10.4,
+            23.9
+          ]
+        },
+        {
+          "code": "HEART_PART_034",
+          "name": "Diagonal branch of anterior descending branch of left coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_034",
+          "centerMm": [
+            -68.3,
+            38.2,
+            102.3
+          ],
+          "sizeMm": [
+            29.3,
+            14.2,
+            48.8
+          ]
+        },
+        {
+          "code": "HEART_PART_035",
+          "name": "Conus branch of anterior interventricular branch of left coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_035",
+          "centerMm": [
+            -45.6,
+            55.3,
+            126.3
+          ],
+          "sizeMm": [
+            16.8,
+            28.7,
+            7.6
+          ]
+        },
+        {
+          "code": "HEART_PART_036",
+          "name": "Conus branch of anterior interventricular branch of left coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_036",
+          "centerMm": [
+            -39.7,
+            64.8,
+            128.2
+          ],
+          "sizeMm": [
+            14.5,
+            7.7,
+            3.6
+          ]
+        },
+        {
+          "code": "HEART_PART_037",
+          "name": "First right anterior branch of anterior interventricular branch of left coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_037",
+          "centerMm": [
+            -51.2,
+            59.7,
+            112.6
+          ],
+          "sizeMm": [
+            11.0,
+            18.4,
+            11.9
+          ]
+        },
+        {
+          "code": "HEART_PART_038",
+          "name": "Second right anterior branch of anterior interventricular branch of left coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_038",
+          "centerMm": [
+            -49.4,
+            64.7,
+            92.7
+          ],
+          "sizeMm": [
+            17.4,
+            11.9,
+            25.4
+          ]
+        },
+        {
+          "code": "HEART_PART_039",
+          "name": "Third right anterior branch of anterior interventricular branch of left coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_039",
+          "centerMm": [
+            -47.3,
+            61.8,
+            70.6
+          ],
+          "sizeMm": [
+            6.7,
+            6.7,
+            9.4
+          ]
+        },
+        {
+          "code": "HEART_PART_040",
+          "name": "Diagonal branch of anterior descending branch of left coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_040",
+          "centerMm": [
+            -79.3,
+            42.4,
+            99.7
+          ],
+          "sizeMm": [
+            2.7,
+            7.2,
+            13.0
+          ]
+        },
+        {
+          "code": "HEART_PART_041",
+          "name": "Circumflex branch of left coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_041",
+          "centerMm": [
+            -46.0,
+            2.3,
+            122.4
+          ],
+          "sizeMm": [
+            16.1,
+            34.9,
+            33.9
+          ]
+        },
+        {
+          "code": "HEART_PART_042",
+          "name": "Circumflex branch of left coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_042",
+          "centerMm": [
+            -61.1,
+            -9.5,
+            91.2
+          ],
+          "sizeMm": [
+            4.5,
+            6.3,
+            16.9
+          ]
+        },
+        {
+          "code": "HEART_PART_043",
+          "name": "Circumflex branch of left coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_043",
+          "centerMm": [
+            -70.8,
+            1.8,
+            97.7
+          ],
+          "sizeMm": [
+            16.9,
+            23.3,
+            7.1
+          ]
+        },
+        {
+          "code": "HEART_PART_044",
+          "name": "Circumflex branch of left coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_044",
+          "centerMm": [
+            -69.8,
+            0.2,
+            85.2
+          ],
+          "sizeMm": [
+            4.1,
+            10.0,
+            15.0
+          ]
+        },
+        {
+          "code": "HEART_PART_045",
+          "name": "Circumflex branch of left coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_045",
+          "centerMm": [
+            -78.8,
+            21.7,
+            76.6
+          ],
+          "sizeMm": [
+            3.1,
+            8.9,
+            10.3
+          ]
+        },
+        {
+          "code": "HEART_PART_046",
+          "name": "Circumflex branch of left coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_046",
+          "centerMm": [
+            -78.9,
+            34.9,
+            73.1
+          ],
+          "sizeMm": [
+            2.3,
+            11.5,
+            4.4
+          ]
+        },
+        {
+          "code": "HEART_PART_047",
+          "name": "Coronary sinus",
+          "kind": "coronary",
+          "node": "HEART_PART_047",
+          "centerMm": [
+            -22.4,
+            -3.8,
+            90.2
+          ],
+          "sizeMm": [
+            48.8,
+            34.5,
+            19.2
+          ]
+        },
+        {
+          "code": "HEART_PART_048",
+          "name": "Great cardiac vein",
+          "kind": "other",
+          "node": "HEART_PART_048",
+          "centerMm": [
+            -47.8,
+            2.3,
+            116.7
+          ],
+          "sizeMm": [
+            8.7,
+            45.0,
+            39.7
+          ]
+        },
+        {
+          "code": "HEART_PART_049",
+          "name": "Marginal branch of right coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_049",
+          "centerMm": [
+            -27.2,
+            69.5,
+            83.3
+          ],
+          "sizeMm": [
+            20.7,
+            4.6,
+            9.2
+          ]
+        },
+        {
+          "code": "HEART_PART_050",
+          "name": "Marginal branch of right coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_050",
+          "centerMm": [
+            -33.3,
+            70.9,
+            86.8
+          ],
+          "sizeMm": [
+            12.0,
+            1.5,
+            4.2
+          ]
+        },
+        {
+          "code": "HEART_PART_051",
+          "name": "Right conus artery",
+          "kind": "other",
+          "node": "HEART_PART_051",
+          "centerMm": [
+            -20.5,
+            58.5,
+            136.2
+          ],
+          "sizeMm": [
+            19.9,
+            18.0,
+            12.1
+          ]
+        },
+        {
+          "code": "HEART_PART_052",
+          "name": "First anterior ventricular branch of right coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_052",
+          "centerMm": [
+            -16.0,
+            65.7,
+            116.9
+          ],
+          "sizeMm": [
+            24.1,
+            17.3,
+            23.2
+          ]
+        },
+        {
+          "code": "HEART_PART_053",
+          "name": "Marginal branch of right coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_053",
+          "centerMm": [
+            -9.4,
+            63.7,
+            90.3
+          ],
+          "sizeMm": [
+            40.3,
+            14.6,
+            25.7
+          ]
+        },
+        {
+          "code": "HEART_PART_054",
+          "name": "First anterior ventricular branch of right coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_054",
+          "centerMm": [
+            -26.0,
+            72.3,
+            110.6
+          ],
+          "sizeMm": [
+            22.3,
+            4.2,
+            10.0
+          ]
+        },
+        {
+          "code": "HEART_PART_055",
+          "name": "Marginal branch of right coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_055",
+          "centerMm": [
+            -13.3,
+            67.2,
+            84.8
+          ],
+          "sizeMm": [
+            11.7,
+            3.1,
+            12.4
+          ]
+        },
+        {
+          "code": "HEART_PART_056",
+          "name": "Marginal branch of right coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_056",
+          "centerMm": [
+            -0.3,
+            63.1,
+            90.9
+          ],
+          "sizeMm": [
+            6.3,
+            2.3,
+            9.4
+          ]
+        },
+        {
+          "code": "HEART_PART_057",
+          "name": "Right conus artery",
+          "kind": "other",
+          "node": "HEART_PART_057",
+          "centerMm": [
+            -29.1,
+            62.2,
+            138.6
+          ],
+          "sizeMm": [
+            14.3,
+            2.3,
+            4.2
+          ]
+        },
+        {
+          "code": "HEART_PART_058",
+          "name": "First anterior ventricular branch of right coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_058",
+          "centerMm": [
+            -31.1,
+            73.1,
+            112.3
+          ],
+          "sizeMm": [
+            13.2,
+            2.2,
+            4.6
+          ]
+        },
+        {
+          "code": "HEART_PART_059",
+          "name": "Posterior interventricular branch of right coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_059",
+          "centerMm": [
+            -35.9,
+            33.0,
+            66.3
+          ],
+          "sizeMm": [
+            66.4,
+            31.8,
+            14.6
+          ]
+        },
+        {
+          "code": "HEART_PART_060",
+          "name": "Posterior interventricular branch of right coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_060",
+          "centerMm": [
+            -32.0,
+            25.7,
+            66.3
+          ],
+          "sizeMm": [
+            58.4,
+            20.4,
+            16.5
+          ]
+        },
+        {
+          "code": "HEART_PART_061",
+          "name": "Posterior interventricular branch of right coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_061",
+          "centerMm": [
+            -29.7,
+            18.1,
+            63.2
+          ],
+          "sizeMm": [
+            16.7,
+            4.3,
+            4.7
+          ]
+        },
+        {
+          "code": "HEART_PART_062",
+          "name": "Posterior interventricular branch of right coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_062",
+          "centerMm": [
+            -45.6,
+            29.7,
+            59.9
+          ],
+          "sizeMm": [
+            8.8,
+            5.8,
+            3.7
+          ]
+        },
+        {
+          "code": "HEART_PART_063",
+          "name": "Posterior interventricular branch of right coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_063",
+          "centerMm": [
+            -28.1,
+            39.0,
+            62.7
+          ],
+          "sizeMm": [
+            14.1,
+            25.3,
+            3.3
+          ]
+        },
+        {
+          "code": "HEART_PART_064",
+          "name": "Posterior interventricular branch of right coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_064",
+          "centerMm": [
+            -43.7,
+            45.0,
+            60.3
+          ],
+          "sizeMm": [
+            2.8,
+            12.5,
+            2.6
+          ]
+        },
+        {
+          "code": "HEART_PART_065",
+          "name": "Posterior interventricular branch of right coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_065",
+          "centerMm": [
+            -45.8,
+            47.5,
+            60.5
+          ],
+          "sizeMm": [
+            5.7,
+            9.0,
+            3.0
+          ]
+        },
+        {
+          "code": "HEART_PART_066",
+          "name": "Posterior interventricular branch of right coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_066",
+          "centerMm": [
+            -67.2,
+            49.5,
+            62.8
+          ],
+          "sizeMm": [
+            6.5,
+            3.6,
+            3.6
+          ]
+        },
+        {
+          "code": "HEART_PART_067",
+          "name": "Posterior interventricular branch of right coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_067",
+          "centerMm": [
+            -63.2,
+            49.9,
+            62.5
+          ],
+          "sizeMm": [
+            6.3,
+            7.6,
+            4.1
+          ]
+        },
+        {
+          "code": "HEART_PART_068",
+          "name": "First posterior ventricular branch of right coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_068",
+          "centerMm": [
+            -47.4,
+            9.8,
+            69.5
+          ],
+          "sizeMm": [
+            49.0,
+            37.1,
+            16.8
+          ]
+        },
+        {
+          "code": "HEART_PART_069",
+          "name": "First posterior ventricular branch of right coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_069",
+          "centerMm": [
+            -74.1,
+            30.0,
+            66.4
+          ],
+          "sizeMm": [
+            6.0,
+            4.8,
+            7.1
+          ]
+        },
+        {
+          "code": "HEART_PART_070",
+          "name": "First posterior ventricular branch of right coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_070",
+          "centerMm": [
+            -73.4,
+            32.3,
+            65.4
+          ],
+          "sizeMm": [
+            4.5,
+            9.3,
+            5.2
+          ]
+        },
+        {
+          "code": "HEART_PART_071",
+          "name": "First posterior ventricular branch of right coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_071",
+          "centerMm": [
+            -37.8,
+            -10.2,
+            75.2
+          ],
+          "sizeMm": [
+            16.1,
+            6.6,
+            5.8
+          ]
+        },
+        {
+          "code": "HEART_PART_072",
+          "name": "First posterior ventricular branch of right coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_072",
+          "centerMm": [
+            -45.4,
+            -4.7,
+            69.2
+          ],
+          "sizeMm": [
+            6.1,
+            3.8,
+            4.0
+          ]
+        },
+        {
+          "code": "HEART_PART_073",
+          "name": "First posterior ventricular branch of right coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_073",
+          "centerMm": [
+            -48.2,
+            8.6,
+            62.0
+          ],
+          "sizeMm": [
+            3.6,
+            12.1,
+            5.4
+          ]
+        },
+        {
+          "code": "HEART_PART_074",
+          "name": "First posterior ventricular branch of right coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_074",
+          "centerMm": [
+            -62.8,
+            5.9,
+            67.6
+          ],
+          "sizeMm": [
+            11.8,
+            2.5,
+            9.1
+          ]
+        },
+        {
+          "code": "HEART_PART_075",
+          "name": "First posterior ventricular branch of right coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_075",
+          "centerMm": [
+            -70.6,
+            15.8,
+            66.7
+          ],
+          "sizeMm": [
+            10.5,
+            4.1,
+            11.1
+          ]
+        },
+        {
+          "code": "HEART_PART_076",
+          "name": "First posterior ventricular branch of right coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_076",
+          "centerMm": [
+            -65.8,
+            23.5,
+            60.4
+          ],
+          "sizeMm": [
+            2.5,
+            17.5,
+            3.5
+          ]
+        },
+        {
+          "code": "HEART_PART_077",
+          "name": "Trunk of right coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_077",
+          "centerMm": [
+            -3.1,
+            25.8,
+            107.6
+          ],
+          "sizeMm": [
+            42.4,
+            69.1,
+            73.1
+          ]
+        },
+        {
+          "code": "HEART_PART_078",
+          "name": "Small cardiac vein",
+          "kind": "other",
+          "node": "HEART_PART_078",
+          "centerMm": [
+            7.8,
+            51.7,
+            104.7
+          ],
+          "sizeMm": [
+            18.9,
+            13.2,
+            39.1
+          ]
+        },
+        {
+          "code": "HEART_PART_079",
+          "name": "Right marginal vein",
+          "kind": "coronary",
+          "node": "HEART_PART_079",
+          "centerMm": [
+            -20.6,
+            50.4,
+            75.6
+          ],
+          "sizeMm": [
+            75.6,
+            8.3,
+            27.6
+          ]
+        },
+        {
+          "code": "HEART_PART_080",
+          "name": "Right marginal vein",
+          "kind": "coronary",
+          "node": "HEART_PART_080",
+          "centerMm": [
+            -2.2,
+            64.0,
+            90.9
+          ],
+          "sizeMm": [
+            7.5,
+            1.5,
+            12.2
+          ]
+        },
+        {
+          "code": "HEART_PART_081",
+          "name": "Right marginal vein",
+          "kind": "coronary",
+          "node": "HEART_PART_081",
+          "centerMm": [
+            -23.9,
+            68.0,
+            81.5
+          ],
+          "sizeMm": [
+            15.6,
+            4.6,
+            10.6
+          ]
+        },
+        {
+          "code": "HEART_PART_082",
+          "name": "Small cardiac vein",
+          "kind": "other",
+          "node": "HEART_PART_082",
+          "centerMm": [
+            3.6,
+            29.5,
+            78.3
+          ],
+          "sizeMm": [
+            26.3,
+            34.6,
+            17.2
+          ]
+        },
+        {
+          "code": "HEART_PART_083",
+          "name": "Trunk of left coronary artery",
+          "kind": "coronary",
+          "node": "HEART_PART_083",
+          "centerMm": [
+            -32.5,
+            18.2,
+            140.5
+          ],
+          "sizeMm": [
+            11.0,
+            6.1,
+            6.9
+          ]
+        }
+      ]
     },
     {
       "code": "LUNG_R",
@@ -92,7 +1423,170 @@
       },
       "renderable": true,
       "source": "HuBMAP Human Reference Atlas v1.1 male (CC BY 4.0); selected surfaces, simplified, aligned to the BodyParts3D reference frame",
-      "note": "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md."
+      "note": "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md.",
+      "detailAsset": "organs/LUNG_R_detail.glb",
+      "parts": [
+        {
+          "code": "LUNG_R_SEGMENT_01",
+          "name": "右肺anterior basal 段",
+          "kind": "segment",
+          "node": "LUNG_R_SEGMENT_01",
+          "centerMm": [
+            83.5,
+            -1.0,
+            77.7
+          ],
+          "sizeMm": [
+            90.0,
+            100.4,
+            81.3
+          ]
+        },
+        {
+          "code": "LUNG_R_SEGMENT_02",
+          "name": "右肺anterior 段",
+          "kind": "segment",
+          "node": "LUNG_R_SEGMENT_02",
+          "centerMm": [
+            63.3,
+            32.9,
+            156.0
+          ],
+          "sizeMm": [
+            114.2,
+            93.8,
+            112.8
+          ]
+        },
+        {
+          "code": "LUNG_R_SEGMENT_03",
+          "name": "右肺apical 段",
+          "kind": "segment",
+          "node": "LUNG_R_SEGMENT_03",
+          "centerMm": [
+            41.0,
+            -7.0,
+            190.8
+          ],
+          "sizeMm": [
+            56.3,
+            56.7,
+            74.4
+          ]
+        },
+        {
+          "code": "LUNG_R_SEGMENT_04",
+          "name": "右肺lateral basal 段",
+          "kind": "segment",
+          "node": "LUNG_R_SEGMENT_04",
+          "centerMm": [
+            76.8,
+            -45.8,
+            60.7
+          ],
+          "sizeMm": [
+            102.6,
+            73.9,
+            87.5
+          ]
+        },
+        {
+          "code": "LUNG_R_SEGMENT_05",
+          "name": "右肺lateral 段",
+          "kind": "segment",
+          "node": "LUNG_R_SEGMENT_05",
+          "centerMm": [
+            83.2,
+            17.8,
+            84.9
+          ],
+          "sizeMm": [
+            82.2,
+            94.1,
+            76.6
+          ]
+        },
+        {
+          "code": "LUNG_R_SEGMENT_06",
+          "name": "右肺medial basal 段",
+          "kind": "segment",
+          "node": "LUNG_R_SEGMENT_06",
+          "centerMm": [
+            37.8,
+            2.3,
+            59.3
+          ],
+          "sizeMm": [
+            69.7,
+            56.5,
+            77.2
+          ]
+        },
+        {
+          "code": "LUNG_R_SEGMENT_07",
+          "name": "右肺medial 段",
+          "kind": "segment",
+          "node": "LUNG_R_SEGMENT_07",
+          "centerMm": [
+            61.6,
+            53.6,
+            71.7
+          ],
+          "sizeMm": [
+            108.4,
+            89.2,
+            92.9
+          ]
+        },
+        {
+          "code": "LUNG_R_SEGMENT_08",
+          "name": "右肺posterior basal 段",
+          "kind": "segment",
+          "node": "LUNG_R_SEGMENT_08",
+          "centerMm": [
+            59.2,
+            -47.2,
+            51.3
+          ],
+          "sizeMm": [
+            112.4,
+            93.5,
+            108.7
+          ]
+        },
+        {
+          "code": "LUNG_R_SEGMENT_09",
+          "name": "右肺posterior 段",
+          "kind": "segment",
+          "node": "LUNG_R_SEGMENT_09",
+          "centerMm": [
+            66.7,
+            -35.3,
+            170.0
+          ],
+          "sizeMm": [
+            107.5,
+            81.3,
+            105.0
+          ]
+        },
+        {
+          "code": "LUNG_R_SEGMENT_10",
+          "name": "右肺superior 段",
+          "kind": "segment",
+          "node": "LUNG_R_SEGMENT_10",
+          "centerMm": [
+            61.5,
+            -55.1,
+            110.6
+          ],
+          "sizeMm": [
+            103.2,
+            78.6,
+            105.7
+          ]
+        }
+      ]
     },
     {
       "code": "LUNG_L",
@@ -116,7 +1610,170 @@
       },
       "renderable": true,
       "source": "HuBMAP Human Reference Atlas v1.1 male (CC BY 4.0); selected surfaces, simplified, aligned to the BodyParts3D reference frame",
-      "note": "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md."
+      "note": "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md.",
+      "detailAsset": "organs/LUNG_L_detail.glb",
+      "parts": [
+        {
+          "code": "LUNG_L_SEGMENT_01",
+          "name": "左肺anterior basal 段",
+          "kind": "segment",
+          "node": "LUNG_L_SEGMENT_01",
+          "centerMm": [
+            -83.3,
+            -7.7,
+            82.3
+          ],
+          "sizeMm": [
+            103.5,
+            110.4,
+            94.9
+          ]
+        },
+        {
+          "code": "LUNG_L_SEGMENT_02",
+          "name": "左肺anterior 段",
+          "kind": "segment",
+          "node": "LUNG_L_SEGMENT_02",
+          "centerMm": [
+            -65.3,
+            14.8,
+            149.3
+          ],
+          "sizeMm": [
+            116.0,
+            135.2,
+            85.4
+          ]
+        },
+        {
+          "code": "LUNG_L_SEGMENT_03",
+          "name": "左肺apical 段",
+          "kind": "segment",
+          "node": "LUNG_L_SEGMENT_03",
+          "centerMm": [
+            -53.3,
+            -8.6,
+            195.0
+          ],
+          "sizeMm": [
+            100.7,
+            74.3,
+            69.5
+          ]
+        },
+        {
+          "code": "LUNG_L_SEGMENT_04",
+          "name": "左肺lateral basal 段",
+          "kind": "segment",
+          "node": "LUNG_L_SEGMENT_04",
+          "centerMm": [
+            -93.8,
+            -45.5,
+            66.1
+          ],
+          "sizeMm": [
+            77.6,
+            83.2,
+            92.2
+          ]
+        },
+        {
+          "code": "LUNG_L_SEGMENT_05",
+          "name": "左肺lingula inferior 段",
+          "kind": "segment",
+          "node": "LUNG_L_SEGMENT_05",
+          "centerMm": [
+            -85.5,
+            39.1,
+            64.4
+          ],
+          "sizeMm": [
+            92.5,
+            117.2,
+            108.3
+          ]
+        },
+        {
+          "code": "LUNG_L_SEGMENT_06",
+          "name": "左肺lingula superior 段",
+          "kind": "segment",
+          "node": "LUNG_L_SEGMENT_06",
+          "centerMm": [
+            -69.2,
+            22.8,
+            92.6
+          ],
+          "sizeMm": [
+            118.2,
+            151.2,
+            97.1
+          ]
+        },
+        {
+          "code": "LUNG_L_SEGMENT_07",
+          "name": "左肺medial basal 段",
+          "kind": "segment",
+          "node": "LUNG_L_SEGMENT_07",
+          "centerMm": [
+            -79.4,
+            -2.5,
+            88.3
+          ],
+          "sizeMm": [
+            103.0,
+            100.0,
+            103.4
+          ]
+        },
+        {
+          "code": "LUNG_L_SEGMENT_08",
+          "name": "左肺posetrior basal 段",
+          "kind": "segment",
+          "node": "LUNG_L_SEGMENT_08",
+          "centerMm": [
+            -65.7,
+            -50.6,
+            50.9
+          ],
+          "sizeMm": [
+            102.9,
+            85.0,
+            90.8
+          ]
+        },
+        {
+          "code": "LUNG_L_SEGMENT_09",
+          "name": "左肺posterior 段",
+          "kind": "segment",
+          "node": "LUNG_L_SEGMENT_09",
+          "centerMm": [
+            -56.9,
+            -39.9,
+            174.6
+          ],
+          "sizeMm": [
+            107.8,
+            64.4,
+            86.5
+          ]
+        },
+        {
+          "code": "LUNG_L_SEGMENT_10",
+          "name": "左肺superior 段",
+          "kind": "segment",
+          "node": "LUNG_L_SEGMENT_10",
+          "centerMm": [
+            -55.1,
+            -54.8,
+            124.4
+          ],
+          "sizeMm": [
+            98.1,
+            76.4,
+            111.6
+          ]
+        }
+      ]
     },
     {
       "code": "TRACHEA",
@@ -140,7 +1797,9 @@
       },
       "renderable": true,
       "source": "BodyParts3D 4.0 (DBCLS, CC BY 4.0); selected surfaces, simplified",
-      "note": "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md."
+      "note": "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md.",
+      "detailAsset": null,
+      "parts": []
     },
     {
       "code": "LIVER",
@@ -164,7 +1823,202 @@
       },
       "renderable": true,
       "source": "HuBMAP Human Reference Atlas v1.1 male (CC BY 4.0); selected surfaces, simplified, aligned to the BodyParts3D reference frame",
-      "note": "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md."
+      "note": "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md.",
+      "detailAsset": "organs/LIVER_detail.glb",
+      "parts": [
+        {
+          "code": "LIVER_CAPSULE",
+          "name": "肝脏表面",
+          "kind": "capsule",
+          "node": "LIVER_CAPSULE",
+          "centerMm": [
+            39.7,
+            10.8,
+            -21.7
+          ],
+          "sizeMm": [
+            194.6,
+            197.1,
+            177.5
+          ]
+        },
+        {
+          "code": "LIVER_CAUDATE",
+          "name": "尾状叶",
+          "kind": "lobe",
+          "node": "LIVER_CAUDATE",
+          "centerMm": [
+            15.7,
+            -4.4,
+            1.8
+          ],
+          "sizeMm": [
+            61.0,
+            66.8,
+            106.0
+          ]
+        },
+        {
+          "code": "LIVER_SEGMENT_RIGHT_POSTEROINFERIOR",
+          "name": "右后下段",
+          "kind": "segment",
+          "node": "LIVER_SEGMENT_RIGHT_POSTEROINFERIOR",
+          "centerMm": [
+            82.9,
+            -47.0,
+            -55.3
+          ],
+          "sizeMm": [
+            104.7,
+            78.3,
+            102.5
+          ]
+        },
+        {
+          "code": "LIVER_SEGMENT_RIGHT_POSTEROSUPERIOR",
+          "name": "右后上段",
+          "kind": "segment",
+          "node": "LIVER_SEGMENT_RIGHT_POSTEROSUPERIOR",
+          "centerMm": [
+            79.6,
+            -45.6,
+            12.2
+          ],
+          "sizeMm": [
+            105.4,
+            82.1,
+            96.3
+          ]
+        },
+        {
+          "code": "LIVER_SEGMENT_RIGHT_ANTEROSUPERIOR",
+          "name": "右前上段",
+          "kind": "segment",
+          "node": "LIVER_SEGMENT_RIGHT_ANTEROSUPERIOR",
+          "centerMm": [
+            87.7,
+            29.1,
+            30.9
+          ],
+          "sizeMm": [
+            89.9,
+            91.2,
+            69.9
+          ]
+        },
+        {
+          "code": "LIVER_SEGMENT_RIGHT_ANTEROINFERIOR",
+          "name": "右前下段",
+          "kind": "segment",
+          "node": "LIVER_SEGMENT_RIGHT_ANTEROINFERIOR",
+          "centerMm": [
+            89.1,
+            31.8,
+            -48.8
+          ],
+          "sizeMm": [
+            93.7,
+            96.6,
+            120.9
+          ]
+        },
+        {
+          "code": "LIVER_SEGMENT_LEFT_ANTEROLATERAL",
+          "name": "左前外侧段",
+          "kind": "segment",
+          "node": "LIVER_SEGMENT_LEFT_ANTEROLATERAL",
+          "centerMm": [
+            -5.0,
+            66.5,
+            -16.3
+          ],
+          "sizeMm": [
+            66.2,
+            83.9,
+            50.2
+          ]
+        },
+        {
+          "code": "LIVER_SEGMENT_LEFT_POSTEROLATERAL",
+          "name": "左后外侧段",
+          "kind": "segment",
+          "node": "LIVER_SEGMENT_LEFT_POSTEROLATERAL",
+          "centerMm": [
+            -16.7,
+            51.9,
+            14.7
+          ],
+          "sizeMm": [
+            79.4,
+            89.7,
+            53.3
+          ]
+        },
+        {
+          "code": "LIVER_SEGMENT_LEFT_SUPERIOMEDIAL",
+          "name": "左内侧上段",
+          "kind": "segment",
+          "node": "LIVER_SEGMENT_LEFT_SUPERIOMEDIAL",
+          "centerMm": [
+            49.4,
+            46.5,
+            34.7
+          ],
+          "sizeMm": [
+            87.5,
+            77.6,
+            53.7
+          ]
+        },
+        {
+          "code": "LIVER_SEGMENT_LEFT_INFEROMEDIAL",
+          "name": "左内侧下段",
+          "kind": "segment",
+          "node": "LIVER_SEGMENT_LEFT_INFEROMEDIAL",
+          "centerMm": [
+            60.2,
+            88.9,
+            -12.6
+          ],
+          "sizeMm": [
+            72.8,
+            28.3,
+            49.1
+          ]
+        },
+        {
+          "code": "LIVER_QUADRATE",
+          "name": "方叶",
+          "kind": "lobe",
+          "node": "LIVER_QUADRATE",
+          "centerMm": [
+            53.6,
+            58.3,
+            -20.8
+          ],
+          "sizeMm": [
+            82.3,
+            89.5,
+            32.6
+          ]
+        },
+        {
+          "code": "LIVER_LIGAMENTS",
+          "name": "肝韧带与压迹",
+          "kind": "surface",
+          "node": "LIVER_LIGAMENTS",
+          "centerMm": [
+            30.8,
+            10.9,
+            -28.5
+          ],
+          "sizeMm": [
+            174.2,
+            204.9,
+            161.4
+          ]
+        }
+      ]
     },
     {
       "code": "GALLBLADDER",
@@ -188,7 +2042,9 @@
       },
       "renderable": true,
       "source": "BodyParts3D 4.0 (DBCLS, CC BY 4.0); selected surfaces, simplified",
-      "note": "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md."
+      "note": "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md.",
+      "detailAsset": null,
+      "parts": []
     },
     {
       "code": "STOMACH",
@@ -212,7 +2068,9 @@
       },
       "renderable": true,
       "source": "BodyParts3D 4.0 (DBCLS, CC BY 4.0); selected surfaces, simplified",
-      "note": "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md."
+      "note": "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md.",
+      "detailAsset": null,
+      "parts": []
     },
     {
       "code": "SPLEEN",
@@ -236,7 +2094,90 @@
       },
       "renderable": true,
       "source": "HuBMAP Human Reference Atlas v1.1 male (CC BY 4.0); selected surfaces, simplified, aligned to the BodyParts3D reference frame",
-      "note": "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md."
+      "note": "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md.",
+      "detailAsset": "organs/SPLEEN_detail.glb",
+      "parts": [
+        {
+          "code": "SPLEEN_DIAPHRAGMATIC",
+          "name": "膈面",
+          "kind": "surface",
+          "node": "SPLEEN_DIAPHRAGMATIC",
+          "centerMm": [
+            -80.9,
+            -38.2,
+            -18.9
+          ],
+          "sizeMm": [
+            112.2,
+            89.1,
+            120.5
+          ]
+        },
+        {
+          "code": "SPLEEN_GASTRIC",
+          "name": "胃面",
+          "kind": "surface",
+          "node": "SPLEEN_GASTRIC",
+          "centerMm": [
+            -78.3,
+            -27.1,
+            3.8
+          ],
+          "sizeMm": [
+            103.0,
+            63.7,
+            74.6
+          ]
+        },
+        {
+          "code": "SPLEEN_COLIC",
+          "name": "结肠面",
+          "kind": "surface",
+          "node": "SPLEEN_COLIC",
+          "centerMm": [
+            -122.0,
+            -6.1,
+            -52.5
+          ],
+          "sizeMm": [
+            21.9,
+            26.8,
+            52.6
+          ]
+        },
+        {
+          "code": "SPLEEN_RENAL",
+          "name": "肾面",
+          "kind": "surface",
+          "node": "SPLEEN_RENAL",
+          "centerMm": [
+            -76.6,
+            -47.1,
+            -44.8
+          ],
+          "sizeMm": [
+            86.8,
+            62.0,
+            68.6
+          ]
+        },
+        {
+          "code": "SPLEEN_HILUM",
+          "name": "脾门",
+          "kind": "surface",
+          "node": "SPLEEN_HILUM",
+          "centerMm": [
+            -77.3,
+            -34.7,
+            -29.3
+          ],
+          "sizeMm": [
+            97.1,
+            52.6,
+            62.6
+          ]
+        }
+      ]
     },
     {
       "code": "PANCREAS",
@@ -260,7 +2201,90 @@
       },
       "renderable": true,
       "source": "HuBMAP Human Reference Atlas v1.1 male (CC BY 4.0); selected surfaces, simplified, aligned to the BodyParts3D reference frame",
-      "note": "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md."
+      "note": "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md.",
+      "detailAsset": "organs/PANCREAS_detail.glb",
+      "parts": [
+        {
+          "code": "PANCREAS_HEAD",
+          "name": "胰头",
+          "kind": "segment",
+          "node": "PANCREAS_HEAD",
+          "centerMm": [
+            14.5,
+            28.6,
+            -61.6
+          ],
+          "sizeMm": [
+            43.2,
+            41.6,
+            44.2
+          ]
+        },
+        {
+          "code": "PANCREAS_NECK",
+          "name": "胰颈",
+          "kind": "segment",
+          "node": "PANCREAS_NECK",
+          "centerMm": [
+            8.2,
+            35.4,
+            -48.0
+          ],
+          "sizeMm": [
+            25.9,
+            31.5,
+            33.0
+          ]
+        },
+        {
+          "code": "PANCREAS_BODY",
+          "name": "胰体",
+          "kind": "segment",
+          "node": "PANCREAS_BODY",
+          "centerMm": [
+            -28.8,
+            9.4,
+            -35.7
+          ],
+          "sizeMm": [
+            71.2,
+            79.1,
+            44.9
+          ]
+        },
+        {
+          "code": "PANCREAS_TAIL",
+          "name": "胰尾",
+          "kind": "segment",
+          "node": "PANCREAS_TAIL",
+          "centerMm": [
+            -58.5,
+            -20.9,
+            -27.5
+          ],
+          "sizeMm": [
+            37.4,
+            25.8,
+            27.6
+          ]
+        },
+        {
+          "code": "PANCREAS_UNCINATE",
+          "name": "钩突",
+          "kind": "segment",
+          "node": "PANCREAS_UNCINATE",
+          "centerMm": [
+            13.3,
+            25.3,
+            -77.4
+          ],
+          "sizeMm": [
+            31.8,
+            34.3,
+            18.2
+          ]
+        }
+      ]
     },
     {
       "code": "KIDNEY_R",
@@ -284,7 +2308,122 @@
       },
       "renderable": true,
       "source": "HuBMAP Human Reference Atlas v1.1 male (CC BY 4.0); selected surfaces, simplified, aligned to the BodyParts3D reference frame",
-      "note": "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md."
+      "note": "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md.",
+      "detailAsset": "organs/KIDNEY_R_detail.glb",
+      "parts": [
+        {
+          "code": "KIDNEY_R_CAPSULE",
+          "name": "肾包膜",
+          "kind": "capsule",
+          "node": "KIDNEY_R_CAPSULE",
+          "centerMm": [
+            66.7,
+            -14.1,
+            -105.0
+          ],
+          "sizeMm": [
+            66.5,
+            77.7,
+            114.3
+          ]
+        },
+        {
+          "code": "KIDNEY_R_HILUM",
+          "name": "肾门",
+          "kind": "hilum",
+          "node": "KIDNEY_R_HILUM",
+          "centerMm": [
+            58.1,
+            2.7,
+            -101.3
+          ],
+          "sizeMm": [
+            34.0,
+            31.2,
+            60.6
+          ]
+        },
+        {
+          "code": "KIDNEY_R_CALYCES",
+          "name": "肾盏",
+          "kind": "calyx",
+          "node": "KIDNEY_R_CALYCES",
+          "centerMm": [
+            61.9,
+            -7.9,
+            -103.5
+          ],
+          "sizeMm": [
+            23.0,
+            42.7,
+            56.3
+          ]
+        },
+        {
+          "code": "KIDNEY_R_MEDULLA",
+          "name": "肾髓质（锥体）",
+          "kind": "medulla",
+          "node": "KIDNEY_R_MEDULLA",
+          "centerMm": [
+            66.4,
+            -13.1,
+            -104.7
+          ],
+          "sizeMm": [
+            47.8,
+            62.2,
+            99.3
+          ]
+        },
+        {
+          "code": "KIDNEY_R_COLUMN",
+          "name": "肾柱",
+          "kind": "medulla",
+          "node": "KIDNEY_R_COLUMN",
+          "centerMm": [
+            65.9,
+            -15.6,
+            -104.9
+          ],
+          "sizeMm": [
+            47.7,
+            57.1,
+            93.5
+          ]
+        },
+        {
+          "code": "KIDNEY_R_CORTEX",
+          "name": "肾皮质",
+          "kind": "cortex",
+          "node": "KIDNEY_R_CORTEX",
+          "centerMm": [
+            66.7,
+            -14.1,
+            -105.1
+          ],
+          "sizeMm": [
+            66.4,
+            77.3,
+            114.1
+          ]
+        },
+        {
+          "code": "KIDNEY_R_PELVIS",
+          "name": "肾盂",
+          "kind": "pelvis",
+          "node": "KIDNEY_R_PELVIS",
+          "centerMm": [
+            53.2,
+            12.1,
+            -118.5
+          ],
+          "sizeMm": [
+            16.1,
+            11.5,
+            15.4
+          ]
+        }
+      ]
     },
     {
       "code": "KIDNEY_L",
@@ -308,7 +2447,122 @@
       },
       "renderable": true,
       "source": "HuBMAP Human Reference Atlas v1.1 male (CC BY 4.0); selected surfaces, simplified, aligned to the BodyParts3D reference frame",
-      "note": "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md."
+      "note": "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md.",
+      "detailAsset": "organs/KIDNEY_L_detail.glb",
+      "parts": [
+        {
+          "code": "KIDNEY_L_CAPSULE",
+          "name": "肾包膜",
+          "kind": "capsule",
+          "node": "KIDNEY_L_CAPSULE",
+          "centerMm": [
+            -71.2,
+            -28.5,
+            -86.9
+          ],
+          "sizeMm": [
+            76.9,
+            83.7,
+            108.2
+          ]
+        },
+        {
+          "code": "KIDNEY_L_HILUM",
+          "name": "肾门",
+          "kind": "hilum",
+          "node": "KIDNEY_L_HILUM",
+          "centerMm": [
+            -66.3,
+            -16.9,
+            -85.8
+          ],
+          "sizeMm": [
+            29.9,
+            32.7,
+            45.8
+          ]
+        },
+        {
+          "code": "KIDNEY_L_CALYCES",
+          "name": "肾盏",
+          "kind": "calyx",
+          "node": "KIDNEY_L_CALYCES",
+          "centerMm": [
+            -72.7,
+            -25.9,
+            -85.4
+          ],
+          "sizeMm": [
+            24.7,
+            36.6,
+            53.9
+          ]
+        },
+        {
+          "code": "KIDNEY_L_MEDULLA",
+          "name": "肾髓质（锥体）",
+          "kind": "medulla",
+          "node": "KIDNEY_L_MEDULLA",
+          "centerMm": [
+            -69.9,
+            -29.5,
+            -86.9
+          ],
+          "sizeMm": [
+            59.8,
+            67.5,
+            91.3
+          ]
+        },
+        {
+          "code": "KIDNEY_L_COLUMN",
+          "name": "肾柱",
+          "kind": "medulla",
+          "node": "KIDNEY_L_COLUMN",
+          "centerMm": [
+            -71.2,
+            -27.2,
+            -86.1
+          ],
+          "sizeMm": [
+            53.2,
+            65.3,
+            86.7
+          ]
+        },
+        {
+          "code": "KIDNEY_L_CORTEX",
+          "name": "肾皮质",
+          "kind": "cortex",
+          "node": "KIDNEY_L_CORTEX",
+          "centerMm": [
+            -71.1,
+            -28.1,
+            -86.8
+          ],
+          "sizeMm": [
+            75.4,
+            82.1,
+            106.2
+          ]
+        },
+        {
+          "code": "KIDNEY_L_PELVIS",
+          "name": "肾盂",
+          "kind": "pelvis",
+          "node": "KIDNEY_L_PELVIS",
+          "centerMm": [
+            -62.9,
+            -9.1,
+            -91.3
+          ],
+          "sizeMm": [
+            18.0,
+            20.1,
+            19.7
+          ]
+        }
+      ]
     },
     {
       "code": "AORTA",
@@ -332,7 +2586,58 @@
       },
       "renderable": true,
       "source": "BodyParts3D 4.0 (DBCLS, CC BY 4.0); selected surfaces, simplified",
-      "note": "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md."
+      "note": "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md.",
+      "detailAsset": "organs/AORTA_detail.glb",
+      "parts": [
+        {
+          "code": "AORTA_ASCENDING",
+          "name": "升主动脉",
+          "kind": "segment",
+          "node": "AORTA_ASCENDING",
+          "centerMm": [
+            -14.6,
+            19.9,
+            141.1
+          ],
+          "sizeMm": [
+            35.8,
+            30.8,
+            47.8
+          ]
+        },
+        {
+          "code": "AORTA_ARCH",
+          "name": "主动脉弓",
+          "kind": "segment",
+          "node": "AORTA_ARCH",
+          "centerMm": [
+            -17.6,
+            -8.6,
+            182.6
+          ],
+          "sizeMm": [
+            41.6,
+            87.3,
+            35.2
+          ]
+        },
+        {
+          "code": "AORTA_DESCENDING",
+          "name": "降主动脉",
+          "kind": "segment",
+          "node": "AORTA_DESCENDING",
+          "centerMm": [
+            -19.7,
+            -14.0,
+            -2.6
+          ],
+          "sizeMm": [
+            37.1,
+            86.1,
+            335.1
+          ]
+        }
+      ]
     },
     {
       "code": "IVC",
@@ -356,7 +2661,42 @@
       },
       "renderable": true,
       "source": "BodyParts3D 4.0 (DBCLS, CC BY 4.0); selected surfaces, simplified",
-      "note": "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md."
+      "note": "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md.",
+      "detailAsset": "organs/IVC_detail.glb",
+      "parts": [
+        {
+          "code": "IVC_SUPERIOR",
+          "name": "下腔静脉（近心段）",
+          "kind": "segment",
+          "node": "IVC_SUPERIOR",
+          "centerMm": [
+            11.8,
+            12.9,
+            25.8
+          ],
+          "sizeMm": [
+            22.7,
+            22.9,
+            95.5
+          ]
+        },
+        {
+          "code": "IVC_INFERIOR",
+          "name": "下腔静脉（腹段）",
+          "kind": "segment",
+          "node": "IVC_INFERIOR",
+          "centerMm": [
+            9.4,
+            15.0,
+            -93.9
+          ],
+          "sizeMm": [
+            21.6,
+            22.9,
+            144.0
+          ]
+        }
+      ]
     },
     {
       "code": "SPINE",
@@ -380,7 +2720,378 @@
       },
       "renderable": true,
       "source": "BodyParts3D 4.0 (DBCLS, CC BY 4.0); selected surfaces, simplified",
-      "note": "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md."
+      "note": "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md.",
+      "detailAsset": "organs/SPINE_detail.glb",
+      "parts": [
+        {
+          "code": "SPINE_T10",
+          "name": "第10胸椎",
+          "kind": "vertebra",
+          "node": "SPINE_T10",
+          "centerMm": [
+            -2.9,
+            -56.2,
+            11.5
+          ],
+          "sizeMm": [
+            65.9,
+            76.2,
+            57.4
+          ]
+        },
+        {
+          "code": "SPINE_T11",
+          "name": "第11胸椎",
+          "kind": "vertebra",
+          "node": "SPINE_T11",
+          "centerMm": [
+            -3.0,
+            -49.4,
+            -14.4
+          ],
+          "sizeMm": [
+            52.3,
+            79.5,
+            53.5
+          ]
+        },
+        {
+          "code": "SPINE_T12",
+          "name": "第12胸椎",
+          "kind": "vertebra",
+          "node": "SPINE_T12",
+          "centerMm": [
+            -2.9,
+            -40.2,
+            -41.1
+          ],
+          "sizeMm": [
+            43.4,
+            78.8,
+            51.6
+          ]
+        },
+        {
+          "code": "SPINE_L1",
+          "name": "第1腰椎",
+          "kind": "vertebra",
+          "node": "SPINE_L1",
+          "centerMm": [
+            -2.9,
+            -32.8,
+            -73.3
+          ],
+          "sizeMm": [
+            70.2,
+            80.3,
+            56.8
+          ]
+        },
+        {
+          "code": "SPINE_T1",
+          "name": "第1胸椎",
+          "kind": "vertebra",
+          "node": "SPINE_T1",
+          "centerMm": [
+            -2.8,
+            -50.2,
+            245.2
+          ],
+          "sizeMm": [
+            73.3,
+            69.8,
+            29.7
+          ]
+        },
+        {
+          "code": "SPINE_L2",
+          "name": "第2腰椎",
+          "kind": "vertebra",
+          "node": "SPINE_L2",
+          "centerMm": [
+            -2.9,
+            -27.6,
+            -100.9
+          ],
+          "sizeMm": [
+            79.4,
+            80.4,
+            47.4
+          ]
+        },
+        {
+          "code": "SPINE_T2",
+          "name": "第2胸椎",
+          "kind": "vertebra",
+          "node": "SPINE_T2",
+          "centerMm": [
+            -2.9,
+            -54.7,
+            226.6
+          ],
+          "sizeMm": [
+            70.5,
+            70.6,
+            33.8
+          ]
+        },
+        {
+          "code": "SPINE_C3",
+          "name": "第3颈椎",
+          "kind": "vertebra",
+          "node": "SPINE_C3",
+          "centerMm": [
+            -2.9,
+            -39.2,
+            314.5
+          ],
+          "sizeMm": [
+            58.4,
+            49.7,
+            28.7
+          ]
+        },
+        {
+          "code": "SPINE_L3",
+          "name": "第3腰椎",
+          "kind": "vertebra",
+          "node": "SPINE_L3",
+          "centerMm": [
+            -2.9,
+            -29.7,
+            -128.2
+          ],
+          "sizeMm": [
+            79.0,
+            85.8,
+            42.0
+          ]
+        },
+        {
+          "code": "SPINE_T3",
+          "name": "第3胸椎",
+          "kind": "vertebra",
+          "node": "SPINE_T3",
+          "centerMm": [
+            -3.0,
+            -63.1,
+            205.2
+          ],
+          "sizeMm": [
+            64.8,
+            75.4,
+            39.5
+          ]
+        },
+        {
+          "code": "SPINE_C4",
+          "name": "第4颈椎",
+          "kind": "vertebra",
+          "node": "SPINE_C4",
+          "centerMm": [
+            -2.9,
+            -37.2,
+            301.5
+          ],
+          "sizeMm": [
+            54.1,
+            48.4,
+            27.5
+          ]
+        },
+        {
+          "code": "SPINE_L4",
+          "name": "第4腰椎",
+          "kind": "vertebra",
+          "node": "SPINE_L4",
+          "centerMm": [
+            -2.9,
+            -33.9,
+            -155.9
+          ],
+          "sizeMm": [
+            84.2,
+            84.2,
+            44.7
+          ]
+        },
+        {
+          "code": "SPINE_T4",
+          "name": "第4胸椎",
+          "kind": "vertebra",
+          "node": "SPINE_T4",
+          "centerMm": [
+            -3.0,
+            -67.2,
+            182.7
+          ],
+          "sizeMm": [
+            69.7,
+            69.4,
+            43.7
+          ]
+        },
+        {
+          "code": "SPINE_C5",
+          "name": "第5颈椎",
+          "kind": "vertebra",
+          "node": "SPINE_C5",
+          "centerMm": [
+            -2.9,
+            -38.7,
+            289.0
+          ],
+          "sizeMm": [
+            58.0,
+            54.7,
+            24.2
+          ]
+        },
+        {
+          "code": "SPINE_L5",
+          "name": "第5腰椎",
+          "kind": "vertebra",
+          "node": "SPINE_L5",
+          "centerMm": [
+            -2.8,
+            -43.5,
+            -187.2
+          ],
+          "sizeMm": [
+            100.6,
+            80.8,
+            50.2
+          ]
+        },
+        {
+          "code": "SPINE_T5",
+          "name": "第5胸椎",
+          "kind": "vertebra",
+          "node": "SPINE_T5",
+          "centerMm": [
+            -2.9,
+            -69.2,
+            151.6
+          ],
+          "sizeMm": [
+            71.0,
+            66.0,
+            57.5
+          ]
+        },
+        {
+          "code": "SPINE_C6",
+          "name": "第6颈椎",
+          "kind": "vertebra",
+          "node": "SPINE_C6",
+          "centerMm": [
+            -2.9,
+            -41.7,
+            276.3
+          ],
+          "sizeMm": [
+            61.2,
+            62.5,
+            23.1
+          ]
+        },
+        {
+          "code": "SPINE_T6",
+          "name": "第6胸椎",
+          "kind": "vertebra",
+          "node": "SPINE_T6",
+          "centerMm": [
+            -2.9,
+            -68.9,
+            122.3
+          ],
+          "sizeMm": [
+            71.4,
+            64.0,
+            59.7
+          ]
+        },
+        {
+          "code": "SPINE_C7",
+          "name": "第7颈椎",
+          "kind": "vertebra",
+          "node": "SPINE_C7",
+          "centerMm": [
+            -2.9,
+            -46.5,
+            261.4
+          ],
+          "sizeMm": [
+            65.2,
+            68.8,
+            27.1
+          ]
+        },
+        {
+          "code": "SPINE_T7",
+          "name": "第7胸椎",
+          "kind": "vertebra",
+          "node": "SPINE_T7",
+          "centerMm": [
+            -3.1,
+            -68.3,
+            93.7
+          ],
+          "sizeMm": [
+            73.5,
+            66.3,
+            62.5
+          ]
+        },
+        {
+          "code": "SPINE_T8",
+          "name": "第8胸椎",
+          "kind": "vertebra",
+          "node": "SPINE_T8",
+          "centerMm": [
+            -2.8,
+            -65.7,
+            66.5
+          ],
+          "sizeMm": [
+            65.8,
+            71.1,
+            59.3
+          ]
+        },
+        {
+          "code": "SPINE_T9",
+          "name": "第9胸椎",
+          "kind": "vertebra",
+          "node": "SPINE_T9",
+          "centerMm": [
+            -2.9,
+            -60.2,
+            38.8
+          ],
+          "sizeMm": [
+            67.4,
+            71.5,
+            58.2
+          ]
+        },
+        {
+          "code": "SPINE_SACRUM",
+          "name": "骶骨",
+          "kind": "vertebra",
+          "node": "SPINE_SACRUM",
+          "centerMm": [
+            -2.9,
+            -65.1,
+            -261.9
+          ],
+          "sizeMm": [
+            117.7,
+            88.6,
+            144.4
+          ]
+        }
+      ]
     }
   ],
   "segLabelMap": {

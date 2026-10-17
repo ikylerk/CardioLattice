@@ -7579,3 +7579,84 @@ input:focus-visible {
 .organ-source-note { margin: 6px 0 0; font-size: 8.5px; line-height: 1.5; color: #526a78; }
 
 .organ-size-stat .stat strong { font-size: 9.5px; line-height: 1.25; white-space: normal; overflow-wrap: anywhere; }
+
+/* Organ detail tree and targeting simulation */
+
+.organ-part-list {
+  max-height: 280px;
+  overflow-y: auto;
+  margin-top: 9px;
+  padding-top: 7px;
+  border-top: 1px solid rgba(31, 46, 60, 0.55);
+}
+.organ-part-group { display: flex; flex-direction: column; gap: 1px; margin-bottom: 7px; }
+.organ-part-kind {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 4px;
+  font-family: var(--font-mono);
+  font-size: 7.5px;
+  letter-spacing: 0.5px;
+  color: var(--teal);
+  text-transform: uppercase;
+}
+.organ-part-kind em { font-style: normal; color: var(--muted); }
+.organ-part-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 5px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+.organ-part-row:hover { background: rgba(22, 34, 46, 0.5); }
+.organ-part-row.active { border-color: rgba(103, 216, 204, 0.35); background: rgba(18, 56, 59, 0.22); }
+.organ-part-row > i { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.organ-part-row > span { display: flex; flex-direction: column; gap: 0; min-width: 0; flex: 1; }
+.organ-part-row b { font-size: 9.5px; font-weight: 500; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.organ-part-row small { font-family: var(--font-mono); font-size: 6.5px; color: var(--muted); letter-spacing: 0.2px; }
+
+.organ-target-list {
+  max-height: 260px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+.organ-target-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 8px;
+  border: 1px solid rgba(34, 52, 70, 0.8);
+  border-radius: 4px;
+  background: rgba(12, 19, 27, 0.55);
+  text-align: left;
+}
+.organ-target-row:hover { border-color: var(--line-3); }
+.organ-target-row.active { border-color: rgba(239, 179, 107, 0.55); background: rgba(239, 179, 107, 0.07); }
+.organ-target-row > span { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.organ-target-row b { font-size: 10px; color: var(--text-2); font-weight: 550; }
+.organ-target-row small { font-family: var(--font-mono); font-size: 6.8px; color: var(--muted); }
+.organ-target-row em { font-style: normal; font-size: 8px; color: var(--amber); white-space: nowrap; }
+
+.organ-target-info .scan-params { margin-bottom: 9px; }
+.organ-target-info b { font-size: 9px; }
+.organ-target-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  margin: 9px 0 0;
+  padding: 7px 8px;
+  border: 1px solid rgba(239, 179, 107, 0.35);
+  background: rgba(239, 179, 107, 0.06);
+  color: var(--amber);
+  font-size: 8.5px;
+  line-height: 1.5;
+}
+.organ-target-warning svg { flex-shrink: 0; margin-top: 1px; }

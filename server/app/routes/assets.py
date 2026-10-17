@@ -8,6 +8,7 @@ from ..config import settings
 from ..db import get_db
 from ..models import MeshRecord, VolumeRecord
 from ..organ_library import catalog
+from ..organ_targets import catalog as target_catalog
 from ..schemas import volume_out
 from ..storage import storage
 
@@ -61,6 +62,12 @@ def organ_atlas():
     These are reference models and codes, not patient anatomy.
     """
     return catalog()
+
+
+@router.get("/organ-targets")
+def organ_targets():
+    """Reference targets for teaching, orientation and workflow simulation."""
+    return target_catalog()
 
 
 @router.get("/models")

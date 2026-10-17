@@ -134,11 +134,18 @@ codes, systems, colours, canonical placement and cardiac label mappings.
   spine) and HuBMAP HRA v1.1 (liver, lungs, kidneys, spleen, pancreas), both
   CC BY 4.0. The HRA organs are aligned to the BodyParts3D frame with a uniform
   scale + translation solved from shared landmarks.
+- Each organ also has a `<CODE>_detail.glb` with named sub-structures. The
+  engine loads it on demand, exposes per-part visibility/focus, and supports
+  axial/coronal/sagittal clipping through a selected target.
+- `shared/organ_targets.json` defines 81 reference targets in the same frame.
+  The engine builds a target marker, a straight approach path, a virtual needle,
+  and reports path length, depth and approximate structure intersections.
 - `src/three/organGeometry.js` remains as a procedural fallback for missing
   assets; it is explicitly labelled reference geometry.
-- Backend: `server/app/organ_library.py` loads and validates the same JSON;
-  `GET /api/organs` exposes it; segmentation provenance includes
-  `standard_label_map` (for example `LV → HEART_LV`).
+- Backend: `server/app/organ_library.py` and `server/app/organ_targets.py` load
+  and validate the same JSON; `GET /api/organs` and `GET /api/organ-targets`
+  expose them; segmentation provenance includes `standard_label_map` (for
+  example `LV → HEART_LV`).
 - The catalog is versioned (`organ-atlas/v2`). Changing a published code is a
   breaking change; bump the version and keep the mapping stable.
 - The organ GLBs are CC BY 4.0 and are not covered by the repository MIT licence.

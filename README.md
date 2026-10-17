@@ -24,7 +24,7 @@ M1 把「演示」换成了可验证的数据链路：
 | 腔室容积测量 | ✅ 已实现 | 体素数 × 体素体积，带 method / source / validation_status |
 | 结构化报告草稿 | ✅ 已实现 | 模板生成；每个结论引用 measurement；医生批准后写入审计链 |
 | 审计哈希链 | ✅ 已实现 | 去标识、体数据、流水线、报告批准等事件 |
-| 标准器官模型库 | ✅ 已实现 | 14 个解剖参考器官、统一编码、RAS 坐标系、可导出目录 |
+| 标准器官模型库 | ✅ 已实现 | 14 个解剖参考器官、详细子结构、81 个参考靶点、靶点模拟 |
 | LLM 辅助报告（Claude） | 🚧 M2 | 只对结构化事实做语言化，不独立下诊断；接口与校验已设计 |
 | 冠脉管腔/狭窄/FFR-CT | 🚧 M3–M4 | 未接入经过验证的模型，UI 显示 `not_computed`，不编造数值 |
 | 纵向对比/预测 | 🚧 M3 | 先做配准与 delta；没有验证模型前不展示“未来事件概率” |
@@ -132,12 +132,16 @@ queued → validating → anonymizing → building_volume
 - 统一使用 `RAS_ORGAN_REFERENCE` 坐标系，单位 mm（+x 右、+y 前、+z 上），原点位于参考器官集合中心；
 - 每个器官有稳定 `code`、系统分类、颜色、实际网格尺寸/中心与来源说明；
 - 支持系统筛选、单器官显示/隐藏、聚焦、实体/半透明、前面观/后面观/左侧观/右侧观、截图和 JSON 目录导出；
+- **详细子结构**：心脏 83 个解剖部件（心腔、瓣膜、冠脉、乳头肌）、肝 12、左右肺各 10、左右肾各 7、胰 5、脾 5、主动脉 3、下腔静脉 2、脊柱 23；
+- 子结构可独立显示/隐藏、点击聚焦，并支持轴位 / 冠状位 / 矢状位裁剪切面；
+- **81 个标准参考靶点**：心腔、瓣膜、冠脉、肝段、肺段、肾极/肾门/肾盂、胰头/颈/体/尾、脾门、主动脉、IVC、气管、椎体等；
+- **靶点模拟**：选择靶点 → 选择前/后/左/右入路 → 调整进针深度 → 正交切面 → 模拟进针；显示路径长度、距靶点距离和近似路径经过器官；
 - 心脏分割标签通过 `standardLabelMap` 映射到 `HEART_LV`、`AORTA` 等标准代码；
-- 前后端共用 `shared/organ_library.json`，后端通过 `GET /api/organs` 暴露同一目录。
+- 前后端共用 `shared/organ_library.json` 和 `shared/organ_targets.json`，后端通过 `GET /api/organs` 与 `GET /api/organ-targets` 暴露同一目录。
 
 > 这些是**解剖参考模型**，不是患者解剖，不能用于诊断或测量。器官 GLB 采用 **CC BY 4.0** 授权，与仓库代码的 MIT 授权分开；详见 [`src/assets/organs/ATTRIBUTION.md`](src/assets/organs/ATTRIBUTION.md)。
 
-当前版本提供标准目录、可视化和编码映射；把图谱配准到患者体数据（atlas-to-patient registration）属于后续工作，并且只能用于方位/质控，不能用于推导患者测量。
+当前版本提供标准目录、详细子结构、参考靶点和模拟操作界面；把图谱配准到患者体数据（atlas-to-patient registration）属于后续工作，并且只能用于方位/质控，不能用于推导患者测量。靶点与进针演示仅用于教学和流程演练，不是手术规划或导航系统。
 
 详见 [`docs/organ-library.md`](docs/organ-library.md)。
 
@@ -160,6 +164,7 @@ queued → validating → anonymizing → building_volume
 | GET | `/api/volumes/{id}/data` | 8-bit 体数据 |
 | GET | `/api/meshes/{id}/glb` | 患者 GLB |
 | GET | `/api/organs` | 标准器官目录（与前端共享同一 JSON） |
+| GET | `/api/organ-targets` | 参考靶点目录（教学/流程演练） |
 | GET | `/api/models` | 模型注册表与授权状态 |
 | POST | `/api/studies/{id}/reports/{reportId}/approve` | 医生批准报告 |
 

@@ -1,8 +1,10 @@
 import React from 'react'
 import {
+  Activity,
   Boxes,
   Camera,
   CircleAlert,
+  Crosshair,
   Download,
   Eye,
   EyeOff,
@@ -15,9 +17,25 @@ import ViewHeader from './ViewHeader.jsx'
 import { Badge, Button, Section, Slider, Stat, Toggle } from './ui.jsx'
 import OrganLibraryEngine from '../three/OrganLibraryEngine.js'
 import ORGAN_LIBRARY from '../../shared/organ_library.json'
+import ORGAN_TARGETS from '../../shared/organ_targets.json'
 
 const SYSTEM_MAP = Object.fromEntries(ORGAN_LIBRARY.systems.map((system) => [system.id, system]))
 const RENDERABLE = ORGAN_LIBRARY.organs.filter((organ) => organ.renderable)
+const TARGETS = ORGAN_TARGETS.targets || []
+const APPROACH_LABELS = { anterior: '前面入路', posterior: '后面入路', left: '左侧入路', right: '右侧入路' }
+const KIND_LABELS = {
+  capsule: '包膜', segment: '段/叶', lobe: '叶', ligament: '韧带/压迹', surface: '表面',
+  chamber: '心腔', valve: '瓣膜', coronary: '冠脉', muscle: '乳头肌', cortex: '皮质',
+  medulla: '髓质', calyx: '肾盏', pelvis: '肾盂', hilum: '肾门', vertebra: '椎体',
+  organ: '整体', other: '其他',
+}
+const KIND_ORDER = ['chamber', 'valve', 'coronary', 'muscle', 'capsule', 'segment', 'lobe', 'surface', 'ligament', 'cortex', 'medulla', 'calyx', 'pelvis', 'hilum', 'vertebra', 'organ', 'other']
+const PART_KIND_COLORS = {
+  chamber: '#c45258', valve: '#e0b07a', coronary: '#d46a5a', muscle: '#a85b50',
+  capsule: '#8f4a43', segment: '#b06a5a', lobe: '#a65a50', surface: '#8a5a6a',
+  ligament: '#8a7a60', cortex: '#b06a7a', medulla: '#d0a0a8', calyx: '#e0c8a0',
+  pelvis: '#e8d8b8', hilum: '#c0a080', vertebra: '#b8b0a0', organ: '#a08a70', other: '#9aa8b0',
+}
 
 function downloadCatalog() {
   const blob = new Blob([JSON.stringify(ORGAN_LIBRARY, null, 2)], { type: 'application/json' })
@@ -41,6 +59,17 @@ export default function OrganLibraryView({ notify }) {
   const [view, setView] = React.useState('anterior')
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState('')
+  const [detailMode, setDetailMode] = React.useState(false)
+  const [selectedPart, setSelectedPart] = React.useState(null)
+  const [partVisibility, setPartVisibility] = React.useState({})
+  const [targetMode, setTargetMode] = React.useState(false)
+  const [selectedTargetId, setSelectedTargetId] = React.useState(null)
+  const [approach, setApproach] = React.useState('anterior')
+  const [depth, setDepth] = React.useState(0)
+  const [pathInfo, setPathInfo] = React.useState(null)
+  const [clipMode, setClipMode] = React.useState('off')
+  const [clipFlip, setClipFlip] = React.useState(false)
+  const [simulating, setSimulating] = React.useState(false)
 
   React.useEffect(() => {
     if (!hostRef.current) return undefined
@@ -48,8 +77,22 @@ export default function OrganLibraryView({ notify }) {
       const engine = new OrganLibraryEngine(hostRef.current, {
         autoRotate,
         opacity,
-        onSelect: (code) => setSelected(code),
+        onSelect: (code) => {
+          setSelected(code)
+          setSelectedTargetId(null)
+          setPathInfo(null)
+          setDepth(0)
+          engineRef.current?.clearTarget()
+        },
         onReady: () => setLoading(false),
+        onTargetUpdate: (info) => {
+          setPathInfo(info)
+          if (info && Number.isFinite(info.depth)) setDepth(info.depth)
+        },
+        onInsertionEnd: (finalDepth) => {
+          setSimulating(false)
+          if (Number.isFinite(finalDepth)) setDepth(finalDepth)
+        },
       })
       engineRef.current = engine
     } catch (err) {
@@ -88,6 +131,15 @@ export default function OrganLibraryView({ notify }) {
     engineRef.current?.setSelected(selected)
   }, [selected])
 
+  React.useEffect(() => {
+    engineRef.current?.setDetailMode(selected, detailMode)
+  }, [selected, detailMode])
+
+  React.useEffect(() => {
+    if (!targetMode) return
+    engineRef.current?.setClip(clipMode, clipMode !== 'off', clipFlip)
+  }, [clipMode, clipFlip, targetMode])
+
   const selectedOrgan = ORGAN_LIBRARY.organs.find((organ) => organ.code === selected) || RENDERABLE[0]
   const selectedSystem = SYSTEM_MAP[selectedOrgan.system]
   const visibleCount = RENDERABLE.filter((organ) => {
@@ -97,8 +149,17 @@ export default function OrganLibraryView({ notify }) {
 
   const focusOrgan = (code) => {
     setSelected(code)
+    setSelectedPart(null)
+    setSelectedTargetId(null)
+    setPathInfo(null)
+    setDepth(0)
+    engineRef.current?.clearTarget()
     engineRef.current?.focus(code)
     engineRef.current?.setSelected(code)
+    if (targetMode) {
+      const first = TARGETS.find((target) => target.organ === code)
+      if (first) selectTarget(first)
+    }
   }
 
   const selectView = (nextView) => {
@@ -136,6 +197,99 @@ export default function OrganLibraryView({ notify }) {
     organs: ORGAN_LIBRARY.organs.filter((organ) => organ.renderable && organ.system === system.id),
   }))
 
+  const selectedTarget = TARGETS.find((target) => target.id === selectedTargetId) || null
+  const organTargets = TARGETS.filter((target) => target.organ === selected)
+  const depthMax = Math.max(1, pathInfo?.pathLength || 200)
+  const remaining = pathInfo ? Math.max(0, pathInfo.pathLength - depth) : null
+  const collisionNames = (pathInfo?.collisions || []).map(
+    (code) => ORGAN_LIBRARY.organs.find((organ) => organ.code === code)?.name || code,
+  )
+  const partGroups = React.useMemo(() => {
+    const parts = selectedOrgan.parts || []
+    const groups = new Map()
+    for (const part of parts) {
+      const kind = part.kind || 'other'
+      if (!groups.has(kind)) groups.set(kind, [])
+      groups.get(kind).push(part)
+    }
+    return [...groups.entries()]
+      .sort((a, b) => KIND_ORDER.indexOf(a[0]) - KIND_ORDER.indexOf(b[0]))
+      .map(([kind, items]) => ({ kind, label: KIND_LABELS[kind] || kind, parts: items }))
+  }, [selectedOrgan])
+
+  const partVisible = (code) => partVisibility[`${selected}:${code}`] !== false
+
+  const selectTarget = (target) => {
+    setSelected(target.organ)
+    setSelectedTargetId(target.id)
+    setApproach(target.approach || 'anterior')
+    setDepth(0)
+    setPathInfo(null)
+    setSimulating(false)
+    setSelectedPart(null)
+    setDetailMode(true)
+    engineRef.current?.setTarget(target)
+  }
+
+  const toggleTargetMode = (enabled) => {
+    setTargetMode(enabled)
+    if (!enabled) {
+      setSelectedTargetId(null)
+      setPathInfo(null)
+      setDepth(0)
+      setSimulating(false)
+      setClipMode('off')
+      setClipFlip(false)
+      engineRef.current?.clearTarget()
+      engineRef.current?.setClip('off', false)
+      setDetailMode(false)
+      engineRef.current?.setDetailMode(selected, false)
+      return
+    }
+    setDetailMode(true)
+    const first = TARGETS.find((target) => target.organ === selected)
+    if (first) selectTarget(first)
+  }
+
+  const changeApproach = (next) => {
+    setApproach(next)
+    setDepth(0)
+    setSimulating(false)
+    engineRef.current?.setApproach(next)
+  }
+
+  const changeDepth = (value) => {
+    setDepth(value)
+    setSimulating(false)
+    engineRef.current?.setNeedleDepth(value)
+  }
+
+  const startSimulation = () => {
+    if (!selectedTarget || !pathInfo) return
+    setSimulating(true)
+    setDepth(0)
+    engineRef.current?.startInsertion(1800)
+  }
+
+  const resetNeedle = () => {
+    setDepth(0)
+    setSimulating(false)
+    engineRef.current?.setNeedleDepth(0)
+  }
+
+  const togglePart = (partCode) => {
+    const key = `${selected}:${partCode}`
+    const next = !partVisible(partCode)
+    setPartVisibility((current) => ({ ...current, [key]: next }))
+    engineRef.current?.setPartVisibility(selected, partCode, next)
+  }
+
+  const focusPart = (partCode) => {
+    setSelectedPart(partCode)
+    engineRef.current?.setPartSelected(selected, partCode)
+    engineRef.current?.focusPart(selected, partCode)
+  }
+
   return (
     <div className="module-view organ-view">
       <ViewHeader
@@ -143,7 +297,7 @@ export default function OrganLibraryView({ notify }) {
         eyebrow="ORGAN ATLAS"
         title="器官模型库"
         titleSuffix="STANDARD REFERENCE"
-        description="内置标准化器官参考模型与统一编码，用于方位、教学、配准占位与界面标准化。"
+        description="内置解剖参考模型、详细子结构与标准靶点，用于方位、教学、配准占位与流程演练。"
         meta={
           <>
             <span>{ORGAN_LIBRARY.version}</span>
@@ -151,6 +305,8 @@ export default function OrganLibraryView({ notify }) {
             <span>{RENDERABLE.length} 个器官</span>
             <i />
             <span>{ORGAN_LIBRARY.frame.name} · mm</span>
+            <i />
+            <span>{TARGETS.length} 个参考靶点</span>
           </>
         }
         actions={
@@ -299,6 +455,146 @@ export default function OrganLibraryView({ notify }) {
             </div>
           </Section>
 
+          <Section title="详细结构" code="SUB-STRUCTURES" right={<Boxes size={13} />}>
+            {selectedOrgan.parts?.length ? (
+              <>
+                <Toggle
+                  label="显示详细结构"
+                  hint={`${selectedOrgan.parts.length} 个子结构 · 点击行聚焦`}
+                  checked={detailMode}
+                  onChange={(value) => {
+                    setDetailMode(value)
+                    engineRef.current?.setDetailMode(selected, value)
+                  }}
+                />
+                {detailMode ? (
+                  <div className="organ-part-list">
+                    {partGroups.map((group) => (
+                      <div className="organ-part-group" key={group.kind}>
+                        <div className="organ-part-kind">
+                          <span>{group.label}</span>
+                          <em>{group.parts.length}</em>
+                        </div>
+                        {group.parts.map((part) => (
+                          <div
+                            key={part.code}
+                            className={`organ-part-row ${selectedPart === part.code ? 'active' : ''}`}
+                            onClick={() => focusPart(part.code)}
+                            role="button"
+                            tabIndex={0}
+                            onKeyDown={(event) => {
+                              if (event.key === 'Enter') focusPart(part.code)
+                            }}
+                          >
+                            <i style={{ background: PART_KIND_COLORS[group.kind] || selectedOrgan.color }} />
+                            <span>
+                              <b>{part.name}</b>
+                              <small>{part.code}</small>
+                            </span>
+                            <button
+                              type="button"
+                              className={`organ-visibility ${partVisible(part.code) ? 'on' : ''}`}
+                              onClick={(event) => {
+                                event.stopPropagation()
+                                togglePart(part.code)
+                              }}
+                              aria-label={`${partVisible(part.code) ? '隐藏' : '显示'}${part.name}`}
+                            >
+                              {partVisible(part.code) ? <Eye size={13} /> : <EyeOff size={13} />}
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="wb-empty-line">开启后显示器官内部结构、分段和可独立选择的子结构。</div>
+                )}
+              </>
+            ) : (
+              <div className="wb-empty-line">该器官当前仅提供整体表面；详细结构将在后续版本补充。</div>
+            )}
+          </Section>
+
+          <Section title="靶点与模拟" code="TARGET / SIMULATION" right={<Crosshair size={13} />}>
+            <div className="organ-mode-row">
+              <button type="button" className={!targetMode ? 'active' : ''} onClick={() => { if (targetMode) toggleTargetMode(false) }}>浏览</button>
+              <button type="button" className={targetMode ? 'active' : ''} onClick={() => { if (!targetMode) toggleTargetMode(true) }}>靶点模拟</button>
+            </div>
+            {targetMode ? (
+              <>
+                <div className="organ-target-list">
+                  {organTargets.length ? organTargets.map((target) => (
+                    <button
+                      type="button"
+                      key={target.id}
+                      className={`organ-target-row ${selectedTargetId === target.id ? 'active' : ''}`}
+                      onClick={() => selectTarget(target)}
+                    >
+                      <span>
+                        <b>{target.name}</b>
+                        <small>{target.id} · {target.category}</small>
+                      </span>
+                      <em>{APPROACH_LABELS[target.approach] || target.approach}</em>
+                    </button>
+                  )) : <div className="wb-empty-line">该器官暂无标准靶点</div>}
+                </div>
+                {selectedTarget ? (
+                  <>
+                    <div className="scan-params organ-target-info">
+                      <div><span>靶点坐标</span><b>{selectedTarget.coordinateMm.join(' / ')} mm</b></div>
+                      <div><span>参考来源</span><b>{selectedTarget.reference}</b></div>
+                      <div><span>路径长度</span><b>{pathInfo ? `${pathInfo.pathLength.toFixed(1)} mm` : '—'}</b></div>
+                      <div><span>进针深度</span><b>{depth.toFixed(1)} mm</b></div>
+                      <div><span>距靶点</span><b>{remaining !== null ? `${remaining.toFixed(1)} mm` : '—'}</b></div>
+                      <div><span>入路</span><b>{APPROACH_LABELS[approach] || approach}</b></div>
+                    </div>
+                    <div className="organ-view-grid">
+                      {['anterior', 'posterior', 'left', 'right'].map((item) => (
+                        <button
+                          key={item}
+                          type="button"
+                          className={approach === item ? 'active' : ''}
+                          onClick={() => changeApproach(item)}
+                        >
+                          {APPROACH_LABELS[item]}
+                        </button>
+                      ))}
+                    </div>
+                    <Slider
+                      label="进针深度 DEPTH"
+                      value={depth}
+                      min={0}
+                      max={depthMax}
+                      step={0.5}
+                      onChange={changeDepth}
+                      format={(value) => `${value.toFixed(1)} mm`}
+                    />
+                    <div className="organ-view-grid">
+                      <button type="button" className={clipMode === 'off' ? 'active' : ''} onClick={() => setClipMode('off')}>关闭切面</button>
+                      <button type="button" className={clipMode === 'axial' ? 'active' : ''} onClick={() => setClipMode('axial')}>轴位切面</button>
+                      <button type="button" className={clipMode === 'coronal' ? 'active' : ''} onClick={() => setClipMode('coronal')}>冠状切面</button>
+                      <button type="button" className={clipMode === 'sagittal' ? 'active' : ''} onClick={() => setClipMode('sagittal')}>矢状切面</button>
+                    </div>
+                    <Toggle label="翻转裁剪" hint="显示切面另一侧" checked={clipFlip} onChange={setClipFlip} />
+                    <div className="organ-actions">
+                      <Button size="sm" icon={<Activity size={13} />} onClick={startSimulation} disabled={simulating || !pathInfo}>
+                        {simulating ? '模拟进针中…' : '模拟进针'}
+                      </Button>
+                      <Button size="sm" icon={<RotateCcw size={13} />} onClick={resetNeedle}>复位针尖</Button>
+                    </div>
+                    <p className="organ-frame-note">
+                      路径经过：{collisionNames.length ? collisionNames.join('、') : '未检出其他参考器官（近似）'}
+                    </p>
+                    <p className="organ-target-warning">
+                      <CircleAlert size={12} /> 教学 / 流程演示，不是手术规划或导航系统；不能用于真实穿刺、消融或介入操作。
+                    </p>
+                  </>
+                ) : <div className="wb-empty-line">选择上方靶点开始</div>}
+              </>
+            ) : <div className="wb-empty-line">切换到「靶点模拟」查看标准靶点、正交切面与进针演示。</div>}
+          </Section>
+
           <Section title="显示" code="RENDERING" right={<ShieldCheck size={13} />}>
             <div className="organ-mode-row">
               <button
@@ -350,7 +646,7 @@ export default function OrganLibraryView({ notify }) {
 
           <div className="cta-disclaimer">
             <CircleAlert size={12} />
-            标准参考几何用于方位、教学、配准占位与界面标准化；不是患者解剖，不用于临床诊断或治疗决策。
+            解剖参考模型与标准靶点用于方位、教学和流程演练；不是患者解剖，不用于诊断、测量或真实操作。
           </div>
         </aside>
       </div>

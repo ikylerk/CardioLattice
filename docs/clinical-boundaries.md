@@ -43,6 +43,27 @@ Standard codes such as `HEART_LV` or `AORTA` are internal catalogue identifiers,
 not a certified terminology binding. Do not claim SNOMED/RadLex/FMA compliance
 unless the mapping has been reviewed and licensed separately.
 
+### Detailed sub-structures and targets
+
+The sub-structure meshes and the 81 reference targets are **reference anatomy**,
+not patient-specific anatomy or lesions. Target coordinates are derived from
+reference part centroids or simple morphological landmarks (for example organ
+poles); they do not represent a patient's pathology and must not be used for
+diagnosis or targeting.
+
+The target-simulation view is an educational workflow demonstration:
+
+- the approach path is a straight ray, not a patient-specific trajectory;
+- collision detection is a simple ray cast against reference surfaces, with no
+  tissue deformation, respiration, motion or safety margins;
+- it is **not** a surgical navigation, biopsy-planning, ablation-planning or
+  robotic guidance system;
+- it must not be used to plan or perform a real procedure.
+
+Any future patient-specific targeting feature requires registered patient
+imaging, validated registration accuracy, clinician review, and the applicable
+regulatory pathway.
+
 ## 4. Model governance
 
 A model may only produce a displayed clinical measurement after:
