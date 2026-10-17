@@ -156,7 +156,7 @@ queued → validating → anonymizing → building_volume
 
 示例：`POST /api/studies/demo?lang=zh`。
 
-草稿写入 `content.lang`，之后的读取和批准都不会改写正文。没有 `lang` 字段的已存报告按保存内容原样返回。审计链仍只记录报告 id、操作者和动作。
+草稿写入 `content.language` 和 `content.provenance.language`。之后的读取和批准都不会改写正文。仍使用旧键 `lang` 的已存报告，以及没有语言字段的已存报告，都按保存内容原样返回。审计链仍只记录报告 id、操作者和动作。
 
 `lang=en` 时保存的英文免责声明：
 

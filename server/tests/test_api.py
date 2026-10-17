@@ -50,7 +50,7 @@ def test_demo_pipeline_end_to_end():
         report = bundle["reports"][0]
         assert report["status"] == "draft"
         assert report["generator"] == "template"
-        assert report["content"]["lang"] == "en"
+        assert report["content"]["language"] == "en"
         assert report["content"]["disclaimer"] == (
             "Research prototype, not a medical device. "
             "This project is not certified by NMPA / FDA / CE, and outputs must not be used "

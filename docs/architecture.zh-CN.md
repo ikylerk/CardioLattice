@@ -134,7 +134,7 @@ API 不读取 `Accept-Language`。
 
 报告草稿由上传、演示、选择序列和重新运行流水线的请求生成。查询参数为 `lang=en` 或 `lang=zh`。省略则为 `en`。其他值返回 HTTP 400 `{"detail": {"code": "INVALID_LANG", "params": {"lang": "<value>"}}}`。
 
-草稿写入 `content.lang`，读取和批准都不会改写。没有 `lang` 字段的已存报告按保存内容原样返回。审计链仍只记录报告 id、操作者和动作。
+草稿写入 `content.language` 和 `content.provenance.language`，读取和批准都不会改写。仍使用旧键 `lang` 的已存报告，以及没有语言字段的已存报告，都按保存内容原样返回。审计链仍只记录报告 id、操作者和动作。
 
 `lang=en` 保存：“Research prototype, not a medical device. This project is not certified by NMPA / FDA / CE, and outputs must not be used for clinical diagnosis, treatment decisions, or medico-legal purposes. All data in demo mode is procedurally synthesized.”
 

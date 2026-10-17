@@ -28,7 +28,8 @@ app = FastAPI(
         + DISCLAIMER_EN
         + " Errors, reasons, stage messages, series reasons, and measurement labels "
         "are {code, params} objects. A report draft is generated once from the lang "
-        "query parameter (en or zh, default en) and is not rewritten on read."
+        "query parameter (en or zh, default en) and stored as content.language. "
+        "Stored reports are not rewritten on read."
     ),
     lifespan=lifespan,
 )

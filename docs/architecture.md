@@ -148,9 +148,10 @@ requests. The query parameter is `lang=en` or `lang=zh`. Omitting it means
 `en`. Any other value is HTTP 400
 `{"detail": {"code": "INVALID_LANG", "params": {"lang": "<value>"}}}`.
 
-The draft is stored with `content.lang` and is not rewritten on read or after
-approval. A stored report with no `lang` field is returned as stored. The audit
-chain still records the report id, actor, and action.
+The draft is stored with `content.language` and `content.provenance.language`
+and is not rewritten on read or after approval. A stored report that still has
+the old `lang` key, or that has no language field, is returned as stored. The
+audit chain still records the report id, actor, and action.
 
 `lang=en` stores: "Research prototype, not a medical device. This project is
 not certified by NMPA / FDA / CE, and outputs must not be used for clinical

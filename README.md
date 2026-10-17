@@ -154,7 +154,7 @@ A structured report is created by `POST /api/studies`, `POST /api/studies/demo`,
 
 Example: `POST /api/studies/demo?lang=zh`.
 
-The draft is stored with `content.lang` and is not rewritten on later reads or after approval. A stored report that has no `lang` field is returned as stored. The audit chain still records only the report id, actor, and action.
+The draft is stored with `content.language` and `content.provenance.language`. Later reads and approval do not rewrite it. A stored report that still has the old `lang` key, or that has no language field, is returned as stored. The audit chain still records only the report id, actor, and action.
 
 English disclaimer, stored when `lang=en`:
 
