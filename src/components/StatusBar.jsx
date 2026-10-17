@@ -21,9 +21,11 @@ export default function StatusBar({ active, bpm = 72, playing = true, onTogglePl
   const systolic = phase < 0.35
   const vitalsAvailable = isDemo
   const disclaimer = t('disclaimer.body')
+  const sentences = disclaimer.split(/(?<=[。．.])\s*/).map((sentence) => sentence.trim()).filter(Boolean)
 
   return (
     <footer className="statusbar">
+      <div className="status-row">
       <div className="vitals">
         {vitalsAvailable ? (
           <div className="ecg-block">
@@ -60,10 +62,15 @@ export default function StatusBar({ active, bpm = 72, playing = true, onTogglePl
       </div>
       <div className="status-legal">
         <span className="audio-icon"><Volume2 size={12} /></span>
-        <span className="status-disclaimer">{disclaimer}</span>
         <span className="status-build" title="3D anatomical surface: Realistic Human Heart by neshallads, CC BY 4.0">MODEL CC BY 4.0</span>
         <span className="status-build">{isApi ? 'BUILD M1 · API' : 'BUILD 2026.10 · LOCAL DEMO'}</span>
       </div>
+      </div>
+      <p className="status-disclaimer">
+        {sentences.map((sentence) => (
+          <span key={sentence}>{sentence}</span>
+        ))}
+      </p>
     </footer>
   )
 }
