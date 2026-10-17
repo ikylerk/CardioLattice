@@ -2,7 +2,6 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import ORGAN_LIBRARY from '../../shared/organ_library.json'
-import heartModelUrl from '../assets/heart.glb?url'
 import {
   applyOrganHighlight,
   applyOrganOpacity,
@@ -10,7 +9,32 @@ import {
   disposeObject,
 } from './organGeometry.js'
 
-const HEART = ORGAN_LIBRARY.organs.find((organ) => organ.code === 'HEART')
+const ORGAN_ASSETS = import.meta.glob('../assets/organs/*.glb', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+})
+
+const RENDERABLE = ORGAN_LIBRARY.organs.filter((organ) => organ.renderable)
+
+function assetUrl(organ) {
+  if (organ.mesh?.type !== 'glb' || !organ.mesh.asset) return null
+  return ORGAN_ASSETS[`../assets/${organ.mesh.asset}`] || null
+}
+
+function materialFor(organ, opacity) {
+  const color = new THREE.Color(organ.color || '#a0a8b0')
+  return new THREE.MeshStandardMaterial({
+    color,
+    emissive: color.clone().multiplyScalar(0.05),
+    roughness: 0.55,
+    metalness: 0.02,
+    transparent: true,
+    opacity,
+    side: THREE.DoubleSide,
+    depthWrite: opacity >= 0.98,
+  })
+}
 
 export default class OrganLibraryEngine {
   constructor(container, options = {}) {
@@ -18,11 +42,16 @@ export default class OrganLibraryEngine {
     this.onSelect = options.onSelect
     this.onReady = options.onReady
     this.autoRotate = options.autoRotate !== false
-    this.opacity = options.opacity ?? 1
-    this.selected = null
-    this.disposed = false
+    this.opacity = options.opacity ?? 0.42
+    this.selected = 'HEART'
+    this.view = 'anterior'
+    this.visibility = new Map()
     this.organObjects = new Map()
+    this.materials = new Map()
+    this.disposed = false
     this.lastRender = 0
+    this.atlasBox = new THREE.Box3()
+    this.atlasSize = new THREE.Vector3(400, 300, 600)
 
     this.renderer = new THREE.WebGLRenderer({
       antialias: true,
@@ -39,44 +68,36 @@ export default class OrganLibraryEngine {
     this.container.appendChild(this.renderer.domElement)
 
     this.scene = new THREE.Scene()
-    this.camera = new THREE.PerspectiveCamera(32, 1, 1, 5000)
+    this.camera = new THREE.PerspectiveCamera(32, 1, 1, 8000)
     this.camera.up.set(0, 0, 1)
-    this.camera.position.set(300, 1150, 480)
+    this.camera.position.set(0, 1300, 0)
 
     this.controls = new OrbitControls(this.camera, this.renderer.domElement)
-    this.controls.target.set(0, 0, -30)
+    this.controls.target.set(0, 0, 0)
     this.controls.enableDamping = true
     this.controls.dampingFactor = 0.07
     this.controls.autoRotate = this.autoRotate
     this.controls.autoRotateSpeed = 0.35
-    this.controls.minDistance = 360
-    this.controls.maxDistance = 3000
+    this.controls.minDistance = 300
+    this.controls.maxDistance = 4000
     this.controls.rotateSpeed = 0.6
 
     this.scene.add(new THREE.AmbientLight(0xffffff, 0.75))
     const key = new THREE.DirectionalLight(0xffffff, 1.65)
-    key.position.set(500, -700, 900)
+    key.position.set(500, 900, 900)
     this.scene.add(key)
     const fill = new THREE.DirectionalLight(0x8ab4d8, 0.55)
-    fill.position.set(-700, 400, 200)
+    fill.position.set(-700, 500, 200)
     this.scene.add(fill)
     const rim = new THREE.DirectionalLight(0xd8a070, 0.42)
-    rim.position.set(-300, 500, -700)
+    rim.position.set(-300, -500, -700)
     this.scene.add(rim)
 
-    this.grid = new THREE.GridHelper(700, 14, 0x1c2b36, 0x14212b)
-    this.grid.rotation.x = Math.PI / 2
-    this.grid.position.z = -260
-    this.scene.add(this.grid)
-
-    this.axes = new THREE.AxesHelper(110)
-    this.axes.position.set(-260, -110, -250)
-    this.scene.add(this.axes)
-
+    this.grid = null
+    this.axes = null
     this.atlasRoot = new THREE.Group()
     this.scene.add(this.atlasRoot)
-    this.buildOrgans()
-    this.loadHeart()
+    this.loadOrgans()
 
     this.resizeObserver = new ResizeObserver(() => this.resize())
     this.resizeObserver.observe(this.container)
@@ -90,62 +111,125 @@ export default class OrganLibraryEngine {
     this.pointerStart = null
   }
 
-  buildOrgans() {
-    for (const organ of ORGAN_LIBRARY.organs) {
-      if (!organ.renderable || organ.mesh?.type === 'glb') continue
-      const object = createOrganObject(organ, { opacity: this.opacity })
-      this.atlasRoot.add(object)
-      this.organObjects.set(organ.code, object)
-    }
+  addFallback(organ) {
+    const object = createOrganObject(organ, { opacity: this.opacity })
+    object.traverse((node) => {
+      if (node.isMesh) node.userData.organCode = organ.code
+    })
+    object.userData.organCode = organ.code
+    this.atlasRoot.add(object)
+    this.organObjects.set(organ.code, object)
+    this.applyLoadedState(organ.code)
   }
 
-  loadHeart() {
-    if (!HEART) return
+  applyLoadedState(code) {
+    const object = this.organObjects.get(code)
+    if (!object) return
+    object.visible = this.visibility.get(code) !== false
+    applyOrganOpacity(object, this.opacity)
+    applyOrganHighlight(object, this.selected === code)
+  }
+
+  async loadOrgans() {
     const loader = new GLTFLoader()
-    loader
-      .loadAsync(heartModelUrl)
-      .then((gltf) => {
-        if (this.disposed) return
-        const root = gltf.scene
-        root.rotation.x = Math.PI / 2
-        root.updateMatrixWorld(true)
-        const color = new THREE.Color(HEART.color)
-        root.traverse((node) => {
-          if (!node.isMesh) return
-          node.material = new THREE.MeshStandardMaterial({
-            color,
-            emissive: color.clone().multiplyScalar(0.05),
-            roughness: 0.58,
-            metalness: 0.02,
-            transparent: true,
-            opacity: this.opacity,
-            side: THREE.DoubleSide,
+    const jobs = []
+    for (const organ of RENDERABLE) {
+      const url = assetUrl(organ)
+      if (!url) {
+        this.addFallback(organ)
+        continue
+      }
+      jobs.push(
+        loader
+          .loadAsync(url)
+          .then((gltf) => {
+            if (this.disposed) return
+            const group = new THREE.Group()
+            group.userData.organCode = organ.code
+            group.userData.standardReference = true
+            const material = materialFor(organ, this.opacity)
+            this.materials.set(organ.code, material)
+            gltf.scene.traverse((node) => {
+              if (!node.isMesh) return
+              node.material = material
+              node.userData.organCode = organ.code
+            })
+            group.add(gltf.scene)
+            this.atlasRoot.add(group)
+            this.organObjects.set(organ.code, group)
+            this.applyLoadedState(organ.code)
           })
-        })
-        const box = new THREE.Box3().setFromObject(root)
-        const size = box.getSize(new THREE.Vector3())
-        const center = box.getCenter(new THREE.Vector3())
-        const scale = Math.min(
-          HEART.sizeMm[0] / Math.max(size.x, 0.001),
-          HEART.sizeMm[1] / Math.max(size.y, 0.001),
-          HEART.sizeMm[2] / Math.max(size.z, 0.001),
-        )
-        root.position.sub(center)
-        const group = new THREE.Group()
-        group.add(root)
-        group.scale.setScalar(scale)
-        group.position.set(...HEART.centerMm)
-        group.userData.organCode = 'HEART'
-        group.userData.standardReference = true
-        this.atlasRoot.add(group)
-        this.organObjects.set('HEART', group)
-        this.applyOpacity('HEART', this.opacity)
-        this.onReady?.()
-      })
-      .catch((error) => {
-        console.error(error)
-        this.onReady?.()
-      })
+          .catch((error) => {
+            console.error(`failed to load ${organ.code}`, error)
+            this.addFallback(organ)
+          }),
+      )
+    }
+    await Promise.all(jobs)
+    if (this.disposed) return
+    this.fitAtlas()
+    this.onReady?.()
+  }
+
+  fitAtlas() {
+    const box = new THREE.Box3()
+    for (const object of this.organObjects.values()) box.expandByObject(object)
+    if (box.isEmpty()) return
+    this.atlasBox.copy(box)
+    this.atlasSize.copy(box.getSize(new THREE.Vector3()))
+    const center = box.getCenter(new THREE.Vector3())
+    this.controls.target.copy(center)
+    this.controls.minDistance = Math.max(180, Math.max(this.atlasSize.x, this.atlasSize.y, this.atlasSize.z) * 0.45)
+    this.controls.maxDistance = Math.max(1200, Math.max(this.atlasSize.x, this.atlasSize.y, this.atlasSize.z) * 4)
+    this.setView(this.view)
+    this.placeContext(box)
+  }
+
+  placeContext(box) {
+    if (this.grid) {
+      this.scene.remove(this.grid)
+      this.grid.geometry.dispose()
+      this.grid.material.dispose()
+    }
+    if (this.axes) {
+      this.scene.remove(this.axes)
+      this.axes.geometry.dispose()
+      this.axes.material.dispose()
+    }
+    const size = box.getSize(new THREE.Vector3())
+    const center = box.getCenter(new THREE.Vector3())
+    const span = Math.max(size.x, size.y, 300) * 1.5
+    this.grid = new THREE.GridHelper(span, 16, 0x1c2b36, 0x14212b)
+    this.grid.rotation.x = Math.PI / 2
+    this.grid.position.set(center.x, center.y, box.min.z - 15)
+    this.scene.add(this.grid)
+    this.axes = new THREE.AxesHelper(Math.max(60, Math.max(size.x, size.y, size.z) * 0.12))
+    this.axes.position.set(box.min.x, box.min.y, box.min.z)
+    this.scene.add(this.axes)
+  }
+
+  setView(view) {
+    this.view = view
+    const size = this.atlasSize
+    const center = this.controls.target
+    const vfov = THREE.MathUtils.degToRad(this.camera.fov)
+    const aspect = this.camera.aspect || 1
+    const distance = Math.max(
+      size.z / (2 * Math.tan(vfov / 2)),
+      size.x / aspect / (2 * Math.tan(vfov / 2)),
+      size.y / (2 * Math.tan(vfov / 2)),
+    ) * 1.28
+    const directions = {
+      anterior: [0, 1, 0],
+      posterior: [0, -1, 0],
+      left: [-1, 0, 0],
+      right: [1, 0, 0],
+    }
+    const direction = directions[view] || directions.anterior
+    this.camera.up.set(0, 0, 1)
+    this.camera.position.copy(center).add(new THREE.Vector3(...direction).multiplyScalar(distance))
+    this.controls.target.copy(center)
+    this.controls.update()
   }
 
   handlePointerDown = (event) => {
@@ -165,8 +249,7 @@ export default class OrganLibraryEngine {
     )
     const raycaster = new THREE.Raycaster()
     raycaster.setFromCamera(pointer, this.camera)
-    const roots = [...this.organObjects.values()]
-    const hits = raycaster.intersectObjects(roots, true)
+    const hits = raycaster.intersectObjects([...this.organObjects.values()], true)
     if (!hits.length) return
     let node = hits[0].object
     while (node && !node.userData.organCode) node = node.parent
@@ -174,6 +257,7 @@ export default class OrganLibraryEngine {
   }
 
   setVisibility(code, visible) {
+    this.visibility.set(code, visible)
     const object = this.organObjects.get(code)
     if (object) object.visible = visible
   }
@@ -198,10 +282,10 @@ export default class OrganLibraryEngine {
   }
 
   setSelected(code) {
+    this.selected = code
     for (const [organCode, object] of this.organObjects) {
       applyOrganHighlight(object, organCode === code)
     }
-    this.selected = code
   }
 
   focus(code) {
@@ -212,17 +296,15 @@ export default class OrganLibraryEngine {
     const size = box.getSize(new THREE.Vector3())
     const radius = Math.max(size.x, size.y, size.z, 40)
     this.controls.target.copy(center)
-    this.camera.position.set(center.x + radius * 1.1, center.y + radius * 2.2, center.z + radius * 1.2)
+    this.camera.up.set(0, 0, 1)
+    this.camera.position.set(center.x, center.y + radius * 2.4, center.z + radius * 0.15)
     this.controls.minDistance = radius * 0.7
     this.controls.maxDistance = radius * 12
+    this.controls.update()
   }
 
   resetView() {
-    this.controls.target.set(0, 0, -30)
-    this.camera.position.set(300, 1150, 480)
-    this.controls.minDistance = 360
-    this.controls.maxDistance = 3000
-    this.controls.update()
+    this.fitAtlas()
   }
 
   resize() {
@@ -257,6 +339,11 @@ export default class OrganLibraryEngine {
     this.controls?.dispose()
     for (const object of this.organObjects.values()) disposeObject(object)
     this.organObjects.clear()
+    this.materials.clear()
+    this.grid?.geometry?.dispose?.()
+    this.grid?.material?.dispose?.()
+    this.axes?.geometry?.dispose?.()
+    this.axes?.material?.dispose?.()
     this.renderer.dispose()
     this.renderer.domElement.remove()
   }

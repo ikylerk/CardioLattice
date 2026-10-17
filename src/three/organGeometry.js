@@ -175,8 +175,8 @@ export function applyOrganOpacity(object, opacity) {
 export function applyOrganHighlight(object, active) {
   object.traverse((node) => {
     if (node.isMesh && node.material) {
-      node.material.emissiveIntensity = active ? 0.6 : 0.05
-      node.material.emissive.set(active ? 0x67d8cc : 0x000000)
+      node.material.emissiveIntensity = active ? 0.32 : 0.04
+      node.material.emissive.set(active ? 0x2a6b66 : 0x000000)
     }
   })
 }

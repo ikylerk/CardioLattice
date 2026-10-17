@@ -38,6 +38,7 @@ export default function OrganLibraryView({ notify }) {
   const [mode, setMode] = React.useState('ghost')
   const [opacity, setOpacity] = React.useState(0.42)
   const [autoRotate, setAutoRotate] = React.useState(true)
+  const [view, setView] = React.useState('anterior')
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState('')
 
@@ -98,6 +99,12 @@ export default function OrganLibraryView({ notify }) {
     setSelected(code)
     engineRef.current?.focus(code)
     engineRef.current?.setSelected(code)
+  }
+
+  const selectView = (nextView) => {
+    setView(nextView)
+    setAutoRotate(false)
+    engineRef.current?.setView(nextView)
   }
 
   const toggleOrgan = (code) => {
@@ -171,7 +178,7 @@ export default function OrganLibraryView({ notify }) {
           {loading ? <div className="webgl-error">正在加载标准器官模型…</div> : null}
           {error ? <div className="webgl-error">{error}</div> : null}
           <div className="volume-overlay-top">
-            <span>RAS_BODY_CENTER · MILLIMETRES</span>
+            <span>{ORGAN_LIBRARY.frame.name} · MILLIMETRES</span>
             <span>{visibleCount} / {RENDERABLE.length} VISIBLE</span>
           </div>
           <div className="organ-axis-legend">
@@ -208,7 +215,9 @@ export default function OrganLibraryView({ notify }) {
             <p>{selectedOrgan.note}</p>
             <div className="selection-stats">
               <Stat label="系统" value={selectedSystem?.name || '—'} />
-              <Stat label="尺寸" value={selectedOrgan.sizeMm.join('×')} unit="mm" />
+              <div className="organ-size-stat">
+                <Stat label="尺寸" value={selectedOrgan.sizeMm.join(' × ')} unit="mm" />
+              </div>
               <Stat label="编码" value={selectedOrgan.code} />
             </div>
             <div className="organ-actions">
@@ -307,6 +316,13 @@ export default function OrganLibraryView({ notify }) {
                 半透明
               </button>
             </div>
+            <div className="organ-view-grid">
+              <button type="button" className={view === 'anterior' ? 'active' : ''} onClick={() => selectView('anterior')}>前面观</button>
+              <button type="button" className={view === 'posterior' ? 'active' : ''} onClick={() => selectView('posterior')}>后面观</button>
+              <button type="button" className={view === 'left' ? 'active' : ''} onClick={() => selectView('left')}>左侧观</button>
+              <button type="button" className={view === 'right' ? 'active' : ''} onClick={() => selectView('right')}>右侧观</button>
+            </div>
+            <p className="organ-frame-note">放射学惯例：前面观时患者右侧位于图像左侧。</p>
             <Slider
               label="透明度 OPACITY"
               value={opacity}
@@ -326,9 +342,10 @@ export default function OrganLibraryView({ notify }) {
               <div><span>单位</span><b>{ORGAN_LIBRARY.frame.units}</b></div>
               <div><span>标准编码</span><b>{ORGAN_LIBRARY.organs.length + Object.keys(ORGAN_LIBRARY.standardCodes).length} 项</b></div>
               <div><span>心脏子结构</span><b>{Object.keys(ORGAN_LIBRARY.segLabelMap).join(', ')}</b></div>
-              <div><span>几何来源</span><b>{selectedOrgan.mesh?.type === 'glb' ? '演示 GLB' : '标准参考几何'}</b></div>
+              <div><span>几何来源</span><b>{selectedOrgan.mesh?.type === 'glb' ? '解剖 GLB' : '标准参考几何'}</b></div>
             </div>
             <p className="organ-frame-note">{ORGAN_LIBRARY.frame.description}</p>
+            <p className="organ-source-note">{selectedOrgan.source}</p>
           </Section>
 
           <div className="cta-disclaimer">

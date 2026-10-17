@@ -32,11 +32,12 @@ Every clinically meaningful output is advisory:
 
 ## 3. Standard organ atlas
 
-The built-in organ library (`shared/organ_library.json`) is **reference
-geometry** for orientation, teaching, registration placeholders and UI
-standardisation. It is not derived from the patient and must never be displayed
-as patient anatomy. The only patient-specific 3D mesh is the one produced by the
-segmentation pipeline and stored in `MeshRecord`.
+The built-in organ library (`shared/organ_library.json`) contains **anatomically
+derived reference meshes** for orientation, teaching, registration placeholders
+and UI standardisation. They come from BodyParts3D 4.0 and the HuBMAP Human
+Reference Atlas (both CC BY 4.0), are not derived from the patient, and must
+never be displayed as patient anatomy. The only patient-specific 3D mesh is the
+one produced by the segmentation pipeline and stored in `MeshRecord`.
 
 Standard codes such as `HEART_LV` or `AORTA` are internal catalogue identifiers,
 not a certified terminology binding. Do not claim SNOMED/RadLex/FMA compliance
