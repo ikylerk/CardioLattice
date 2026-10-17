@@ -122,10 +122,12 @@ queued → validating → anonymizing → building_volume → segmenting
 
 `shared/organ_library.json` 是参考器官编码、系统、颜色、标准位置和心脏标签映射的唯一来源。
 
-- 前端：`src/three/organGeometry.js` 构建参考网格；`OrganLibraryEngine` 在 z 轴向上的 RAS 场景中以毫米渲染。
-- 后端：`server/app/organ_library.py` 加载并校验同一份 JSON。`GET /api/organs` 返回这套几何，名称、说明、来源和坐标系描述都是 `{"code", "params"}`。它不返回显示用的句子，也不读取 `Accept-Language`。分割来源包含 `standard_label_map`（例如 `LV → HEART_LV`）。
-- 目录有版本（`organ-atlas/v1`）。改动已发布的编码是破坏性变更；应提升版本并保持映射稳定。
-- 非心脏器官明确标为参考几何。可以用有许可的 GLB 逐个替换，而不改变目录契约。
+- 解剖参考网格在 `src/assets/organs/*.glb`，由 `OrganLibraryEngine` 通过 `import.meta.glob` 加载；GLB 顶点已经在共享的 `RAS_ORGAN_REFERENCE` 坐标系中。
+- 来源：BodyParts3D 4.0（心、胃、胆囊、主动脉、下腔静脉、气管、脊柱）和 HuBMAP HRA v1.1（肝、肺、肾、脾、胰），均为 CC BY 4.0。HRA 器官用共享标志点求出的统一缩放和平移对齐到 BodyParts3D 坐标系。
+- `src/three/organGeometry.js` 仍是缺失资源时的程序化回退，并明确标为参考几何。
+- 后端：`server/app/organ_library.py` 加载并校验同一份 JSON。`GET /api/organs` 把名称、说明、来源、许可、机构和坐标系描述返回为 `{"code", "params"}`。它不读取 `Accept-Language`。分割来源包含 `standard_label_map`（例如 `LV → HEART_LV`）。
+- 目录版本为 `organ-atlas/v2`。改动已发布的编码是破坏性变更；应提升版本并保持映射稳定。
+- 器官 GLB 为 CC BY 4.0，不在仓库 MIT 许可之内。见 `src/assets/organs/ATTRIBUTION.md`。
 
 ## 10. 部署路径
 
@@ -143,7 +145,7 @@ API 不读取 `Accept-Language`。
 
 报告草稿由上传、演示、选择序列和重新运行流水线的请求生成。查询参数为 `lang=en` 或 `lang=zh`。省略则为 `en`。其他值返回 HTTP 400 `{"detail": {"code": "INVALID_LANG", "params": {"lang": "<value>"}}}`。
 
-草稿写入 `content.language` 和 `content.provenance.language`，读取和批准都不会改写。仍使用旧键 `lang` 的已存报告，以及没有语言字段的已存报告，都按保存内容原样返回。审计链仍只记录报告 id、操作者和动作。
+草稿写入 `content.lang` 和 `content.provenance.lang`，读取和批准都不会改写。没有 `lang` 字段的已存报告按保存内容原样返回。审计链仍只记录报告 id、操作者和动作。
 
 `lang=en` 保存：“Research prototype, not a medical device. This project is not certified by NMPA / FDA / CE, and outputs must not be used for clinical diagnosis, treatment decisions, or medico-legal purposes. All data in demo mode is procedurally synthesized.”
 

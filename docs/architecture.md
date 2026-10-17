@@ -129,17 +129,24 @@ Local-lite is intentionally unauthenticated. Before real data:
 `shared/organ_library.json` is the single source of truth for reference organ
 codes, systems, colours, canonical placement and cardiac label mappings.
 
-- Frontend: `src/three/organGeometry.js` builds the reference meshes;
-  `OrganLibraryEngine` renders them in a z-up RAS scene with millimetre units.
+- Anatomical reference meshes live in `src/assets/organs/*.glb` and are loaded
+  by `OrganLibraryEngine` via `import.meta.glob`; the GLB vertices are already
+  in the shared `RAS_ORGAN_REFERENCE` frame.
+- Sources: BodyParts3D 4.0 (heart, stomach, gallbladder, aorta, IVC, trachea,
+  spine) and HuBMAP HRA v1.1 (liver, lungs, kidneys, spleen, pancreas), both
+  CC BY 4.0. The HRA organs are aligned to the BodyParts3D frame with a uniform
+  scale + translation solved from shared landmarks.
+- `src/three/organGeometry.js` remains as a procedural fallback for missing
+  assets; it is explicitly labelled reference geometry.
 - Backend: `server/app/organ_library.py` loads and validates the same JSON.
-  `GET /api/organs` returns that geometry with names, notes, sources, and the
-  frame description as `{"code", "params"}`. It does not return display
-  sentences and it ignores `Accept-Language`. Segmentation provenance includes
+  `GET /api/organs` returns names, notes, sources, licences, institutions, and
+  the frame description as `{"code", "params"}`. It ignores `Accept-Language`.
+  Segmentation provenance includes
   `standard_label_map` (for example `LV → HEART_LV`).
-- The catalog is versioned (`organ-atlas/v1`). Changing a published code is a
+- The catalog is versioned (`organ-atlas/v2`). Changing a published code is a
   breaking change; bump the version and keep the mapping stable.
-- Non-cardiac organs are deliberately labelled as reference geometry. They can
-  be replaced with licensed GLB models without changing the catalog contract.
+- The organ GLBs are CC BY 4.0 and are not covered by the repository MIT licence.
+  See `src/assets/organs/ATTRIBUTION.md`.
 
 ## 10. Deployment path
 
@@ -165,10 +172,10 @@ requests. The query parameter is `lang=en` or `lang=zh`. Omitting it means
 `en`. Any other value is HTTP 400
 `{"detail": {"code": "INVALID_LANG", "params": {"lang": "<value>"}}}`.
 
-The draft is stored with `content.language` and `content.provenance.language`
-and is not rewritten on read or after approval. A stored report that still has
-the old `lang` key, or that has no language field, is returned as stored. The
-audit chain still records the report id, actor, and action.
+The draft is stored with `content.lang` and `content.provenance.lang` and is
+not rewritten on read or after approval. A stored report with no `lang` field
+is returned as stored. The audit chain still records the report id, actor, and
+action.
 
 `lang=en` stores: "Research prototype, not a medical device. This project is
 not certified by NMPA / FDA / CE, and outputs must not be used for clinical

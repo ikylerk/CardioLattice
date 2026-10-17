@@ -26,7 +26,7 @@ M1 replaces the “demo” with a verifiable data path:
 | Chamber volume measurements | ✅ Implemented | Voxel count × voxel volume, with method / source / validation_status |
 | Structured report draft | ✅ Implemented | Template-generated; every conclusion cites a measurement; clinician approval is written to the audit chain |
 | Audit hash chain | ✅ Implemented | Events for de-identification, volume build, pipeline, and report approval |
-| Standard organ library | ✅ Implemented | 14 built-in reference organs, stable codes, RAS frame, exportable catalog |
+| Standard organ library | ✅ Implemented | 14 anatomical reference organs, stable codes, RAS frame, exportable catalog |
 | LLM-assisted reporting (Claude) | 🚧 M2 | Language over structured facts only; it does not diagnose on its own. Interface and checks are designed |
 | Coronary lumen / stenosis / FFR-CT | 🚧 M3–M4 | No validated model is connected. The UI shows `not_computed` and does not invent a number |
 | Longitudinal comparison / prediction | 🚧 M3 | Registration and delta first. No “future event probability” until a model is validated |
@@ -136,13 +136,14 @@ Every measurement includes:
 The sidebar “Organ library” shows a built-in, versioned set of reference models:
 
 - heart, both lungs, trachea, liver, gallbladder, stomach, spleen, pancreas, both kidneys, aorta, inferior vena cava, and spine — 14 organs;
-- one `RAS_BODY_CENTER` frame, millimetres (+x right, +y anterior, +z superior);
-- each organ has a stable `code`, system, colour, standard size and centre, geometry type, and source;
-- system filter, show/hide, focus, translucency, screenshot, and JSON catalog export;
+- anatomical meshes: heart, stomach, gallbladder, aorta, inferior vena cava, trachea, and spine from **BodyParts3D 4.0**; liver, lungs, kidneys, spleen, and pancreas from **HuBMAP HRA v1.1**;
+- one `RAS_ORGAN_REFERENCE` frame, millimetres (+x right, +y anterior, +z superior), origin at the centre of the reference set;
+- each organ has a stable `code`, system, colour, mesh size and centre, and source;
+- system filter, show/hide, focus, solid/translucent, anterior/posterior/left/right views, screenshot, and JSON catalog export;
 - cardiac segmentation labels map through `standardLabelMap` to codes such as `HEART_LV` and `AORTA`;
-- frontend and backend share `shared/organ_library.json`. `GET /api/organs` returns the same geometry with human-readable fields replaced by `{"code", "params"}`. It does not return the Chinese or English display strings, and it ignores `Accept-Language`.
+- frontend and backend share `shared/organ_library.json`. `GET /api/organs` returns the same geometry with names, notes, sources, licences, and institutions as `{"code", "params"}`. It ignores `Accept-Language`.
 
-> These are **standard reference geometry** for orientation, teaching, registration placeholders, and UI standardisation. They are not patient anatomy and must not be used for diagnosis. A later version can replace each shape with a clearly licensed organ GLB without changing the codes.
+> These are **reference anatomy**, not patient anatomy, and must not be used for diagnosis or measurement. The organ GLBs are **CC BY 4.0**, separate from the repository MIT licence. See [`src/assets/organs/ATTRIBUTION.md`](src/assets/organs/ATTRIBUTION.md).
 
 This version provides the catalog, the viewer, and the code mapping. Registering the atlas onto a patient volume is later work, and even then it is only for orientation and quality control.
 
@@ -178,7 +179,7 @@ A structured report is created by `POST /api/studies`, `POST /api/studies/demo`,
 
 Example: `POST /api/studies/demo?lang=zh`.
 
-The draft is stored with `content.language` and `content.provenance.language`. Later reads and approval do not rewrite it. A stored report that still has the old `lang` key, or that has no language field, is returned as stored. The audit chain still records only the report id, actor, and action.
+The draft is stored with `content.lang` and `content.provenance.lang`. Later reads and approval do not rewrite it. A stored report with no `lang` field is returned as stored. The audit chain still records only the report id, actor, and action.
 
 English disclaimer, stored when `lang=en`:
 
@@ -265,6 +266,7 @@ See [`docs/roadmap.md`](docs/roadmap.md) and [`docs/architecture.md`](docs/archi
 ## Third-party licences
 
 - Demo 3D heart surface: **“Realistic Human Heart”** by [neshallads](https://sketchfab.com/neshallads), CC BY 4.0. The licence text is in `src/assets/heart-license.txt`.
+- Standard organ models: **BodyParts3D 4.0** (DBCLS, CC BY 4.0) and **HuBMAP Human Reference Atlas v1.1** (CC BY 4.0). Licence and adaptations are in `src/assets/organs/ATTRIBUTION.md`.
 - Three.js (MIT), React (MIT), Lucide (ISC).
 - Coronary centerlines follow the original CardioScope teaching model.
 - Repository code: MIT (see `LICENSE`).

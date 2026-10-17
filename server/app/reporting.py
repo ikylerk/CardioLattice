@@ -201,7 +201,7 @@ def template_report(study: Study, measurements: list[Measurement], lang: str) ->
         "schema_version": "report/v1",
         "study_id": study.id,
         "status": "draft",
-        "language": lang,
+        "lang": lang,
         "subject": {
             "pseudonym": subject.pseudonym if subject else None,
             "sex": subject.sex if subject else None,
@@ -241,6 +241,6 @@ def template_report(study: Study, measurements: list[Measurement], lang: str) ->
             "model": None,
             "prompt_version": "report_v1",
             "measurement_ids": [item.id for item in measurements],
-            "language": lang,
+            "lang": lang,
         },
     }

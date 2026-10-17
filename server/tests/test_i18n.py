@@ -62,14 +62,14 @@ def test_template_report_is_frozen_in_the_requested_language():
     english = template_report(study, measurements, "en")
     chinese = template_report(study, measurements, "zh")
 
-    assert english["language"] == "en"
-    assert chinese["language"] == "zh"
-    assert "lang" not in english
-    assert "lang" not in chinese
-    assert english["provenance"]["language"] == "en"
-    assert chinese["provenance"]["language"] == "zh"
-    assert "lang" not in english["provenance"]
-    assert "lang" not in chinese["provenance"]
+    assert english["lang"] == "en"
+    assert chinese["lang"] == "zh"
+    assert "language" not in english
+    assert "language" not in chinese
+    assert english["provenance"]["lang"] == "en"
+    assert chinese["provenance"]["lang"] == "zh"
+    assert "language" not in english["provenance"]
+    assert "language" not in chinese["provenance"]
     assert english["disclaimer"] == DISCLAIMER_EN
     assert chinese["disclaimer"] == DISCLAIMER_ZH
     assert "不是医疗器械" in chinese["disclaimer"]
@@ -143,14 +143,14 @@ def test_demo_lang_en_zh_default_and_legacy_report():
         default_bundle = default.json()["study"]
         _assert_codes(default_bundle)
         default_report = default_bundle["reports"][0]["content"]
-        assert default_report["language"] == "en"
-        assert "lang" not in default_report
+        assert default_report["lang"] == "en"
+        assert "language" not in default_report
         assert default_report["disclaimer"] == DISCLAIMER_EN
         assert _CJK.search(str(default_bundle["measurements"])) is None
         assert _CJK.search(str(default_bundle["jobs"])) is None
 
         explicit = client.post("/api/studies/demo?lang=en")
-        assert explicit.json()["study"]["reports"][0]["content"]["language"] == "en"
+        assert explicit.json()["study"]["reports"][0]["content"]["lang"] == "en"
         assert explicit.json()["study"]["reports"][0]["content"]["disclaimer"] == DISCLAIMER_EN
 
         created = client.post("/api/studies/demo?lang=zh", headers={"Accept-Language": "en"})
@@ -158,10 +158,10 @@ def test_demo_lang_en_zh_default_and_legacy_report():
         bundle = created.json()["study"]
         _assert_codes(bundle)
         content = bundle["reports"][0]["content"]
-        assert content["language"] == "zh"
-        assert content["provenance"]["language"] == "zh"
-        assert "lang" not in content
-        assert "lang" not in content["provenance"]
+        assert content["lang"] == "zh"
+        assert content["provenance"]["lang"] == "zh"
+        assert "language" not in content
+        assert "language" not in content["provenance"]
         assert content["disclaimer"] == DISCLAIMER_ZH
         assert "本检查为程序化合成的 DICOM 夹具" in str(content)
         study_id = bundle["study"]["id"]
@@ -181,7 +181,7 @@ def test_demo_lang_en_zh_default_and_legacy_report():
         )
         assert approved.status_code == 200
         assert approved.json()["content"]["disclaimer"] == DISCLAIMER_ZH
-        assert approved.json()["content"]["language"] == "zh"
+        assert approved.json()["content"]["lang"] == "zh"
 
         db = SessionLocal()
         try:

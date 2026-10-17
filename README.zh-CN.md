@@ -25,7 +25,7 @@ M1 把「演示」换成了可验证的数据链路：
 | 腔室容积测量 | ✅ 已实现 | 体素数 × 体素体积，带 method / source / validation_status |
 | 结构化报告草稿 | ✅ 已实现 | 模板生成；每个结论引用 measurement；医生批准后写入审计链 |
 | 审计哈希链 | ✅ 已实现 | 去标识、体数据、流水线、报告批准等事件 |
-| 标准器官模型库 | ✅ 已实现 | 14 个内置参考器官、统一编码、RAS 坐标系、可导出目录 |
+| 标准器官模型库 | ✅ 已实现 | 14 个解剖参考器官、统一编码、RAS 坐标系、可导出目录 |
 | LLM 辅助报告（Claude） | 🚧 M2 | 只对结构化事实做语言化，不独立下诊断；接口与校验已设计 |
 | 冠脉管腔/狭窄/FFR-CT | 🚧 M3–M4 | 未接入经过验证的模型，UI 显示 `not_computed`，不编造数值 |
 | 纵向对比/预测 | 🚧 M3 | 先做配准与 delta；没有验证模型前不展示“未来事件概率” |
@@ -135,13 +135,14 @@ queued → validating → anonymizing → building_volume
 侧栏「器官模型库」提供一套内置、可版本化的标准参考模型：
 
 - 心脏、左右肺、气管、肝、胆囊、胃、脾、胰腺、左右肾、主动脉、下腔静脉、脊柱，共 14 个器官；
-- 统一使用 `RAS_BODY_CENTER` 坐标系，单位 mm（+x 右、+y 前、+z 上）；
-- 每个器官有稳定 `code`、系统分类、颜色、标准尺寸/中心、几何类型与来源说明；
-- 支持系统筛选、单器官显示/隐藏、聚焦、半透明模式、截图和 JSON 目录导出；
+- 使用真实解剖参考网格：心、胃、胆囊、主动脉、下腔静脉、气管、脊柱来自 **BodyParts3D 4.0**；肝、肺、肾、脾、胰来自 **HuBMAP HRA v1.1**；
+- 统一使用 `RAS_ORGAN_REFERENCE` 坐标系，单位 mm（+x 右、+y 前、+z 上），原点位于参考器官集合中心；
+- 每个器官有稳定 `code`、系统分类、颜色、实际网格尺寸/中心与来源说明；
+- 支持系统筛选、单器官显示/隐藏、聚焦、实体/半透明、前面观/后面观/左侧观/右侧观、截图和 JSON 目录导出；
 - 心脏分割标签通过 `standardLabelMap` 映射到 `HEART_LV`、`AORTA` 等标准代码；
-- 前后端共用 `shared/organ_library.json`。`GET /api/organs` 返回同一套几何，但名称、说明和来源都是 `{"code", "params"}`，不返回中文或英文显示句，也不读取 `Accept-Language`。
+- 前后端共用 `shared/organ_library.json`。`GET /api/organs` 返回同一套几何，但名称、说明、来源、许可和机构都是 `{"code", "params"}`，不读取 `Accept-Language`。
 
-> 这些是**标准参考几何**，用于方位、教学、配准占位和界面标准化；不是患者解剖，不能用于诊断。后续可逐个替换为有明确授权的真实器官 GLB，而不改变编码。
+> 这些是**解剖参考模型**，不是患者解剖，不能用于诊断或测量。器官 GLB 采用 **CC BY 4.0** 授权，与仓库代码的 MIT 授权分开；详见 [`src/assets/organs/ATTRIBUTION.zh-CN.md`](src/assets/organs/ATTRIBUTION.zh-CN.md)。
 
 当前版本提供标准目录、可视化和编码映射；把图谱配准到患者体数据属于后续工作，并且只能用于方位与质控，不能用于推导患者测量。
 
@@ -177,7 +178,7 @@ queued → validating → anonymizing → building_volume
 
 示例：`POST /api/studies/demo?lang=zh`。
 
-草稿写入 `content.language` 和 `content.provenance.language`。之后的读取和批准都不会改写正文。仍使用旧键 `lang` 的已存报告，以及没有语言字段的已存报告，都按保存内容原样返回。审计链仍只记录报告 id、操作者和动作。
+草稿写入 `content.lang` 和 `content.provenance.lang`。之后的读取和批准都不会改写正文。没有 `lang` 字段的已存报告按保存内容原样返回。审计链仍只记录报告 id、操作者和动作。
 
 `lang=en` 时保存的英文免责声明：
 
@@ -264,6 +265,7 @@ docs/                       架构、临床边界、路线图
 ## 第三方授权
 
 - 演示 3D 心脏表面：**“Realistic Human Heart”** by [neshallads](https://sketchfab.com/neshallads)，CC BY 4.0；授权文本见 `src/assets/heart-license.txt`。
+- 标准器官模型：**BodyParts3D 4.0**（DBCLS，CC BY 4.0）与 **HuBMAP Human Reference Atlas v1.1**（CC BY 4.0）；授权与改编说明见 `src/assets/organs/ATTRIBUTION.zh-CN.md`。
 - Three.js（MIT）、React（MIT）、Lucide（ISC）。
 - 冠脉中心线参考原始 CardioScope 教学模型数据。
 - 仓库代码：MIT（见 `LICENSE`）。

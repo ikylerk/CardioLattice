@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+from pathlib import Path
+
+import numpy as np
+import trimesh
 from fastapi.testclient import TestClient
 
 import re
@@ -32,18 +36,46 @@ def test_organ_api_returns_codes_not_text():
         assert data == same.json()
         assert data == public_catalog()
         assert data["version"] == ORGAN_LIBRARY["version"]
-        assert data["frame"]["name"] == "RAS_BODY_CENTER"
-        assert data["frame"]["description"] == coded("FRAME_RAS_BODY_CENTER")
+        assert data["version"] == "organ-atlas/v2"
+        assert data["frame"]["name"] == "RAS_ORGAN_REFERENCE"
+        assert data["frame"]["description"] == coded("FRAME_RAS_ORGAN_REFERENCE")
         assert _CJK.search(response.text) is None
         assert len(data["organs"]) == len(ORGAN_LIBRARY["organs"])
         heart = next(item for item in data["organs"] if item["code"] == "HEART")
+        lung = next(item for item in data["organs"] if item["code"] == "LUNG_R")
         assert heart["name"] == coded("HEART")
         assert "en" not in heart
-        assert heart["source"] == coded("SOURCE_DEMO_HEART_GLB")
-        assert heart["note"] == coded("NOTE_HEART_NORMALIZED_SURFACE")
+        assert heart["source"] == coded("SOURCE_BODYPARTS3D")
+        assert heart["note"] == coded("NOTE_ANATOMICAL_REFERENCE")
+        assert lung["source"] == coded("SOURCE_HUBMAP_HRA")
         assert heart["system"] == "cardiovascular"
         systems = {item["id"]: item for item in data["systems"]}
         assert systems["cardiovascular"]["name"] == coded("cardiovascular")
         assert "en" not in systems["cardiovascular"]
         assert data["standardCodes"]["HEART_LV"]["name"] == coded("HEART_LV")
-        assert data["standardCodes"]["CORONARY_CALCIFICATION"]["name"] == coded("CORONARY_CALCIFICATION")
+        sources = {item["id"]: item for item in data["sources"]}
+        assert sources["bodyparts3d"]["name"] == coded("SOURCE_NAME_BODYPARTS3D")
+        assert sources["bodyparts3d"]["institution"] == coded("INSTITUTION_DBCLS")
+        assert sources["bodyparts3d"]["license"] == coded("LICENSE_CC_BY_4_0")
+        assert sources["hra"]["name"] == coded("SOURCE_NAME_HUBMAP_HRA")
+        assert sources["hra"]["institution"] == coded("INSTITUTION_HUBMAP")
+        assert "CC BY" not in response.text
+
+
+def test_organ_glb_assets_exist_and_load():
+    project = Path(__file__).resolve().parents[2]
+    assert ORGAN_LIBRARY["version"] == "organ-atlas/v2"
+    assert ORGAN_LIBRARY["frame"]["name"] == "RAS_ORGAN_REFERENCE"
+    for organ in ORGAN_LIBRARY["organs"]:
+        if not organ.get("renderable"):
+            continue
+        assert organ["mesh"]["type"] == "glb"
+        assert "CC BY 4.0" in organ["source"]
+        path = project / "src" / "assets" / organ["mesh"]["asset"]
+        assert path.exists(), f"missing organ asset {path}"
+        scene = trimesh.load(str(path), force="scene")
+        assert len(scene.geometry) > 0
+        bounds = np.asarray(scene.bounds, dtype=float)
+        assert np.isfinite(bounds).all()
+        size = bounds[1] - bounds[0]
+        assert size.max() > 10.0, f"{organ['code']} has an implausible size {size}"

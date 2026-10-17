@@ -47,27 +47,25 @@ def catalog() -> dict:
 # Human sentences in the JSON stay in the file for the frontend bundle.
 # The API returns these codes instead.
 _SOURCE_BY_TEXT = {
-    "Demo surface: Realistic Human Heart by neshallads, CC BY 4.0; reference placement": "SOURCE_DEMO_HEART_GLB",
-    "Standard reference ellipsoid": "SOURCE_REFERENCE_ELLIPSOID",
-    "Standard reference tube": "SOURCE_REFERENCE_TUBE",
-    "Standard reference stack": "SOURCE_REFERENCE_STACK",
+    "BodyParts3D 4.0 (DBCLS, CC BY 4.0); selected surfaces, simplified": "SOURCE_BODYPARTS3D",
+    "HuBMAP Human Reference Atlas v1.1 male (CC BY 4.0); selected surfaces, simplified, aligned to the BodyParts3D reference frame": "SOURCE_HUBMAP_HRA",
 }
 
-_NOTE_BY_ORGAN = {
-    "HEART": "NOTE_HEART_NORMALIZED_SURFACE",
-    "LUNG_R": "NOTE_LUNG_R_ORIENTATION",
-    "LUNG_L": "NOTE_LUNG_L_SIZE",
-    "TRACHEA": "NOTE_REFERENCE_GEOMETRY",
-    "LIVER": "NOTE_LIVER_NOT_SEGMENTS",
-    "GALLBLADDER": "NOTE_REFERENCE_GEOMETRY",
-    "STOMACH": "NOTE_STOMACH_ORIENTATION",
-    "SPLEEN": "NOTE_REFERENCE_GEOMETRY",
-    "PANCREAS": "NOTE_REFERENCE_GEOMETRY",
-    "KIDNEY_R": "NOTE_KIDNEY_R_LOWER",
-    "KIDNEY_L": "NOTE_REFERENCE_GEOMETRY",
-    "AORTA": "NOTE_AORTA_NOT_CENTERLINE",
-    "IVC": "NOTE_REFERENCE_GEOMETRY",
-    "SPINE": "NOTE_SPINE_ORIENTATION",
+_NOTE_BY_TEXT = {
+    "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md.": "NOTE_ANATOMICAL_REFERENCE",
+}
+
+_SOURCE_CATALOG = {
+    "bodyparts3d": {
+        "name": "SOURCE_NAME_BODYPARTS3D",
+        "institution": "INSTITUTION_DBCLS",
+        "license": "LICENSE_CC_BY_4_0",
+    },
+    "hra": {
+        "name": "SOURCE_NAME_HUBMAP_HRA",
+        "institution": "INSTITUTION_HUBMAP",
+        "license": "LICENSE_CC_BY_4_0",
+    },
 }
 
 
@@ -79,10 +77,38 @@ def _source_coded(organ: dict) -> dict:
 
 
 def _note_coded(organ: dict) -> dict:
-    code = _NOTE_BY_ORGAN.get(organ["code"])
+    code = _NOTE_BY_TEXT.get(organ.get("note", ""))
     if code:
         return coded(code)
     return coded("NOTE_ORGAN", code=organ["code"])
+
+
+def _sources_public() -> list:
+    output = []
+    for item in ORGAN_LIBRARY.get("sources", []):
+        known = _SOURCE_CATALOG.get(item.get("id"))
+        if known:
+            output.append(
+                {
+                    "id": item["id"],
+                    "name": coded(known["name"]),
+                    "institution": coded(known["institution"]),
+                    "license": coded(known["license"]),
+                    "url": item.get("url"),
+                }
+            )
+            continue
+        source_id = item.get("id", "")
+        output.append(
+            {
+                "id": source_id,
+                "name": coded("SOURCE_NAME", id=source_id),
+                "institution": coded("INSTITUTION", id=source_id),
+                "license": coded("LICENSE", id=source_id),
+                "url": item.get("url"),
+            }
+        )
+    return output
 
 
 def _organ_public(organ: dict) -> dict:
@@ -124,6 +150,7 @@ def public_catalog() -> dict:
             code: {"name": coded(code), "system": item["system"]}
             for code, item in STANDARD_CODES.items()
         },
+        "sources": _sources_public(),
     }
 
 
