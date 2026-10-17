@@ -1,5 +1,7 @@
 # Clinical boundaries and safety
 
+[中文](clinical-boundaries.zh-CN.md)
+
 > This is a research prototype. It is not a medical device and must not be used
 > for diagnosis, treatment decisions, triage, or legal purposes.
 
@@ -70,3 +72,8 @@ Clinical deployment requires a separate regulatory pathway (for example NMPA
 software registration in China, or FDA/CE equivalent) including software life
 cycle, risk management, clinical evaluation, and post-market surveillance.
 Nothing in this repository substitutes for that process.
+
+API disclaimer text keeps this English sentence in full: "Research prototype.
+Not for clinical diagnosis or treatment decisions." A Chinese response repeats
+that sentence and then the Chinese equivalent. It does not replace the English
+sentence or soften it.

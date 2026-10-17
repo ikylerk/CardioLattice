@@ -13,8 +13,10 @@ from sqlalchemy.orm import Session
 from .. import audit
 from ..config import settings
 from ..db import SessionLocal, get_db
+from ..i18n import Lang, present, t
 from ..ingest import create_study_from_paths, enqueue_pipeline, new_study_id, prepare_upload
 from ..models import AuditEvent, Job, Report, Study, utcnow
+from ..pipeline import make_pipeline_job
 from ..schemas import job_out, report_out, study_bundle, study_summary
 from ..storage import storage
 
@@ -29,11 +31,11 @@ class ApproveRequest(BaseModel):
     approvedBy: str = settings.default_actor
 
 
-def _bundle(db: Session, study_id: str):
+def _bundle(db: Session, study_id: str, lang: str):
     study = db.get(Study, study_id)
     if study is None:
-        raise HTTPException(status_code=404, detail="study not found")
-    return study_bundle(study)
+        raise HTTPException(status_code=404, detail=t("http.study_not_found", lang))
+    return study_bundle(study, lang)
 
 
 @router.get("/health")
@@ -49,16 +51,18 @@ def health():
 
 @router.get("/studies")
 def list_studies(
+    lang: Lang,
     limit: int = Query(default=50, ge=1, le=200),
     db: Session = Depends(get_db),
 ):
     studies = db.scalars(select(Study).order_by(Study.created_at.desc()).limit(limit)).all()
-    return {"items": [study_summary(item) for item in studies]}
+    return {"items": [study_summary(item, lang) for item in studies]}
 
 
 @router.post("/studies", status_code=202)
 def upload_study(
     background_tasks: BackgroundTasks,
+    lang: Lang,
     files: list[UploadFile] = File(...),
     db: Session = Depends(get_db),
 ):
@@ -73,25 +77,30 @@ def upload_study(
             source="upload",
             fixture_meta=None,
             background_tasks=background_tasks,
+            language=lang,
         )
     except ValueError as exc:
         db.rollback()
         storage.delete_study(study_id)
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise HTTPException(status_code=400, detail=present(str(exc), lang)) from exc
     except Exception as exc:  # noqa: BLE001
         db.rollback()
         storage.delete_study(study_id)
-        raise HTTPException(status_code=500, detail=f"ingest failed: {exc}") from exc
+        raise HTTPException(
+            status_code=500,
+            detail=t("http.ingest_failed", lang, detail=present(str(exc), lang)),
+        ) from exc
     job_id = job.id if job else None
     db.expire_all()
     study = db.get(Study, study_id)
     job = db.get(Job, job_id) if job_id else None
-    return {"study": study_bundle(study), "job": job_out(job) if job else None}
+    return {"study": study_bundle(study, lang), "job": job_out(job, lang) if job else None}
 
 
 @router.post("/studies/demo", status_code=202)
 def create_demo_study(
     background_tasks: BackgroundTasks,
+    lang: Lang,
     db: Session = Depends(get_db),
 ):
     """Generate a synthetic DICOM fixture server-side and run the real pipeline.
@@ -115,25 +124,29 @@ def create_demo_study(
             source="demo",
             fixture_meta={"labels_path": meta["labels_path"], "kind": meta["kind"]},
             background_tasks=background_tasks,
+            language=lang,
         )
     except ValueError as exc:
         db.rollback()
         storage.delete_study(study_id)
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise HTTPException(status_code=400, detail=present(str(exc), lang)) from exc
     except Exception as exc:  # noqa: BLE001
         db.rollback()
         storage.delete_study(study_id)
-        raise HTTPException(status_code=500, detail=f"demo fixture failed: {exc}") from exc
+        raise HTTPException(
+            status_code=500,
+            detail=t("http.demo_failed", lang, detail=present(str(exc), lang)),
+        ) from exc
     job_id = job.id if job else None
     db.expire_all()
     study = db.get(Study, study_id)
     job = db.get(Job, job_id) if job_id else None
-    return {"study": study_bundle(study), "job": job_out(job) if job else None}
+    return {"study": study_bundle(study, lang), "job": job_out(job, lang) if job else None}
 
 
 @router.get("/studies/{study_id}")
-def get_study(study_id: str, db: Session = Depends(get_db)):
-    return _bundle(db, study_id)
+def get_study(study_id: str, lang: Lang, db: Session = Depends(get_db)):
+    return _bundle(db, study_id, lang)
 
 
 @router.post("/studies/{study_id}/select-series")
@@ -141,18 +154,19 @@ def select_series(
     study_id: str,
     body: SeriesSelection,
     background_tasks: BackgroundTasks,
+    lang: Lang,
     db: Session = Depends(get_db),
 ):
     study = db.get(Study, study_id)
     if study is None:
-        raise HTTPException(status_code=404, detail="study not found")
+        raise HTTPException(status_code=404, detail=t("http.study_not_found", lang))
     chosen = next((item for item in study.series if item.id == body.seriesId), None)
     if chosen is None:
-        raise HTTPException(status_code=404, detail="series not found in this study")
+        raise HTTPException(status_code=404, detail=t("http.series_not_found", lang))
     for item in study.series:
         item.is_selected = item.id == chosen.id
     study.status = "queued"
-    job = Job(study_id=study.id, type="pipeline", state="queued", stage="queued", message="Queued")
+    job = make_pipeline_job(study.id, lang)
     db.add(job)
     audit.record(
         db,
@@ -163,39 +177,40 @@ def select_series(
     )
     db.commit()
     enqueue_pipeline(background_tasks, study_id, job.id)
-    return {"study": study_bundle(study), "job": job_out(job)}
+    return {"study": study_bundle(study, lang), "job": job_out(job, lang)}
 
 
 @router.post("/studies/{study_id}/pipeline", status_code=202)
 def rerun_pipeline(
     study_id: str,
     background_tasks: BackgroundTasks,
+    lang: Lang,
     db: Session = Depends(get_db),
 ):
     study = db.get(Study, study_id)
     if study is None:
-        raise HTTPException(status_code=404, detail="study not found")
+        raise HTTPException(status_code=404, detail=t("http.study_not_found", lang))
     if not any(item.is_selected for item in study.series):
-        raise HTTPException(status_code=400, detail="no series selected")
+        raise HTTPException(status_code=400, detail=t("http.no_series_selected", lang))
     study.status = "queued"
-    job = Job(study_id=study.id, type="pipeline", state="queued", stage="queued", message="Queued")
+    job = make_pipeline_job(study.id, lang)
     db.add(job)
     audit.record(db, study_id=study.id, actor=settings.default_actor, action="pipeline_requested")
     db.commit()
     enqueue_pipeline(background_tasks, study_id, job.id)
-    return {"job": job_out(job)}
+    return {"job": job_out(job, lang)}
 
 
 @router.get("/jobs/{job_id}")
-def get_job(job_id: str, db: Session = Depends(get_db)):
+def get_job(job_id: str, lang: Lang, db: Session = Depends(get_db)):
     job = db.get(Job, job_id)
     if job is None:
-        raise HTTPException(status_code=404, detail="job not found")
-    return job_out(job)
+        raise HTTPException(status_code=404, detail=t("http.job_not_found", lang))
+    return job_out(job, lang)
 
 
 @router.get("/studies/{study_id}/events")
-async def study_events(study_id: str):
+async def study_events(study_id: str, lang: Lang):
     async def stream():
         last = None
         deadline = asyncio.get_event_loop().time() + 15 * 60
@@ -205,7 +220,7 @@ async def study_events(study_id: str):
                 job = db.scalars(
                     select(Job).where(Job.study_id == study_id).order_by(Job.created_at.desc()).limit(1)
                 ).first()
-                payload = job_out(job) if job else {"state": "waiting", "progress": 0, "stage": "waiting"}
+                payload = job_out(job, lang) if job else {"state": "waiting", "progress": 0, "stage": "waiting"}
                 text = json.dumps(payload, ensure_ascii=False)
                 if text != last:
                     yield f"event: progress\ndata: {text}\n\n"
@@ -244,10 +259,10 @@ def get_audit(study_id: str, db: Session = Depends(get_db)):
 
 
 @router.delete("/studies/{study_id}")
-def delete_study(study_id: str, db: Session = Depends(get_db)):
+def delete_study(study_id: str, lang: Lang, db: Session = Depends(get_db)):
     study = db.get(Study, study_id)
     if study is None:
-        raise HTTPException(status_code=404, detail="study not found")
+        raise HTTPException(status_code=404, detail=t("http.study_not_found", lang))
     db.query(AuditEvent).filter(AuditEvent.study_id == study_id).delete()
     db.delete(study)
     db.commit()
@@ -260,13 +275,14 @@ def approve_report(
     study_id: str,
     report_id: str,
     body: ApproveRequest,
+    lang: Lang,
     db: Session = Depends(get_db),
 ):
     report = db.get(Report, report_id)
     if report is None or report.study_id != study_id:
-        raise HTTPException(status_code=404, detail="report not found")
+        raise HTTPException(status_code=404, detail=t("http.report_not_found", lang))
     if report.status == "approved":
-        return report_out(report)
+        return report_out(report, lang)
     report.status = "approved"
     report.approved_by = body.approvedBy
     report.approved_at = utcnow()
@@ -278,10 +294,10 @@ def approve_report(
         payload={"report_id": report.id},
     )
     db.commit()
-    return report_out(report)
+    return report_out(report, lang)
 
 
 @router.get("/studies/{study_id}/files/{relative_path:path}")
-def forbid_raw_files(study_id: str, relative_path: str):
+def forbid_raw_files(study_id: str, relative_path: str, lang: Lang):
     # Raw DICOM is deliberately not exposed. Only derived assets have routes.
-    raise HTTPException(status_code=404, detail="not found")
+    raise HTTPException(status_code=404, detail=t("http.not_found", lang))

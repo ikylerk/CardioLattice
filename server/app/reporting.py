@@ -1,11 +1,51 @@
 from __future__ import annotations
 
+from .i18n import (
+    contains_cjk,
+    disclaimer,
+    measurement_label,
+    measurement_reason,
+    normalize_lang,
+    t,
+)
 from .models import Measurement, Study
 
 
-def template_report(study: Study, measurements: list[Measurement]) -> dict:
+def annotate_report_language(content: dict) -> dict:
+    """Return report content for an API response without rewriting stored text.
+
+    Documents that already record ``language`` are returned as stored, including
+    legacy Chinese reports tagged ``zh-CN``. A legacy document with no language
+    is copied and marked; the database row is left untouched.
+    """
+    if not isinstance(content, dict):
+        return content
+    if content.get("language"):
+        return content
+    marked = dict(content)
+    blob = _flatten_text(content)
+    marked["language"] = "zh-CN" if contains_cjk(blob) else "en"
+    return marked
+
+
+def _flatten_text(value) -> str:
+    if isinstance(value, str):
+        return value
+    if isinstance(value, dict):
+        return " ".join(_flatten_text(item) for item in value.values())
+    if isinstance(value, list):
+        return " ".join(_flatten_text(item) for item in value)
+    return ""
+
+
+def template_report(study: Study, measurements: list[Measurement], language: str | None = None) -> dict:
     """Deterministic report fallback. Every claim references a measurement or a
-    study fact; no value is invented."""
+    study fact; no value is invented.
+
+    ``language`` is the request language at generation time. The resulting
+    document is stored as-is and is not translated on later reads.
+    """
+    lang = normalize_lang(language)
     subject = study.subject
     computed = [item for item in measurements if item.status == "computed" and item.value is not None]
     unavailable = [item for item in measurements if item.status != "computed"]
@@ -13,7 +53,12 @@ def template_report(study: Study, measurements: list[Measurement]) -> dict:
     summary_claims = [
         {
             "id": "c_summary_1",
-            "text": f"检查类型：{study.description or study.modality}；数据来源：{study.source}。",
+            "text": t(
+                "report.claim.study_type",
+                lang,
+                description=study.description or study.modality,
+                source=study.source,
+            ),
             "type": "study_fact",
             "evidence_refs": [],
         }
@@ -22,7 +67,7 @@ def template_report(study: Study, measurements: list[Measurement]) -> dict:
         summary_claims.append(
             {
                 "id": "c_summary_2",
-                "text": "本检查为程序化合成的 DICOM 夹具，用于验证影像处理链路，不代表真实患者。",
+                "text": t("report.claim.demo_fixture", lang),
                 "type": "limitation",
                 "evidence_refs": [],
             }
@@ -30,10 +75,18 @@ def template_report(study: Study, measurements: list[Measurement]) -> dict:
 
     measurement_claims = []
     for index, item in enumerate(computed, start=1):
+        unit = f" {item.unit}" if item.unit else ""
         measurement_claims.append(
             {
                 "id": f"c_measure_{index}",
-                "text": f"{item.label}：{item.value:.2f} {item.unit or ''}（{item.method}）。",
+                "text": t(
+                    "report.claim.measurement",
+                    lang,
+                    label=measurement_label(item.code, lang, item.label),
+                    value=f"{item.value:.2f}",
+                    unit=unit,
+                    method=item.method,
+                ),
                 "type": "observation",
                 "evidence_refs": [item.id],
             }
@@ -41,26 +94,32 @@ def template_report(study: Study, measurements: list[Measurement]) -> dict:
 
     limitation_claims = []
     for index, item in enumerate(unavailable, start=1):
+        reason = measurement_reason(item.code, lang, item.reason) or t("measurement.missing_reason", lang)
         limitation_claims.append(
             {
                 "id": f"c_limitation_{index}",
-                "text": f"{item.label}未计算：{item.reason or '缺少已验证的输入或模型。'}",
+                "text": t(
+                    "report.claim.not_computed",
+                    lang,
+                    label=measurement_label(item.code, lang, item.label),
+                    reason=reason,
+                ),
                 "type": "limitation",
                 "evidence_refs": [item.id],
             }
         )
 
     sections = [
-        {"id": "summary", "title": "检查摘要", "claims": summary_claims},
-        {"id": "measurements", "title": "定量测量", "claims": measurement_claims},
-        {"id": "limitations", "title": "局限与未计算项", "claims": limitation_claims},
+        {"id": "summary", "title": t("report.section.summary", lang), "claims": summary_claims},
+        {"id": "measurements", "title": t("report.section.measurements", lang), "claims": measurement_claims},
+        {"id": "limitations", "title": t("report.section.limitations", lang), "claims": limitation_claims},
     ]
 
     return {
         "schema_version": "report/v1",
         "study_id": study.id,
         "status": "draft",
-        "language": "zh-CN",
+        "language": lang,
         "subject": {
             "pseudonym": subject.pseudonym if subject else None,
             "sex": subject.sex if subject else None,
@@ -76,7 +135,7 @@ def template_report(study: Study, measurements: list[Measurement]) -> dict:
         "impression": [
             {
                 "id": "i1",
-                "text": "当前为研究原型输出，仅包含可由分割掩膜确定的测量；未提供狭窄、FFR-CT 或基于单时相的 EF。",
+                "text": t("report.impression", lang),
                 "evidence_refs": [],
                 "status": "research_only",
             }
@@ -84,21 +143,22 @@ def template_report(study: Study, measurements: list[Measurement]) -> dict:
         "recommendations": [
             {
                 "id": "r1",
-                "text": "如需功能或血流动力学评估，请补充相应检查；所有结果需由医生复核。",
+                "text": t("report.recommendation", lang),
                 "category": "research_follow_up",
                 "evidence_refs": [],
             }
         ],
         "limitations": [
-            "研究原型，非临床诊断依据。",
-            "未接入经过验证的冠脉管腔/狭窄模型。",
-            "单时相 CTA 不能计算 EF/SV。",
+            t("report.limitation.prototype", lang),
+            t("report.limitation.no_lumen_model", lang),
+            t("report.limitation.single_phase", lang),
         ],
-        "disclaimer": "Research prototype. Not for clinical diagnosis or treatment decisions.",
+        "disclaimer": disclaimer(lang),
         "provenance": {
             "generator": "template",
             "model": None,
             "prompt_version": "report_v1",
             "measurement_ids": [item.id for item in measurements],
+            "language": lang,
         },
     }

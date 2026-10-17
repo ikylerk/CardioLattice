@@ -1,5 +1,7 @@
 # Architecture
 
+[中文](architecture.zh-CN.md)
+
 ## 1. Goals and non-goals
 
 **Goal:** make the path from a raw CCTA DICOM series to a traceable 3D model and structured report real and testable, without fabricating clinical AI outputs.
@@ -131,3 +133,25 @@ Local-lite is intentionally unauthenticated. Before real data:
 
 The storage/queue interfaces are deliberately narrow so the production
 implementations can be added without changing the imaging pipeline.
+
+## 10. Languages
+
+Human-readable responses follow the `Accept-Language` header. The only
+recognized values are `en` and `zh`. A missing header, `zh-CN`, or any other
+tag returns English.
+
+Translated text is limited to report prose, measurement labels, `not_computed`
+reasons, series-selection reasons, pipeline messages, model descriptions, and
+error messages. `code` values, field names, enums (`status`, `stage`, `method`,
+`source`), and numbers are unchanged.
+
+A newly generated report is stored in the request language (`content.language`
+is `en` or `zh`) and is not translated on later reads. Labels and reasons in a
+study bundle follow the current request, so an English request does not receive
+Chinese labels or reasons. A legacy report that is Chinese-only is returned
+unchanged. If it has no `language` field, the response marks it `zh-CN` without
+writing that mark back to the database. Approved report documents are not
+rewritten.
+
+For `zh`, the disclaimer repeats the full English sentence and then the Chinese
+sentence. The English sentence is not shortened.

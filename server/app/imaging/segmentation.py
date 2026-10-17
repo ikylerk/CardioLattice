@@ -11,13 +11,13 @@ from .dicom import PreviewVolume, align_labels_to_preview, load_label_image
 # Canonical research label map. These are structure identifiers, not clinical
 # diagnoses. Synthetic fixtures and future models must use the same labels.
 LABELS = {
-    1: ("LV", "左心室腔"),
-    2: ("RV", "右心室腔"),
-    3: ("LA", "左心房腔"),
-    4: ("RA", "右心房腔"),
-    5: ("AO", "主动脉"),
-    6: ("MYO", "心肌"),
-    7: ("CALC", "钙化"),
+    1: ("LV", "Left ventricular cavity"),
+    2: ("RV", "Right ventricular cavity"),
+    3: ("LA", "Left atrial cavity"),
+    4: ("RA", "Right atrial cavity"),
+    5: ("AO", "Aorta"),
+    6: ("MYO", "Myocardium"),
+    7: ("CALC", "Calcification"),
 }
 
 
@@ -42,7 +42,7 @@ def segment_synthetic(study, preview: PreviewVolume) -> SegmentationResult:
     meta = study.fixture_meta or {}
     labels_path = meta.get("labels_path")
     if not labels_path or not Path(labels_path).exists():
-        raise ValueError("synthetic_ground_truth requires fixture_meta.labels_path")
+        raise ValueError("error.labels_path_required")
 
     array, _ = load_label_image(Path(labels_path), resample_mm=settings.resample_mm)
     aligned = align_labels_to_preview(array, preview)
@@ -51,7 +51,7 @@ def segment_synthetic(study, preview: PreviewVolume) -> SegmentationResult:
     quality = {
         "label_values_present": present,
         "voxels": int(np.count_nonzero(aligned)),
-        "warnings": ["Synthetic ground truth — not a clinical segmentation"],
+        "warnings": ["quality.synthetic_ground_truth"],
     }
     return SegmentationResult(
         label_array=aligned,
@@ -63,7 +63,7 @@ def segment_synthetic(study, preview: PreviewVolume) -> SegmentationResult:
         provenance={
             "algorithm": "synthetic_ground_truth",
             "labels_path": str(labels_path),
-            "note": "Generated from the same phantom definition as the DICOM fixture.",
+            "note": "note.synthetic_fixture",
         },
     )
 
@@ -107,6 +107,6 @@ def segment_totalsegmentator(hu_nifti: Path, preview: PreviewVolume) -> Segmenta
         model_id="totalsegmentator",
         model_version="2.4.0",
         validation_status="research",
-        quality={"warnings": ["Research adapter; not validated for stenosis or FFR."]},
+        quality={"warnings": ["quality.totalsegmentator_research"]},
         provenance={"algorithm": "totalsegmentator", "task": "heartchambers_highres"},
     )

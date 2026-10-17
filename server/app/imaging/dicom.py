@@ -14,6 +14,8 @@ from pydicom.dataset import Dataset
 from pydicom.uid import generate_uid
 from scipy import ndimage
 
+from ..i18n import SERIES_DESCRIPTION_KEYWORDS_ZH, keyed
+
 # Headers we intentionally keep for research/QC. Everything else is removed or
 # replaced by the de-identification profile below.
 KEEP_ATTRIBUTES = {
@@ -221,35 +223,37 @@ def _as_float(value) -> float | None:
 def score_series(info: SeriesInfo) -> tuple[float, list[str]]:
     score = 0.0
     reasons: list[str] = []
-    text = f"{info.description} {' '.join(str(item) for item in (info.reasons or []))}".lower()
 
     if info.modality == "CT":
         score += 10
-        reasons.append("CT modality")
+        reasons.append("series.ct_modality")
     if info.image_orientation:
         score += 2
-        reasons.append("axial geometry")
+        reasons.append("series.axial_geometry")
     if info.slice_thickness is not None and info.slice_thickness <= 1.25:
         score += 3
-        reasons.append("thin slices")
-    if any(keyword in info.description.lower() for keyword in ("ccta", "cardiac", "coronary", "heart", "冠脉", "心脏")):
+        reasons.append("series.thin_slices")
+    description = info.description.lower()
+    if any(keyword in description for keyword in ("ccta", "cardiac", "coronary", "heart")) or any(
+        keyword in info.description for keyword in SERIES_DESCRIPTION_KEYWORDS_ZH
+    ):
         score += 4
-        reasons.append("cardiac protocol description")
+        reasons.append("series.cardiac_protocol")
     if info.contrast_agent:
         score += 2
-        reasons.append("contrast agent present")
+        reasons.append("series.contrast_present")
     if info.slice_count >= 64:
         score += 2
-        reasons.append(">=64 slices")
+        reasons.append("series.enough_slices")
     if info.slice_count < 16:
         score -= 50
-        reasons.append("too few slices")
+        reasons.append("series.too_few_slices")
     if any(keyword in info.description.lower() for keyword in ("scout", "topogram", "localizer", "dose", "report")):
         score -= 100
-        reasons.append("excluded non-diagnostic series")
+        reasons.append("series.excluded_nondiagnostic")
     if info.modality != "CT":
         score -= 50
-        reasons.append("non-CT series")
+        reasons.append("series.non_ct")
     return score, reasons
 
 
@@ -370,7 +374,7 @@ def load_series(files: list[Path], *, resample_mm: float = 1.5, salt: str = "loc
         datasets.append((key, ds))
 
     if len(datasets) < 2:
-        raise ValueError("selected series has fewer than two slices with pixel data")
+        raise ValueError("error.too_few_slices")
     datasets.sort(key=lambda item: item[0])
     first = datasets[0][1]
 
@@ -382,7 +386,7 @@ def load_series(files: list[Path], *, resample_mm: float = 1.5, salt: str = "loc
     arrays = []
     for _, ds in datasets:
         if int(ds.Rows) != rows or int(ds.Columns) != cols:
-            raise ValueError("inconsistent Rows/Columns within the selected series")
+            raise ValueError("error.inconsistent_dimensions")
         raw = ds.pixel_array.astype(np.float32)
         slope = _as_float(getattr(ds, "RescaleSlope", 1)) or 1.0
         intercept = _as_float(getattr(ds, "RescaleIntercept", 0)) or 0.0
@@ -567,12 +571,12 @@ def safe_extract_zip(archive: Path, target: Path, max_total_bytes: int) -> list[
                 continue
             name = Path(info.filename)
             if name.is_absolute() or ".." in name.parts:
-                raise ValueError("zip entry path traversal rejected")
+                raise ValueError("error.zip_traversal")
             if info.file_size > max_total_bytes:
-                raise ValueError("zip entry exceeds size limit")
+                raise ValueError("error.zip_entry_too_large")
             total += info.file_size
             if total > max_total_bytes:
-                raise ValueError("zip expands beyond the upload size limit")
+                raise ValueError("error.zip_expands_too_large")
         zf.extractall(target)
     extracted = [path for path in target.rglob("*") if path.is_file()]
     return extracted
@@ -627,5 +631,5 @@ def load_volume_bytes(path: Path, dims: list[int]) -> np.ndarray:
     data = np.fromfile(path, dtype=np.uint8)
     expected = int(np.prod(dims))
     if data.size != expected:
-        raise ValueError(f"volume byte size {data.size} does not match dims {dims}")
+        raise ValueError(keyed("error.volume_size", size=int(data.size), dims=list(dims)))
     return data.reshape((dims[2], dims[1], dims[0]))

@@ -22,7 +22,7 @@ class LocalStorage:
     def path_for(self, relative: str) -> Path:
         path = (self.root / relative).resolve()
         if self.root.resolve() not in path.parents and path != self.root.resolve():
-            raise ValueError("storage path escapes storage root")
+            raise ValueError("error.storage_escape")
         return path
 
     def relative(self, absolute: Path) -> str:

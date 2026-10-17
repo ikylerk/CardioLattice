@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .db import init_db
+from .i18n import Lang, disclaimer
 from .routes.assets import router as assets_router
 from .routes.reports import router as reports_router
 from .routes.studies import router as studies_router
@@ -23,7 +24,9 @@ app = FastAPI(
     version="0.1.0",
     description=(
         "Research prototype for DICOM ingestion, 3D reconstruction and human-reviewed "
-        "structured reporting. Not a medical device."
+        "structured reporting. Not a medical device. Not for clinical diagnosis or "
+        "treatment decisions. Human-readable text follows Accept-Language: en or zh. "
+        "A missing or unrecognized value defaults to English."
     ),
     lifespan=lifespan,
 )
@@ -49,10 +52,10 @@ app.include_router(reports_router)
 
 
 @app.get("/")
-def root():
+def root(lang: Lang):
     return {
         "name": "CardioScope Pro Research API",
         "status": "ok",
         "docs": "/docs",
-        "warning": "Research prototype. Not for clinical diagnosis or treatment decisions.",
+        "warning": disclaimer(lang),
     }

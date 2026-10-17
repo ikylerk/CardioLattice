@@ -1,5 +1,7 @@
 # Roadmap
 
+[中文](roadmap.zh-CN.md)
+
 ## M1 — Real data chain (current)
 
 - DICOM upload, safe extraction, series scoring and selection.

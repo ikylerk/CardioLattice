@@ -1,44 +1,46 @@
 # CardioLattice · CardioScope Pro
 
-面向心血管影像的**开源研究原型**：上传原始 CCTA DICOM → 去标识与体数据重建 → 3D 分割建模 → 可追溯的定量测量 → 结构化报告草稿 → 医生复核与审计。
+[中文](README.zh-CN.md)
 
-> **研究原型，不是医疗器械。** 本项目未取得 NMPA / FDA / CE 认证，输出不得用于临床诊断、治疗决策或医疗法律用途。演示模式中的数据全部为程序化合成数据。
+An **open-source research prototype** for cardiovascular imaging: upload a raw CCTA DICOM series → de-identification and volume reconstruction → 3D segmentation and modeling → traceable quantitative measurements → a structured report draft → clinician review and audit.
+
+> **Research prototype. Not a medical device.** This project is not cleared by NMPA, FDA, or CE. Outputs must not be used for clinical diagnosis, treatment decisions, or medico-legal purposes. All data in demo mode is procedurally synthesized.
 
 ---
 
-## 现在真正打通了什么
+## What actually works now
 
-M1 把「演示」换成了可验证的数据链路：
+M1 replaces the “demo” with a verifiable data path:
 
-| 能力 | 状态 | 说明 |
+| Capability | Status | Notes |
 | --- | --- | --- |
-| DICOM 上传（.zip / 多文件） | ✅ 已实现 | 支持未压缩与常见压缩传输语法（pydicom + pylibjpeg/gdcm） |
-| 序列识别与选择 | ✅ 已实现 | 按 modality、层厚、层数、协议描述打分；歧义时要求人工选择 |
-| 去标识与 UID 重映射 | ✅ 已实现 | PS3.15 风格基础轮廓；原始 DICOM 不经 API 暴露 |
-| HU 解码、层序/方向校正 | ✅ 已实现 | RescaleSlope/Intercept、LPS→RAS、各向同性重采样 |
-| 体数据预览与 MPR/VRT | ✅ 已实现 | 任意 dims/spacing/huRange；浏览器端 MPR + WebGL 光线步进 |
-| 分割 → marching cubes → GLB | ✅ 已实现 | 合成夹具 ground truth；真实上传可选 TotalSegmentator |
-| 腔室容积测量 | ✅ 已实现 | 体素数 × 体素体积，带 method / source / validation_status |
-| 结构化报告草稿 | ✅ 已实现 | 模板生成；每个结论引用 measurement；医生批准后写入审计链 |
-| 审计哈希链 | ✅ 已实现 | 去标识、体数据、流水线、报告批准等事件 |
-| LLM 辅助报告（Claude） | 🚧 M2 | 只对结构化事实做语言化，不独立下诊断；接口与校验已设计 |
-| 冠脉管腔/狭窄/FFR-CT | 🚧 M3–M4 | 未接入经过验证的模型，UI 显示 `not_computed`，不编造数值 |
-| 纵向对比/预测 | 🚧 M3 | 先做配准与 delta；没有验证模型前不展示“未来事件概率” |
-| 真实造影（XA）/超声（TTE） | 🚧 后续 | API 模式下明确显示「该检查不可用」，演示模式保留 |
+| DICOM upload (`.zip` / multiple files) | ✅ Implemented | Uncompressed and common compressed transfer syntaxes (pydicom + pylibjpeg/gdcm) |
+| Series recognition and selection | ✅ Implemented | Scored by modality, slice thickness, slice count, and protocol description; ambiguous cases require a human choice |
+| De-identification and UID remapping | ✅ Implemented | PS3.15-style basic profile; raw DICOM is not exposed through the API |
+| HU decoding, slice order, and orientation | ✅ Implemented | RescaleSlope/Intercept, LPS→RAS, isotropic resampling |
+| Volume preview and MPR/VRT | ✅ Implemented | Arbitrary dims/spacing/huRange; browser MPR + WebGL ray marching |
+| Segmentation → marching cubes → GLB | ✅ Implemented | Synthetic-fixture ground truth; real uploads can optionally use TotalSegmentator |
+| Chamber volume measurements | ✅ Implemented | Voxel count × voxel volume, with method / source / validation_status |
+| Structured report draft | ✅ Implemented | Template-generated; every conclusion cites a measurement; clinician approval is written to the audit chain |
+| Audit hash chain | ✅ Implemented | Events for de-identification, volume build, pipeline, and report approval |
+| LLM-assisted reporting (Claude) | 🚧 M2 | Language over structured facts only; it does not diagnose on its own. Interface and checks are designed |
+| Coronary lumen / stenosis / FFR-CT | 🚧 M3–M4 | No validated model is connected. The UI shows `not_computed` and does not invent a number |
+| Longitudinal comparison / prediction | 🚧 M3 | Registration and delta first. No “future event probability” until a model is validated |
+| Real angiography (XA) / echocardiography (TTE) | 🚧 Later | API mode states that the study is unavailable. Demo mode keeps the teaching views |
 
-**最重要的边界**：单时相 CCTA 不能计算 EF/SV；Agatston 积分需要非增强钙化扫描；AHA 灌注/存活心肌不能只靠 CTA 推断；冠脉狭窄百分比必须来自经过独立验证的管腔模型。当前代码在这些项目上返回 `not_computed` 和原因。
+**The boundary that matters most:** a single-phase CCTA cannot compute EF/SV. The Agatston score requires a non-contrast calcium scan. AHA perfusion or viability cannot be inferred from CTA alone. A coronary stenosis percentage must come from an independently validated lumen model. The current code returns `not_computed` and a reason for these items.
 
 ---
 
-## 快速开始
+## Quick start
 
-### 1. 依赖
+### 1. Dependencies
 
 - Node.js 20+
 - Python 3.11+
 - [uv](https://docs.astral.sh/uv/)
 
-### 2. 启动本地 API 与前端
+### 2. Start the local API and the frontend
 
 ```bash
 npm install
@@ -46,46 +48,46 @@ npm run server:dev     # FastAPI: http://127.0.0.1:8000
 npm run dev:api        # Vite:    http://127.0.0.1:5183
 ```
 
-打开 `http://127.0.0.1:5183` → 侧栏「检查工作台」→「生成合成 CCTA 检查」。
-这会生成一套真实的合成 DICOM 序列，走完整的上传 → 去标识 → 体数据 → 分割 → GLB → 测量 → 报告链路。
+Open `http://127.0.0.1:5183` → sidebar “Study workbench” → “Generate synthetic CCTA study”.
+That builds a real synthetic DICOM series and runs upload → de-identification → volume → segmentation → GLB → measurements → report.
 
-也可以上传自己的 CCTA `.zip`（研究用途，仅限已获授权数据）。
+You can also upload your own CCTA `.zip` (research use, authorized data only).
 
-### 3. 纯离线演示（不启动后端）
-
-```bash
-npm run dev            # 自动探测不到 /api 时进入离线演示模式
-npm run build          # 单文件 dist/index.html，可双击打开
-```
-
-演示模式保留原有五个模块（三维解剖、冠脉造影、CT、超声、定量分析），所有数值明确标记为合成数据。
-
-### 4. 云端构建
+### 3. Offline demo (no backend)
 
 ```bash
-npm run build:cloud    # 正常代码分割，输出 dist-cloud/
+npm run dev            # falls back to the offline demo when /api is unreachable
+npm run build          # single-file dist/index.html; open it directly
 ```
 
-将 `dist-cloud/` 部署到静态托管，并把同源 `/api/*` 反向代理到 FastAPI。
+Demo mode keeps the original five modules (3D anatomy, coronary angiography, CT, echocardiography, quantitative analysis). Every number is explicitly marked as synthetic.
+
+### 4. Cloud build
+
+```bash
+npm run build:cloud    # normal code splitting; writes dist-cloud/
+```
+
+Deploy `dist-cloud/` to static hosting and reverse-proxy same-origin `/api/*` to FastAPI.
 
 ---
 
-## 架构
+## Architecture
 
 ```
 React + Vite + three.js
-        │  /api（同源，开发时 Vite proxy）
+        │  /api (same origin; Vite proxy in development)
         ▼
-FastAPI（server/）
-  ├─ SQLite（本地）/ Postgres（生产，规划中）
-  ├─ 本地文件存储（本地）/ S3 兼容对象存储（生产，规划中）
-  ├─ inline BackgroundTasks（本地）/ Redis + RQ worker（规划中）
+FastAPI (server/)
+  ├─ SQLite (local) / Postgres (production, planned)
+  ├─ local filesystem (local) / S3-compatible object storage (production, planned)
+  ├─ inline BackgroundTasks (local) / Redis + RQ worker (planned)
   ├─ pydicom + SimpleITK + scikit-image + trimesh
-  ├─ TotalSegmentator（可选真实分割）
-  └─ Anthropic SDK（M2，服务端密钥）
+  ├─ TotalSegmentator (optional real segmentation)
+  └─ Anthropic SDK (M2, server-side key)
 ```
 
-### 流水线阶段
+### Pipeline stages
 
 ```
 queued → validating → anonymizing → building_volume
@@ -93,18 +95,20 @@ queued → validating → anonymizing → building_volume
        → succeeded | failed
 ```
 
-### 坐标与单位
+`stage` stays this stable code. The human-readable `message` follows `Accept-Language`.
 
-- 内部统一 **RAS**（+x 右，+y 前，+z 头），单位毫米。
-- DICOM 输入为 LPS，在边界处转换。
-- 前端体数据按 `(z, y, x)` C-order 存储，MPR 按物理 spacing 计算纵横比。
-- GLB 网格已转换为场景单位；`scene_transform` 记录 mm → scene 的缩放与中心。
+### Coordinates and units
 
-### 数据模型（核心）
+- Internal space is **RAS** (+x right, +y anterior, +z superior), in millimetres.
+- DICOM input is LPS and is converted at the boundary.
+- The frontend volume is stored in `(z, y, x)` C-order. MPR aspect ratio uses physical spacing.
+- GLB meshes are already in scene units. `scene_transform` records the mm → scene scale and center.
+
+### Data model (core)
 
 `Subject → Study → Series → Volume / Segmentation / Mesh / Measurement / Report / Job / AuditEvent`
 
-每条测量都包含：
+Every measurement includes:
 
 ```js
 {
@@ -113,109 +117,118 @@ queued → validating → anonymizing → building_volume
   source,               // synthetic_ground_truth / model id
   validationStatus,     // synthetic / research / validated
   status,               // computed / not_computed
-  reason                // not_computed 时的人可读原因
+  reason                // human-readable reason when not_computed
 }
 ```
 
+`label` and `reason` are rendered in the request language. `code`, `method`, `source`, `status`, and `value` are not translated.
+
 ---
 
-## API（M1）
+## API (M1)
 
-| Method | Path | 说明 |
+Send `Accept-Language: en` or `Accept-Language: zh` on every request. A missing or unrecognized value, including `zh-CN`, returns English. Enums, `code` values, field names, and numbers are never translated.
+
+| Method | Path | Description |
 | --- | --- | --- |
-| GET | `/api/health` | 健康检查与当前分割适配器 |
-| GET | `/api/studies` | 检查列表 |
-| POST | `/api/studies` | 上传 DICOM（multipart，`.zip` 或多文件） |
-| POST | `/api/studies/demo` | 服务端生成合成 DICOM 并跑完整流水线 |
-| GET | `/api/studies/{id}` | 完整 study bundle |
-| POST | `/api/studies/{id}/select-series` | 人工选择 CCTA 序列 |
-| POST | `/api/studies/{id}/pipeline` | 重新运行 |
-| GET | `/api/studies/{id}/events` | SSE 进度 |
-| GET | `/api/studies/{id}/audit` | 审计事件 + 哈希链校验 |
-| DELETE | `/api/studies/{id}` | 删除检查与派生文件 |
-| GET | `/api/volumes/{id}/data` | 8-bit 体数据 |
-| GET | `/api/meshes/{id}/glb` | 患者 GLB |
-| GET | `/api/models` | 模型注册表与授权状态 |
-| POST | `/api/studies/{id}/reports/{reportId}/approve` | 医生批准报告 |
+| GET | `/api/health` | Health check and the current segmentation adapter |
+| GET | `/api/studies` | Study list |
+| POST | `/api/studies` | Upload DICOM (multipart, `.zip` or multiple files) |
+| POST | `/api/studies/demo` | Generate a synthetic DICOM study server-side and run the full pipeline |
+| GET | `/api/studies/{id}` | Full study bundle |
+| POST | `/api/studies/{id}/select-series` | Choose the CCTA series manually |
+| POST | `/api/studies/{id}/pipeline` | Run again |
+| GET | `/api/studies/{id}/events` | SSE progress |
+| GET | `/api/studies/{id}/audit` | Audit events and hash-chain verification |
+| DELETE | `/api/studies/{id}` | Delete the study and derived files |
+| GET | `/api/volumes/{id}/data` | 8-bit volume |
+| GET | `/api/meshes/{id}/glb` | Patient GLB |
+| GET | `/api/models` | Model registry and licence status |
+| POST | `/api/studies/{id}/reports/{reportId}/approve` | Clinician approves the report |
 
-交互式文档：启动后端后访问 `http://127.0.0.1:8000/docs`。
+A report is stored in the language of the request that generated it (`content.language` is `en` or `zh`). Later reads do not rewrite it. Labels, `not_computed` reasons, pipeline messages, and errors follow the current request. A legacy Chinese-only report is returned as stored. If it has no language field, the response marks `zh-CN` and does not write that mark back.
+
+For `zh`, disclaimer text repeats the full English sentence and then the Chinese sentence. The English sentence is not shortened.
+
+Interactive docs: after the backend is running, open `http://127.0.0.1:8000/docs`.
 
 ---
 
-## 测试
+## Tests
 
 ```bash
-npm run test:server    # pytest：DICOM、HU、方向、去标识、网格、API、审计
-npm run build          # 前端单文件构建回归
-npm run build:cloud    # 云端构建回归
+npm run test:server    # pytest: DICOM, HU, orientation, de-identification, mesh, API, audit, languages
+npm run build          # frontend single-file build regression
+npm run build:cloud    # cloud build regression
 ```
 
-后端测试使用**程序化合成 DICOM**，不下载外部数据集，也不接触真实患者数据。
+Backend tests use a **procedurally synthesized DICOM** series. They do not download an external dataset and they do not touch real patient data.
 
-公开数据验证（后续里程碑）：
+Public-data checks (later milestones):
 
-- **ImageCAS**：约 1000 例 CCTA，含冠脉体素标注；用于管腔分割的训练/验证。使用前核对 Kaggle/官方条款与再分发限制。
-- **ASOCA**：40 例标注 + 20 例测试；其挑战赛 DUA 限制商业使用，需逐项核对。
-- **TotalSegmentator**：代码 Apache-2.0，但 `heartchambers_highres`、`coronary_arteries` 等任务权重并非全部允许商用，必须在进入商业/临床路径前核对并按需取得授权。
+- **ImageCAS**: about 1000 CCTA cases with coronary voxel labels; training and validation for lumen segmentation. Check the Kaggle/official terms and redistribution limits before use.
+- **ASOCA**: 40 annotated cases + 20 test cases. The challenge DUA restricts commercial use; check it item by item.
+- **TotalSegmentator**: code is Apache-2.0, but task weights such as `heartchambers_highres` and `coronary_arteries` are not all cleared for commercial use. Review and license them before any commercial or clinical path.
 
-模型授权与验证状态记录在 `server/app/routes/assets.py` 的 `/api/models` 与 `docs/clinical-boundaries.md`。
+Model licence and validation state are recorded in `/api/models` (`server/app/routes/assets.py`) and in [`docs/clinical-boundaries.md`](docs/clinical-boundaries.md).
 
 ---
 
-## 项目结构
+## Project layout
 
 ```
-src/                        React 前端
-  api/                      fetch/upload/SSE 客户端
-  study/                    StudyContext、演示适配器
-  components/               工作台、CTA/MPR/VRT、患者 3D、分析、报告
+src/                        React frontend
+  api/                      fetch/upload/SSE client
+  study/                    StudyContext, demo adapter
+  components/               workbench, CTA/MPR/VRT, patient 3D, analysis, report
   three/                    HeartEngine / VolumeRenderer / AngioEngine
-  data/heart-data.json      演示用教学解剖数据
-server/                     FastAPI 后端
-  app/imaging/              DICOM 解析、体数据、分割、marching cubes
+  data/heart-data.json      teaching anatomy for the demo
+server/                     FastAPI backend
+  app/imaging/              DICOM parsing, volumes, segmentation, marching cubes
   app/routes/               studies / assets / reports
-  app/pipeline.py           异步流水线
-  app/audit.py              审计哈希链
-  scripts/                  合成 DICOM 生成器
+  app/i18n.py               en/zh text and Accept-Language lookup
+  app/pipeline.py           asynchronous pipeline
+  app/audit.py              audit hash chain
+  scripts/                  synthetic DICOM generator
   tests/                    pytest
-docs/                       架构、临床边界、路线图
+docs/                       architecture, clinical boundaries, roadmap
 ```
 
 ---
 
-## 安全与合规
+## Security and compliance
 
-- 本地开发无需鉴权；生产环境必须加 OIDC、RBAC、TLS、加密存储、短期签名 URL、日志脱敏。
-- 原始 DICOM 不通过 API 暴露；只提供派生体数据与网格。
-- 去标识化保留加盐哈希用于纵向关联；不能保证清除像素中的 burned-in PHI，真实数据必须有人工确认与伦理/数据使用协议。
-- **M1/M2 不应接收真实患者数据**，除非已完成治理评审。
-- 任何面向临床的发布都需要另行评估 NMPA 软件注册、数据合规与临床验证。
+- Local development has no authentication. Production must add OIDC, RBAC, TLS, encryption at rest, short-lived signed URLs, and log redaction.
+- Raw DICOM is not exposed through the API. Only derived volumes and meshes are.
+- De-identification keeps a salted hash for longitudinal linking. It cannot guarantee removal of burned-in PHI. Real data needs a human check and an ethics or data-use agreement.
+- **M1/M2 must not receive real patient data** unless a governance review is complete.
+- Any clinical release needs a separate assessment of NMPA software registration, data compliance, and clinical validation.
 
-详见 [`docs/clinical-boundaries.md`](docs/clinical-boundaries.md)。
+See [`docs/clinical-boundaries.md`](docs/clinical-boundaries.md).
 
 ---
 
-## 路线图
+## Roadmap
 
-| 里程碑 | 内容 |
+| Milestone | Contents |
 | --- | --- |
-| **M1（当前）** | 真实 DICOM → 体数据 → 分割/网格 → 可追溯测量 → 报告草稿 → 审计 |
-| M2 | Claude 辅助结构化报告、报告版本与逐条确认、TotalSegmentator 真实分割 |
-| M3 | 既往检查配准、纵向 delta、可比性警告 |
-| M4 | 冠脉管腔/狭窄模型、模型注册表、独立测试集验证 |
-| M5 | 云端加固、OIDC/RBAC、备份/监控、安全评审与治理门禁 |
+| **M1 (current)** | Real DICOM → volume → segmentation/mesh → traceable measurements → report draft → audit |
+| M2 | Claude-assisted structured reporting, report versions and per-claim confirmation, TotalSegmentator on real studies |
+| M3 | Prior-study registration, longitudinal delta, comparability warnings |
+| M4 | Coronary lumen/stenosis model, model registry, independent test-set validation |
+| M5 | Cloud hardening, OIDC/RBAC, backup/monitoring, security review and governance gates |
 
-详见 [`docs/roadmap.md`](docs/roadmap.md)。
+See [`docs/roadmap.md`](docs/roadmap.md) and [`docs/architecture.md`](docs/architecture.md).
 
 ---
 
-## 第三方授权
+## Third-party licences
 
-- 演示 3D 心脏表面：**“Realistic Human Heart”** by [neshallads](https://sketchfab.com/neshallads)，CC BY 4.0；授权文本见 `src/assets/heart-license.txt`。
-- Three.js（MIT）、React（MIT）、Lucide（ISC）。
-- 冠脉中心线参考原始 CardioScope 教学模型数据。
-- 仓库代码：MIT（见 `LICENSE`）。
+- Demo 3D heart surface: **“Realistic Human Heart”** by [neshallads](https://sketchfab.com/neshallads), CC BY 4.0. The licence text is in `src/assets/heart-license.txt`.
+- Three.js (MIT), React (MIT), Lucide (ISC).
+- Coronary centerlines follow the original CardioScope teaching model.
+- Repository code: MIT (see `LICENSE`).
 
-## 免责声明
+## Disclaimer
 
-本项目是研究原型，不构成医疗器械，不提供临床诊断或治疗建议。所有演示数据均为合成数据；所有模型输出均需医生复核。
+This project is a research prototype. It is not a medical device and it does not provide clinical diagnosis or treatment advice. All demo data is synthetic. Every model output must be reviewed by a physician.

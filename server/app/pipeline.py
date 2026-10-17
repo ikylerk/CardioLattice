@@ -19,6 +19,7 @@ from .imaging.dicom import (
 )
 from .imaging.mesh import build_glb, cavity_volumes
 from .imaging.segmentation import segment_synthetic, segment_totalsegmentator
+from .i18n import normalize_lang, t
 from .models import (
     Job,
     Measurement,
@@ -33,6 +34,26 @@ from .reporting import template_report
 from .storage import storage
 
 PIPELINE_VERSION = "m1.0"
+_VOLUME_CODES = ("LV", "RV", "LA", "RA")
+_NOT_COMPUTED = ("LV_EF", "STENOSIS_LAD", "FFR_CT", "CALCIUM_SCORE", "AHA_SEGMENTS")
+
+
+def make_pipeline_job(study_id: str, language: str | None) -> Job:
+    """Queue a pipeline job in the language of the request that started it."""
+    return Job(
+        study_id=study_id,
+        type="pipeline",
+        state="queued",
+        stage="queued",
+        message="stage.queued",
+        payload={"language": normalize_lang(language)},
+    )
+
+
+def _job_language(job: Job | None) -> str:
+    payload = job.payload if job is not None else None
+    stored = payload.get("language") if isinstance(payload, dict) else None
+    return normalize_lang(stored if isinstance(stored, str) else None)
 
 
 def _progress(db, job: Job, stage: str, progress: int, message: str) -> None:
@@ -46,7 +67,7 @@ def _progress(db, job: Job, stage: str, progress: int, message: str) -> None:
 
 def _selected_files(series) -> list[Path]:
     if not series.storage_dir:
-        raise ValueError("selected series has no stored files")
+        raise ValueError("error.series_no_files")
     root = storage.path_for(series.storage_dir)
     files: list[Path] = []
     for path in sorted(root.rglob("*")):
@@ -59,7 +80,7 @@ def _selected_files(series) -> list[Path]:
         if str(getattr(header, "SeriesInstanceUID", "")) == series.series_uid:
             files.append(path)
     if not files:
-        raise ValueError("no DICOM files found for the selected series")
+        raise ValueError("error.no_dicom_for_series")
     return files
 
 
@@ -79,15 +100,16 @@ def run_pipeline(study_id: str, job_id: str) -> None:
         study.status = "processing"
         study.error = None
         db.commit()
+        language = _job_language(job)
 
         selected = next((item for item in study.series if item.is_selected), None)
         if selected is None:
-            raise ValueError("no series selected; choose a CCTA series before running the pipeline")
+            raise ValueError("error.no_series_selected_pipeline")
 
-        _progress(db, job, "validating", 5, "Validating selected series")
+        _progress(db, job, "validating", 5, "stage.validating")
         files = _selected_files(selected)
 
-        _progress(db, job, "anonymizing", 15, "De-identifying and remapping UIDs")
+        _progress(db, job, "anonymizing", 15, "stage.anonymizing")
         deid_dir = storage.study_dir(study.id) / "deid"
         if deid_dir.exists():
             for path in deid_dir.glob("*"):
@@ -97,7 +119,7 @@ def run_pipeline(study_id: str, job_id: str) -> None:
         audit.record(db, study_id=study.id, actor=settings.default_actor, action="deidentify", payload={"files": len(deid_files)})
         db.commit()
 
-        _progress(db, job, "building_volume", 30, "Decoding pixels, resampling, building preview volume")
+        _progress(db, job, "building_volume", 30, "stage.building_volume")
         loaded = load_series(deid_files, resample_mm=settings.resample_mm, salt=settings.deid_salt)
         if study.subject:
             if not study.subject.sex:
@@ -146,7 +168,7 @@ def run_pipeline(study_id: str, job_id: str) -> None:
         )
         db.commit()
 
-        _progress(db, job, "segmenting", 55, "Segmenting cardiac structures")
+        _progress(db, job, "segmenting", 55, "stage.segmenting")
         segmentation_result = None
         if study.source == "demo" and (study.fixture_meta or {}).get("labels_path"):
             segmentation_result = segment_synthetic(study, preview)
@@ -186,7 +208,7 @@ def run_pipeline(study_id: str, job_id: str) -> None:
             db.add(segmentation)
             db.commit()
 
-        _progress(db, job, "meshing", 72, "Extracting surfaces and exporting GLB")
+        _progress(db, job, "meshing", 72, "stage.meshing")
         mesh_infos = []
         mesh_path = None
         scene_transform = None
@@ -214,21 +236,21 @@ def run_pipeline(study_id: str, job_id: str) -> None:
                 )
             db.commit()
 
-        _progress(db, job, "computing_metrics", 85, "Computing deterministic measurements")
+        _progress(db, job, "computing_metrics", 85, "stage.computing_metrics")
         measurements: list[Measurement] = []
         if segmentation_result is not None:
             volumes = cavity_volumes(segmentation_result.label_array, preview)
-            labels = {
-                "LV": "左心室腔容积（采集时相）",
-                "RV": "右心室腔容积（采集时相）",
-                "LA": "左心房腔容积（采集时相）",
-                "RA": "右心房腔容积（采集时相）",
-            }
             for code, value in volumes.items():
+                measurement_code = f"{code}_VOLUME"
+                label_key = (
+                    f"measurement.{measurement_code}.label"
+                    if code in _VOLUME_CODES
+                    else "measurement.volume_fallback.label"
+                )
                 measurement = Measurement(
                     study_id=study.id,
-                    code=f"{code}_VOLUME",
-                    label=labels.get(code, f"{code} 容积"),
+                    code=measurement_code,
+                    label=t(label_key, "en", code=code),
                     value=round(float(value), 2),
                     unit="mL",
                     method="voxel_count",
@@ -243,26 +265,20 @@ def run_pipeline(study_id: str, job_id: str) -> None:
                 db.add(measurement)
                 measurements.append(measurement)
 
-        unavailable = [
-            ("LV_EF", "左心室射血分数（EF）", "需要舒张末期与收缩末期两个时相；单时相 CTA 不可计算。"),
-            ("STENOSIS_LAD", "LAD 狭窄程度", "尚未接入经过验证的冠脉管腔/狭窄模型。"),
-            ("FFR_CT", "FFR-CT", "需要经过验证的 CFD 或血流动力学模型。"),
-            ("CALCIUM_SCORE", "Agatston 钙化积分", "需要非增强钙化扫描序列。"),
-            ("AHA_SEGMENTS", "AHA 17 段灌注/存活心肌", "仅凭 CTA 不能推断灌注或存活心肌。"),
-        ]
-        for code, label, reason in unavailable:
+        unavailable = list(_NOT_COMPUTED)
+        for code in unavailable:
             db.add(
                 Measurement(
                     study_id=study.id,
                     code=code,
-                    label=label,
+                    label=t(f"measurement.{code}.label", "en"),
                     value=None,
                     unit=None,
                     method="not_available",
                     source="none",
                     validation_status="not_computed",
                     status="not_computed",
-                    reason=reason,
+                    reason=t(f"measurement.{code}.reason", "en"),
                 )
             )
         db.commit()
@@ -286,7 +302,7 @@ def run_pipeline(study_id: str, job_id: str) -> None:
                 volume.markers = [
                     {
                         "id": "marker_calc_1",
-                        "label": "钙化灶（合成）",
+                        "label": "marker.calcification_synthetic",
                         "voxel": voxel,
                         "worldMm": world,
                         "findingId": None,
@@ -295,11 +311,11 @@ def run_pipeline(study_id: str, job_id: str) -> None:
                 ]
                 db.commit()
 
-        _progress(db, job, "drafting_report", 92, "Generating deterministic report draft")
+        _progress(db, job, "drafting_report", 92, "stage.drafting_report")
         report = Report(
             study_id=study.id,
             status="draft",
-            content=template_report(study, measurements),
+            content=template_report(study, measurements, language),
             generator="template",
         )
         db.add(report)
@@ -307,7 +323,7 @@ def run_pipeline(study_id: str, job_id: str) -> None:
         job.state = "succeeded"
         job.stage = "succeeded"
         job.progress = 100
-        job.message = "Pipeline completed"
+        job.message = "stage.succeeded"
         job.updated_at = utcnow()
         audit.record(
             db,
@@ -329,7 +345,7 @@ def run_pipeline(study_id: str, job_id: str) -> None:
             job.state = "failed"
             job.stage = "failed"
             job.error = str(exc)
-            job.message = "Pipeline failed"
+            job.message = "stage.failed"
             job.updated_at = utcnow()
         if study:
             audit.record(
