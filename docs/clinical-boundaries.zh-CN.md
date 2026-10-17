@@ -1,0 +1,75 @@
+# 临床边界与安全
+
+[English](clinical-boundaries.md)
+
+> **Research prototype, not a medical device.** This project is not certified by NMPA / FDA / CE, and outputs must not be used for clinical diagnosis, treatment decisions, or medico-legal purposes. All data in demo mode is procedurally synthesized.
+>
+> **研究原型，不是医疗器械。** 本项目未取得 NMPA / FDA / CE 认证，输出不得用于临床诊断、治疗决策或医疗法律用途。演示模式中的数据全部为程序化合成数据。
+
+## 1. 人在回路中
+
+每一项有临床意义的输出都只是参考：
+
+- 测量带有 `method`、`source` 和 `validationStatus`；
+- 报告在医生批准之前是**草稿**；
+- 批准写入带操作者和时间戳的审计事件；
+- AI 生成的文本（M2）必须引用测量 ID；没有引用的数字会被强制标为 `needs_review`。
+
+## 2. 哪些可以计算，哪些不能
+
+| 输出 | 状态 | 依据 / 限制 |
+| --- | --- | --- |
+| 采集时相的心腔容积 | 可计算 | 体素数 × 体素体积；必须标明时相 |
+| 左心室心肌质量 | 有条件 | 仅当存在心肌标签；假设 1.05 g/mL |
+| EDV / ESV / EF / SV | **不能由单时相 CTA 得出** | 需要舒张末期与收缩末期 |
+| Agatston 钙化积分 | **不能由对比增强 CCTA 得出** | 需要非增强钙化积分序列 |
+| 主动脉 / 肺动脉直径 | 后续 | 需要中心线与垂直截面 |
+| 冠脉中心线长度 / 血管掩膜体积 | 仅描述 | 粗模型；不是狭窄 |
+| 直径狭窄 / MLA | **未计算** | 需要经过验证的管腔模型 |
+| FFR-CT | **未计算** | 需要经过验证的 CFD 或机器学习压力模型 |
+| AHA 17 段灌注 / 存活心肌 | **未计算** | 需要灌注/代谢数据，不能只靠 CTA |
+| SYNTAX / MACE 风险 | **未计算** | 需要经过验证的风险模型和完整输入 |
+| 纵向变化 | M3 | 需要配准以及可比较的采集 |
+| 个体事件预测 | **不提供** | 没有经过验证的纵向模型；只显示趋势 |
+
+## 3. 标准器官图谱
+
+内置器官库（`shared/organ_library.json`）包含用于方位、教学、配准占位和界面标准化的**解剖参考网格**。它们来自 BodyParts3D 4.0 和 HuBMAP 人体参考图谱（均为 CC BY 4.0），不是从患者导出的，绝不能显示成患者解剖。唯一的患者三维网格是分割流水线生成并写入 `MeshRecord` 的那一个。
+
+`HEART_LV`、`AORTA` 这类标准编码是内部目录标识，不是经过认证的术语绑定。映射未经单独审查和许可时，不得声称符合 SNOMED、RadLex 或 FMA。
+
+`GET /api/organs` 以 `{"code", "params"}` 返回这些标识，不返回目录文件里的显示名称。
+
+## 4. 模型治理
+
+模型只有在满足以下条件后，才可以产生展示给用户的临床测量：
+
+1. 模型注册条目（名称、版本、权重哈希、预期用途、训练数据、已知失败模式、监管状态）；
+2. 外部验证集（分割：Dice/HD95；狭窄：与 QCA/IVUS 的一致性；FFR-CT：与有创 FFR 的一致性）；
+3. 稳健性检查（钙化、运动、支架、桥血管、对比剂时相、扫描仪与重建核差异）；
+4. 成文的模型卡，以及研究/临床状态标记。
+
+在此之前，输出为 `not_computed`，并由界面说明原因。
+
+### 许可说明
+
+- TotalSegmentator 代码为 Apache-2.0，但 `heartchambers_highres`、`coronary_arteries` 等任务权重并非一律允许商用。商业部署前必须逐项核对。
+- ASOCA 挑战赛数据协议限制使用（包括商业使用）；必须核对具体分发条款。
+- ImageCAS 在若干清单中被标为 Apache-2.0，但再分发前必须核对下载页条款。
+
+## 5. 数据治理
+
+- 没有获批的方案、伦理/IRB 审查和数据使用协议，不得把可识别的患者数据上传到本原型。
+- 去标识会去除常见 PHI 标签并重映射 UID，但不能可靠去除烧录在像素上的标注。真实数据需要操作者确认。
+- 原始上传保存在检查目录中以便重新处理；任何共享部署之前都要加上保留/删除策略。
+- 日志不得包含 PHI 或原始 DICOM 标签。
+
+## 6. 监管
+
+临床部署需要单独的监管路径（例如中国的 NMPA 软件注册，或 FDA/CE 的同等路径），包括软件生命周期、风险管理、临床评价和上市后监督。本仓库中的任何内容都不能代替该过程。
+
+`lang=en` 的报告草稿完整保存这句英文：“Research prototype, not a medical device. This project is not certified by NMPA / FDA / CE, and outputs must not be used for clinical diagnosis, treatment decisions, or medico-legal purposes. All data in demo mode is procedurally synthesized.”
+
+`lang=zh` 的报告草稿完整保存原文：“研究原型，不是医疗器械。本项目未取得 NMPA / FDA / CE 认证，输出不得用于临床诊断、治疗决策或医疗法律用途。演示模式中的数据全部为程序化合成数据。”
+
+两种文本互不替换、互不缩短。草稿保持生成时的语言。

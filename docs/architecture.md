@@ -1,5 +1,7 @@
 # Architecture
 
+[中文](architecture.zh-CN.md)
+
 ## 1. Goals and non-goals
 
 **Goal:** make the path from a raw CCTA DICOM series to a traceable 3D model and structured report real and testable, without fabricating clinical AI outputs.
@@ -136,8 +138,10 @@ codes, systems, colours, canonical placement and cardiac label mappings.
   scale + translation solved from shared landmarks.
 - `src/three/organGeometry.js` remains as a procedural fallback for missing
   assets; it is explicitly labelled reference geometry.
-- Backend: `server/app/organ_library.py` loads and validates the same JSON;
-  `GET /api/organs` exposes it; segmentation provenance includes
+- Backend: `server/app/organ_library.py` loads and validates the same JSON.
+  `GET /api/organs` returns names, notes, sources, licences, institutions, and
+  the frame description as `{"code", "params"}`. It ignores `Accept-Language`.
+  Segmentation provenance includes
   `standard_label_map` (for example `LV → HEART_LV`).
 - The catalog is versioned (`organ-atlas/v2`). Changing a published code is a
   breaking change; bump the version and keep the mapping stable.
@@ -153,3 +157,29 @@ codes, systems, colours, canonical placement and cardiac label mappings.
 
 The storage/queue interfaces are deliberately narrow so the production
 implementations can be added without changing the imaging pipeline.
+
+## 11. Languages
+
+The API does not read `Accept-Language`.
+
+Errors, `not_computed` reasons, pipeline `message`s, series-selection reasons,
+measurement labels, marker labels, segmentation warnings, and model
+`intendedUse` / `license` are `{"code", "params"}` objects. The frontend owns
+those strings. `stage` stays the step id (`validating`, `succeeded`, …).
+
+A report draft is created by the upload, demo, select-series, and pipeline
+requests. The query parameter is `lang=en` or `lang=zh`. Omitting it means
+`en`. Any other value is HTTP 400
+`{"detail": {"code": "INVALID_LANG", "params": {"lang": "<value>"}}}`.
+
+The draft is stored with `content.lang` and `content.provenance.lang` and is
+not rewritten on read or after approval. A stored report with no `lang` field
+is returned as stored. The audit chain still records the report id, actor, and
+action.
+
+`lang=en` stores: "Research prototype, not a medical device. This project is
+not certified by NMPA / FDA / CE, and outputs must not be used for clinical
+diagnosis, treatment decisions, or medico-legal purposes. All data in demo mode
+is procedurally synthesized."
+
+`lang=zh` stores the original: "研究原型，不是医疗器械。本项目未取得 NMPA / FDA / CE 认证，输出不得用于临床诊断、治疗决策或医疗法律用途。演示模式中的数据全部为程序化合成数据。"

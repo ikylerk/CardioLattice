@@ -1,5 +1,7 @@
 # Standard organ library
 
+[中文](organ-library.zh-CN.md)
+
 The organ library is the shared, versioned reference catalog used by both the
 React frontend and the FastAPI backend. It provides:
 
@@ -9,8 +11,10 @@ React frontend and the FastAPI backend. It provides:
   placeholders.
 
 The single source of truth is [`shared/organ_library.json`](../shared/organ_library.json).
-The backend exposes it at `GET /api/organs`; the frontend imports it and loads
-the GLBs in `src/assets/organs/`.
+That file still carries display names for the frontend bundle, which loads the
+GLBs in `src/assets/organs/`. `GET /api/organs` returns the same geometry and
+identifiers, with every human-readable field replaced by `{"code", "params"}`.
+The route ignores `Accept-Language`.
 
 > These are **reference anatomy**, not patient anatomy. They must not be used to
 > diagnose, measure a patient, or replace a validated segmentation model.
@@ -45,20 +49,20 @@ MIT licence. See [`src/assets/organs/ATTRIBUTION.md`](../src/assets/organs/ATTRI
 
 | Code | Organ | System | Source |
 | --- | --- | --- | --- |
-| `HEART` | 心脏 | cardiovascular | BodyParts3D |
-| `LUNG_R` | 右肺 | respiratory | HRA |
-| `LUNG_L` | 左肺 | respiratory | HRA |
-| `TRACHEA` | 气管 | respiratory | BodyParts3D |
-| `LIVER` | 肝脏 | digestive | HRA |
-| `GALLBLADDER` | 胆囊 | digestive | BodyParts3D |
-| `STOMACH` | 胃 | digestive | BodyParts3D |
-| `SPLEEN` | 脾脏 | digestive | HRA |
-| `PANCREAS` | 胰腺 | digestive | HRA |
-| `KIDNEY_R` | 右肾 | urinary | HRA |
-| `KIDNEY_L` | 左肾 | urinary | HRA |
-| `AORTA` | 主动脉 | cardiovascular | BodyParts3D |
-| `IVC` | 下腔静脉 | cardiovascular | BodyParts3D |
-| `SPINE` | 脊柱 | skeletal | BodyParts3D |
+| `HEART` | Heart | cardiovascular | BodyParts3D |
+| `LUNG_R` | Right lung | respiratory | HRA |
+| `LUNG_L` | Left lung | respiratory | HRA |
+| `TRACHEA` | Trachea | respiratory | BodyParts3D |
+| `LIVER` | Liver | digestive | HRA |
+| `GALLBLADDER` | Gallbladder | digestive | BodyParts3D |
+| `STOMACH` | Stomach | digestive | BodyParts3D |
+| `SPLEEN` | Spleen | digestive | HRA |
+| `PANCREAS` | Pancreas | digestive | HRA |
+| `KIDNEY_R` | Right kidney | urinary | HRA |
+| `KIDNEY_L` | Left kidney | urinary | HRA |
+| `AORTA` | Aorta | cardiovascular | BodyParts3D |
+| `IVC` | Inferior vena cava | cardiovascular | BodyParts3D |
+| `SPINE` | Spine | skeletal | BodyParts3D |
 
 ## Cardiac label mapping
 
@@ -67,17 +71,25 @@ maps those labels to stable standard codes:
 
 | Label | Standard code | Structure |
 | --- | --- | --- |
-| `LV` | `HEART_LV` | 左心室腔 |
-| `RV` | `HEART_RV` | 右心室腔 |
-| `LA` | `HEART_LA` | 左心房腔 |
-| `RA` | `HEART_RA` | 右心房腔 |
-| `AO` | `AORTA` | 主动脉 |
-| `MYO` | `HEART_MYOCARDIUM` | 心肌 |
-| `CALC` | `CORONARY_CALCIFICATION` | 冠脉钙化 |
+| `LV` | `HEART_LV` | Left ventricular cavity |
+| `RV` | `HEART_RV` | Right ventricular cavity |
+| `LA` | `HEART_LA` | Left atrial cavity |
+| `RA` | `HEART_RA` | Right atrial cavity |
+| `AO` | `AORTA` | Aorta |
+| `MYO` | `HEART_MYOCARDIUM` | Myocardium |
+| `CALC` | `CORONARY_CALCIFICATION` | Coronary calcification |
 
 The API exposes the mapping on each segmentation as `standardLabelMap`.
 
-## JSON schema
+## JSON file and API
+
+The file keeps display strings for the frontend import. `GET /api/organs`
+replaces them. A system name uses the system id as `code`. An organ name uses
+the organ code. A standard-structure name uses that structure code. Notes and
+sources, licences, and institutions use their own codes. `params` is `{}`
+unless a field has no dedicated code, in which case `params.code` is the organ
+code (or `params.id` is the source id). The response comes from
+`public_catalog()` and does not include the file's display sentences.
 
 ```json
 {
@@ -85,26 +97,30 @@ The API exposes the mapping on each segmentation as `standardLabelMap`.
   "frame": {
     "name": "RAS_ORGAN_REFERENCE",
     "units": "mm",
-    "description": "Origin at the centre of the reference organ set..."
+    "description": {"code": "FRAME_RAS_ORGAN_REFERENCE", "params": {}}
   },
-  "systems": [{ "id": "cardiovascular", "name": "心血管", "en": "Cardiovascular", "color": "#c45258" }],
+  "systems": [{
+    "id": "cardiovascular",
+    "name": {"code": "cardiovascular", "params": {}},
+    "color": "#c45258"
+  }],
   "organs": [{
     "code": "HEART",
-    "name": "心脏",
-    "en": "Heart",
+    "name": {"code": "HEART", "params": {}},
     "system": "cardiovascular",
-    "color": "#c45258",
-    "centerMm": [-25.1, 21.2, 110.3],
-    "sizeMm": [115.6, 106.3, 104.6],
-    "mesh": { "type": "glb", "asset": "organs/HEART.glb" },
-    "renderable": true,
-    "segLabels": ["LV", "RV", "LA", "RA", "MYO"],
-    "source": "BodyParts3D 4.0 (DBCLS, CC BY 4.0); selected surfaces, simplified",
-    "note": "Anatomical reference surface; not patient-specific."
+    "mesh": {"type": "glb", "asset": "organs/HEART.glb"},
+    "source": {"code": "SOURCE_BODYPARTS3D", "params": {}},
+    "note": {"code": "NOTE_ANATOMICAL_REFERENCE", "params": {}}
   }],
-  "segLabelMap": { "LV": "HEART_LV" },
-  "standardCodes": { "HEART_LV": { "name": "左心室腔", "system": "cardiovascular" } },
-  "sources": [{ "id": "bodyparts3d", "license": "CC BY 4.0" }]
+  "standardCodes": {
+    "HEART_LV": {"name": {"code": "HEART_LV", "params": {}}, "system": "cardiovascular"}
+  },
+  "sources": [{
+    "id": "bodyparts3d",
+    "name": {"code": "SOURCE_NAME_BODYPARTS3D", "params": {}},
+    "institution": {"code": "INSTITUTION_DBCLS", "params": {}},
+    "license": {"code": "LICENSE_CC_BY_4_0", "params": {}}
+  }]
 }
 ```
 

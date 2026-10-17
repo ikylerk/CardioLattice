@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .db import init_db
+from .reporting import DISCLAIMER_EN
 from .routes.assets import router as assets_router
 from .routes.reports import router as reports_router
 from .routes.studies import router as studies_router
@@ -23,7 +24,12 @@ app = FastAPI(
     version="0.1.0",
     description=(
         "Research prototype for DICOM ingestion, 3D reconstruction and human-reviewed "
-        "structured reporting. Not a medical device."
+        "structured reporting. "
+        + DISCLAIMER_EN
+        + " Errors, reasons, stage messages, series reasons, and measurement labels "
+        "are {code, params} objects. A report draft is generated once from the lang "
+        "query parameter (en or zh, default en) and stored as content.lang. "
+        "Stored reports are not rewritten on read."
     ),
     lifespan=lifespan,
 )
@@ -54,5 +60,5 @@ def root():
         "name": "CardioScope Pro Research API",
         "status": "ok",
         "docs": "/docs",
-        "warning": "Research prototype. Not for clinical diagnosis or treatment decisions.",
+        "warning": DISCLAIMER_EN,
     }

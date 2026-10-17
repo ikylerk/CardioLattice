@@ -4,6 +4,8 @@ import json
 import os
 from pathlib import Path
 
+from .codes import coded
+
 _CANDIDATES = [
     Path(os.getenv("ORGAN_LIBRARY_PATH", "")) if os.getenv("ORGAN_LIBRARY_PATH") else None,
     Path(__file__).resolve().parents[2] / "shared" / "organ_library.json",
@@ -40,6 +42,116 @@ def validate() -> list[str]:
 
 def catalog() -> dict:
     return ORGAN_LIBRARY
+
+
+# Human sentences in the JSON stay in the file for the frontend bundle.
+# The API returns these codes instead.
+_SOURCE_BY_TEXT = {
+    "BodyParts3D 4.0 (DBCLS, CC BY 4.0); selected surfaces, simplified": "SOURCE_BODYPARTS3D",
+    "HuBMAP Human Reference Atlas v1.1 male (CC BY 4.0); selected surfaces, simplified, aligned to the BodyParts3D reference frame": "SOURCE_HUBMAP_HRA",
+}
+
+_NOTE_BY_TEXT = {
+    "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md.": "NOTE_ANATOMICAL_REFERENCE",
+}
+
+_SOURCE_CATALOG = {
+    "bodyparts3d": {
+        "name": "SOURCE_NAME_BODYPARTS3D",
+        "institution": "INSTITUTION_DBCLS",
+        "license": "LICENSE_CC_BY_4_0",
+    },
+    "hra": {
+        "name": "SOURCE_NAME_HUBMAP_HRA",
+        "institution": "INSTITUTION_HUBMAP",
+        "license": "LICENSE_CC_BY_4_0",
+    },
+}
+
+
+def _source_coded(organ: dict) -> dict:
+    code = _SOURCE_BY_TEXT.get(organ.get("source", ""))
+    if code:
+        return coded(code)
+    return coded("SOURCE_ORGAN", code=organ["code"])
+
+
+def _note_coded(organ: dict) -> dict:
+    code = _NOTE_BY_TEXT.get(organ.get("note", ""))
+    if code:
+        return coded(code)
+    return coded("NOTE_ORGAN", code=organ["code"])
+
+
+def _sources_public() -> list:
+    output = []
+    for item in ORGAN_LIBRARY.get("sources", []):
+        known = _SOURCE_CATALOG.get(item.get("id"))
+        if known:
+            output.append(
+                {
+                    "id": item["id"],
+                    "name": coded(known["name"]),
+                    "institution": coded(known["institution"]),
+                    "license": coded(known["license"]),
+                    "url": item.get("url"),
+                }
+            )
+            continue
+        source_id = item.get("id", "")
+        output.append(
+            {
+                "id": source_id,
+                "name": coded("SOURCE_NAME", id=source_id),
+                "institution": coded("INSTITUTION", id=source_id),
+                "license": coded("LICENSE", id=source_id),
+                "url": item.get("url"),
+            }
+        )
+    return output
+
+
+def _organ_public(organ: dict) -> dict:
+    public = {
+        "code": organ["code"],
+        "name": coded(organ["code"]),
+        "system": organ["system"],
+        "color": organ["color"],
+        "centerMm": organ["centerMm"],
+        "sizeMm": organ["sizeMm"],
+        "mesh": organ["mesh"],
+        "renderable": organ["renderable"],
+        "source": _source_coded(organ),
+        "note": _note_coded(organ),
+    }
+    if "segLabels" in organ:
+        public["segLabels"] = list(organ["segLabels"])
+    return public
+
+
+def public_catalog() -> dict:
+    """Catalog for ``GET /api/organs``. Display strings are codes."""
+    frame = ORGAN_LIBRARY["frame"]
+    return {
+        "version": ORGAN_LIBRARY["version"],
+        "updated": ORGAN_LIBRARY["updated"],
+        "frame": {
+            "name": frame["name"],
+            "units": frame["units"],
+            "description": coded(f"FRAME_{frame['name']}"),
+        },
+        "systems": [
+            {"id": item["id"], "name": coded(item["id"]), "color": item["color"]}
+            for item in ORGAN_LIBRARY["systems"]
+        ],
+        "organs": [_organ_public(item) for item in ORGAN_LIBRARY["organs"]],
+        "segLabelMap": dict(SEG_LABEL_MAP),
+        "standardCodes": {
+            code: {"name": coded(code), "system": item["system"]}
+            for code, item in STANDARD_CODES.items()
+        },
+        "sources": _sources_public(),
+    }
 
 
 def standard_code_for(seg_label: str) -> str:

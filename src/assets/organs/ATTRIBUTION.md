@@ -1,5 +1,7 @@
 # Organ model attribution
 
+[中文](ATTRIBUTION.zh-CN.md)
+
 The organ GLB files in this directory are adapted anatomical reference meshes.
 They are **CC BY 4.0**, not MIT. The repository code remains MIT.
 

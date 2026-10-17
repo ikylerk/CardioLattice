@@ -5,6 +5,7 @@ from pathlib import Path
 
 import numpy as np
 
+from ..codes import CodedError
 from ..config import settings
 from ..organ_library import ORGAN_LIBRARY, standard_label_map
 from .dicom import PreviewVolume, align_labels_to_preview, load_label_image
@@ -12,13 +13,13 @@ from .dicom import PreviewVolume, align_labels_to_preview, load_label_image
 # Canonical research label map. These are structure identifiers, not clinical
 # diagnoses. Synthetic fixtures and future models must use the same labels.
 LABELS = {
-    1: ("LV", "左心室腔"),
-    2: ("RV", "右心室腔"),
-    3: ("LA", "左心房腔"),
-    4: ("RA", "右心房腔"),
-    5: ("AO", "主动脉"),
-    6: ("MYO", "心肌"),
-    7: ("CALC", "钙化"),
+    1: ("LV", "Left ventricular cavity"),
+    2: ("RV", "Right ventricular cavity"),
+    3: ("LA", "Left atrial cavity"),
+    4: ("RA", "Right atrial cavity"),
+    5: ("AO", "Aorta"),
+    6: ("MYO", "Myocardium"),
+    7: ("CALC", "Calcification"),
 }
 
 
@@ -43,7 +44,7 @@ def segment_synthetic(study, preview: PreviewVolume) -> SegmentationResult:
     meta = study.fixture_meta or {}
     labels_path = meta.get("labels_path")
     if not labels_path or not Path(labels_path).exists():
-        raise ValueError("synthetic_ground_truth requires fixture_meta.labels_path")
+        raise CodedError("LABELS_PATH_REQUIRED")
 
     array, _ = load_label_image(Path(labels_path), resample_mm=settings.resample_mm)
     aligned = align_labels_to_preview(array, preview)
@@ -52,7 +53,7 @@ def segment_synthetic(study, preview: PreviewVolume) -> SegmentationResult:
     quality = {
         "label_values_present": present,
         "voxels": int(np.count_nonzero(aligned)),
-        "warnings": ["Synthetic ground truth — not a clinical segmentation"],
+        "warnings": ["QUALITY_SYNTHETIC_GROUND_TRUTH"],
     }
     return SegmentationResult(
         label_array=aligned,
@@ -66,7 +67,7 @@ def segment_synthetic(study, preview: PreviewVolume) -> SegmentationResult:
             "labels_path": str(labels_path),
             "organ_library_version": ORGAN_LIBRARY["version"],
             "standard_label_map": standard_label_map(label_map),
-            "note": "Generated from the same phantom definition as the DICOM fixture.",
+            "note": "NOTE_SYNTHETIC_FIXTURE",
         },
     )
 
@@ -111,7 +112,7 @@ def segment_totalsegmentator(hu_nifti: Path, preview: PreviewVolume) -> Segmenta
         model_id="totalsegmentator",
         model_version="2.4.0",
         validation_status="research",
-        quality={"warnings": ["Research adapter; not validated for stenosis or FFR."]},
+        quality={"warnings": ["QUALITY_TOTALSEGMENTATOR_RESEARCH"]},
         provenance={
             "algorithm": "totalsegmentator",
             "task": "heartchambers_highres",

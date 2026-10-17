@@ -8,6 +8,7 @@ import trimesh
 from scipy import ndimage
 from skimage import measure
 
+from ..codes import CodedError
 from .dicom import PreviewVolume
 from .segmentation import LABELS
 
@@ -22,13 +23,13 @@ COLORS = {
 }
 
 STRUCTURE_NAMES = {
-    "LV": "左心室",
-    "RV": "右心室",
-    "LA": "左心房",
-    "RA": "右心房",
-    "AO": "主动脉",
-    "MYO": "心肌",
-    "CALC": "钙化",
+    "LV": "Left ventricle",
+    "RV": "Right ventricle",
+    "LA": "Left atrium",
+    "RA": "Right atrium",
+    "AO": "Aorta",
+    "MYO": "Myocardium",
+    "CALC": "Calcification",
 }
 
 
@@ -109,14 +110,14 @@ def build_glb(
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     if len(scene.geometry) == 0:
-        raise ValueError("no labelled structures found; mesh not created")
+        raise CodedError("NO_LABELLED_STRUCTURES")
     scene.export(str(out_path), file_type="glb")
     transform = {
         "scale": scale,
         "center_mm": center.tolist(),
         "source": "RAS_mm",
         "target": "scene_units",
-        "note": "GLB coordinates are already in scene units.",
+        "note": "NOTE_GLB_SCENE_UNITS",
     }
     return infos, transform
 

@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from .. import audit
+from ..codes import coded
 from ..config import settings
 from ..db import get_db
 from ..models import Report
@@ -21,7 +22,7 @@ class ReportPatch(BaseModel):
 def get_report(report_id: str, db: Session = Depends(get_db)):
     report = db.get(Report, report_id)
     if report is None:
-        raise HTTPException(status_code=404, detail="report not found")
+        raise HTTPException(status_code=404, detail=coded("REPORT_NOT_FOUND"))
     return report_out(report)
 
 
@@ -31,9 +32,9 @@ def patch_report(report_id: str, body: ReportPatch, db: Session = Depends(get_db
     audit event; immutable version history is a later milestone."""
     report = db.get(Report, report_id)
     if report is None:
-        raise HTTPException(status_code=404, detail="report not found")
+        raise HTTPException(status_code=404, detail=coded("REPORT_NOT_FOUND"))
     if report.status == "approved":
-        raise HTTPException(status_code=409, detail="approved reports must be amended, not overwritten")
+        raise HTTPException(status_code=409, detail=coded("APPROVED_IMMUTABLE"))
     report.content = body.content
     report.generator = "human"
     report.status = "clinician_reviewed"

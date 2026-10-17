@@ -13,7 +13,9 @@ def test_demo_pipeline_end_to_end():
         assert response.status_code == 202, response.text
         payload = response.json()
         assert payload["job"]["state"] == "succeeded"
+        assert payload["job"]["stage"] == "succeeded"
         assert payload["job"]["progress"] == 100
+        assert payload["job"]["message"] == {"code": "STAGE_SUCCEEDED", "params": {}}
         study_id = payload["study"]["study"]["id"]
 
         bundle = client.get(f"/api/studies/{study_id}").json()
@@ -32,6 +34,12 @@ def test_demo_pipeline_end_to_end():
         for code in ("LV_EF", "STENOSIS_LAD", "FFR_CT", "CALCIUM_SCORE", "AHA_SEGMENTS"):
             assert measurements[code]["status"] == "not_computed"
             assert measurements[code]["reason"]
+        assert measurements["LV_EF"]["code"] == "LV_EF"
+        assert measurements["LV_EF"]["reason"] == {
+            "code": "LV_EF_REQUIRES_TWO_PHASES",
+            "params": {},
+        }
+        assert measurements["LV_VOLUME"]["label"] == {"code": "LV_VOLUME", "params": {}}
 
         volume = bundle["volumes"][0]
         data = client.get(volume["dataUrl"])
@@ -45,7 +53,14 @@ def test_demo_pipeline_end_to_end():
         report = bundle["reports"][0]
         assert report["status"] == "draft"
         assert report["generator"] == "template"
-        assert report["content"]["disclaimer"]
+        assert report["content"]["lang"] == "en"
+        assert "language" not in report["content"]
+        assert report["content"]["disclaimer"] == (
+            "Research prototype, not a medical device. "
+            "This project is not certified by NMPA / FDA / CE, and outputs must not be used "
+            "for clinical diagnosis, treatment decisions, or medico-legal purposes. "
+            "All data in demo mode is procedurally synthesized."
+        )
 
         approved = client.post(
             f"/api/studies/{study_id}/reports/{report['id']}/approve",
