@@ -1,3 +1,6 @@
+[![CI](https://github.com/ikylerk/CardioLattice/actions/workflows/ci.yml/badge.svg)](https://github.com/ikylerk/CardioLattice/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 # CardioLattice · CardioScope Pro
 
 面向心血管影像的**开源研究原型**：上传原始 CCTA DICOM → 去标识与体数据重建 → 3D 分割建模 → 可追溯的定量测量 → 结构化报告草稿 → 医生复核与审计。
