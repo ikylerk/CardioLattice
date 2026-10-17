@@ -1,7 +1,7 @@
 import React from 'react'
 import { CheckCircle2, CircleAlert, FileSignature, ShieldCheck } from 'lucide-react'
 import { Badge, Button } from '../ui.jsx'
-import { enumLabel, useI18n } from '../../i18n.js'
+import { enumLabel, measurementLabel, useI18n } from '../../i18n.js'
 
 function generatorLabel(report, t) {
   if (report.generator === 'claude') return t('report.aiDraft', { model: report.model || 'Claude' })
@@ -11,7 +11,7 @@ function generatorLabel(report, t) {
 
 function citationLabel(ref, measurementMap) {
   const item = measurementMap[ref]
-  return item ? item.label : ref
+  return item ? measurementLabel(item) : ref
 }
 
 export default function StructuredReport({ report, study, onApprove, approveBusy }) {
@@ -34,7 +34,10 @@ export default function StructuredReport({ report, study, onApprove, approveBusy
   const isAi = report.generator === 'claude'
 
   return (
-    <article className="report-document structured-report">
+    <article
+      className="report-document structured-report"
+      lang={content.lang === 'zh' ? 'zh-CN' : content.lang === 'en' ? 'en' : undefined}
+    >
       <div className="report-letterhead">
         <div className="report-brand">
           <span>CARDIOVASCULAR IMAGING · RESEARCH</span>
@@ -43,6 +46,9 @@ export default function StructuredReport({ report, study, onApprove, approveBusy
           <span>REPORT NO.</span>
           <b>{report.id.replace(/^rep_/, 'R-').toUpperCase()}</b>
           <em>{enumLabel('status', report.status)} · {generatorLabel(report, t)}</em>
+          {content.lang ? (
+            <em>{t('report.storedLang', { lang: content.lang === 'zh' ? t('lang.nameZh') : t('lang.nameEn') })}</em>
+          ) : null}
         </div>
       </div>
 
@@ -122,7 +128,7 @@ export default function StructuredReport({ report, study, onApprove, approveBusy
       <div className="report-provenance">
         <ShieldCheck size={13} />
         <div>
-          <b>Provenance</b>
+          <b>{t('report.provenanceTitle')}</b>
           <span>
             {t('report.provenance', {
               generator: report.generator,

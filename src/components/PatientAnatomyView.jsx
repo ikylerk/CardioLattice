@@ -14,7 +14,7 @@ import {
 import ViewHeader from './ViewHeader.jsx'
 import { Badge, Button, Section, Slider, Stat, Toggle } from './ui.jsx'
 import { useStudy } from '../study/StudyContext.jsx'
-import { useI18n } from '../i18n.js'
+import { measurementLabel, useI18n } from '../i18n.js'
 
 const STRUCTURE_KEYS = {
   LV: 'patient.lv',
@@ -322,7 +322,7 @@ export default function PatientAnatomyView({ notify, onNavigate }) {
             <div className="patient-measurement-list">
               {computed.length ? computed.map((item) => (
                 <div key={item.id}>
-                  <span>{item.label}</span>
+                  <span>{measurementLabel(item)}</span>
                   <b>{item.value} {item.unit}</b>
                   <small>{item.method} · {item.validationStatus}</small>
                 </div>

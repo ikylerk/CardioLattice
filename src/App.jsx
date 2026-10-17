@@ -11,6 +11,7 @@ import CtaView from './components/CtaView.jsx'
 import EchoView from './components/EchoView.jsx'
 import AnalysisView from './components/AnalysisView.jsx'
 import StudyWorkbench from './components/StudyWorkbench.jsx'
+import OrganLibraryView from './components/OrganLibraryView.jsx'
 import { StudyProvider, useStudy } from './study/StudyContext.jsx'
 import { useI18n } from './i18n.js'
 
@@ -21,6 +22,7 @@ const VIEWS = {
   cta: CtaView,
   echo: EchoView,
   analysis: AnalysisView,
+  organs: OrganLibraryView,
 }
 
 const MODULE_IDS = new Set(MODULES.map((item) => item.id))
@@ -65,7 +67,8 @@ function AppShell() {
   React.useEffect(() => {
     const onKey = (event) => {
       if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) return
-      const found = MODULES.find((item) => item.key === event.key)
+      const padded = event.key.length === 1 ? event.key.padStart(2, '0') : event.key
+      const found = MODULES.find((item) => item.key === event.key || item.key === padded)
       if (found) setActive(found.id)
       if (event.key === 'Escape') setReportOpen(false)
     }

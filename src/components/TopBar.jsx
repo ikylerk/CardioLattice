@@ -3,7 +3,7 @@ import { Bell, ChevronDown, FileText, FolderOpen, Search, Share2 } from 'lucide-
 import Brand from './Brand.jsx'
 import { Badge, IconButton } from './ui.jsx'
 import { useStudy } from '../study/StudyContext.jsx'
-import { dictionaries, useI18n } from '../i18n.js'
+import { dicomLabel, dictionaries, useI18n } from '../i18n.js'
 
 function Clock() {
   const [now, setNow] = React.useState(() => new Date())
@@ -72,13 +72,13 @@ export default function TopBar({ onReport, onWorkbench }) {
         <div className="topbar-divider" />
         <div className="study-meta">
           <span className="micro-label">STUDY / MODALITY</span>
-          <strong>{current ? `${current.modality} · ${current.description || 'CCTA'}` : '—'}</strong>
+          <strong>{current ? `${current.modality} · ${current.description ? (isApi ? dicomLabel(current.description) : current.description) : 'CCTA'}` : '—'}</strong>
           <small>{current?.studyDate || '—'} · {current?.source === 'demo' ? t('topbar.synthetic') : current?.source || '—'}</small>
         </div>
         <div className="topbar-divider hide-md" />
         <div className="study-meta hide-md">
           <span className="micro-label">SERIES</span>
-          <strong>{series.description || '—'}</strong>
+          <strong>{series.description ? (isApi ? dicomLabel(series.description) : series.description) : '—'}</strong>
           <small>
             {series.sliceThickness ? `${Number(series.sliceThickness).toFixed(2)} mm` : '—'} ·{' '}
             {series.kvp ? `${series.kvp} kV` : 'kV —'}

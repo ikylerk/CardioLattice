@@ -1,0 +1,437 @@
+{
+  "version": "organ-atlas/v2",
+  "updated": "2026-10-18",
+  "frame": {
+    "name": "RAS_ORGAN_REFERENCE",
+    "units": "mm",
+    "description": "Origin at the centre of the reference organ set. +x right, +y anterior, +z superior. Adapted from BodyParts3D 4.0 and HuBMAP HRA v1.1; not patient anatomy."
+  },
+  "systems": [
+    {
+      "id": "cardiovascular",
+      "name": "心血管",
+      "en": "Cardiovascular",
+      "color": "#c45258"
+    },
+    {
+      "id": "respiratory",
+      "name": "呼吸",
+      "en": "Respiratory",
+      "color": "#6ca9b8"
+    },
+    {
+      "id": "digestive",
+      "name": "消化",
+      "en": "Digestive",
+      "color": "#c49a5a"
+    },
+    {
+      "id": "urinary",
+      "name": "泌尿",
+      "en": "Urinary",
+      "color": "#9b86c4"
+    },
+    {
+      "id": "skeletal",
+      "name": "骨骼",
+      "en": "Skeletal",
+      "color": "#b8b0a0"
+    }
+  ],
+  "organs": [
+    {
+      "code": "HEART",
+      "name": "心脏",
+      "en": "Heart",
+      "system": "cardiovascular",
+      "color": "#c45258",
+      "centerMm": [
+        -25.1,
+        21.2,
+        110.3
+      ],
+      "sizeMm": [
+        115.6,
+        106.3,
+        104.6
+      ],
+      "mesh": {
+        "type": "glb",
+        "asset": "organs/HEART.glb"
+      },
+      "renderable": true,
+      "segLabels": [
+        "LV",
+        "RV",
+        "LA",
+        "RA",
+        "MYO"
+      ],
+      "source": "BodyParts3D 4.0 (DBCLS, CC BY 4.0); selected surfaces, simplified",
+      "note": "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md."
+    },
+    {
+      "code": "LUNG_R",
+      "name": "右肺",
+      "en": "Right lung",
+      "system": "respiratory",
+      "color": "#6ca9b8",
+      "centerMm": [
+        65.7,
+        1.9,
+        112.5
+      ],
+      "sizeMm": [
+        125.5,
+        192.6,
+        231.1
+      ],
+      "mesh": {
+        "type": "glb",
+        "asset": "organs/LUNG_R.glb"
+      },
+      "renderable": true,
+      "source": "HuBMAP Human Reference Atlas v1.1 male (CC BY 4.0); selected surfaces, simplified, aligned to the BodyParts3D reference frame",
+      "note": "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md."
+    },
+    {
+      "code": "LUNG_L",
+      "name": "左肺",
+      "en": "Left lung",
+      "system": "respiratory",
+      "color": "#6ca9b8",
+      "centerMm": [
+        -69.0,
+        2.6,
+        117.6
+      ],
+      "sizeMm": [
+        132.1,
+        191.5,
+        224.2
+      ],
+      "mesh": {
+        "type": "glb",
+        "asset": "organs/LUNG_L.glb"
+      },
+      "renderable": true,
+      "source": "HuBMAP Human Reference Atlas v1.1 male (CC BY 4.0); selected surfaces, simplified, aligned to the BodyParts3D reference frame",
+      "note": "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md."
+    },
+    {
+      "code": "TRACHEA",
+      "name": "气管",
+      "en": "Trachea",
+      "system": "respiratory",
+      "color": "#8ba0a8",
+      "centerMm": [
+        -3.4,
+        -8.4,
+        223.3
+      ],
+      "sizeMm": [
+        25.9,
+        32.7,
+        110.3
+      ],
+      "mesh": {
+        "type": "glb",
+        "asset": "organs/TRACHEA.glb"
+      },
+      "renderable": true,
+      "source": "BodyParts3D 4.0 (DBCLS, CC BY 4.0); selected surfaces, simplified",
+      "note": "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md."
+    },
+    {
+      "code": "LIVER",
+      "name": "肝脏",
+      "en": "Liver",
+      "system": "digestive",
+      "color": "#8f4a43",
+      "centerMm": [
+        39.7,
+        10.9,
+        -21.7
+      ],
+      "sizeMm": [
+        194.4,
+        197.0,
+        177.3
+      ],
+      "mesh": {
+        "type": "glb",
+        "asset": "organs/LIVER.glb"
+      },
+      "renderable": true,
+      "source": "HuBMAP Human Reference Atlas v1.1 male (CC BY 4.0); selected surfaces, simplified, aligned to the BodyParts3D reference frame",
+      "note": "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md."
+    },
+    {
+      "code": "GALLBLADDER",
+      "name": "胆囊",
+      "en": "Gallbladder",
+      "system": "digestive",
+      "color": "#7d9a52",
+      "centerMm": [
+        41.5,
+        52.2,
+        -45.6
+      ],
+      "sizeMm": [
+        36.4,
+        48.4,
+        40.4
+      ],
+      "mesh": {
+        "type": "glb",
+        "asset": "organs/GALLBLADDER.glb"
+      },
+      "renderable": true,
+      "source": "BodyParts3D 4.0 (DBCLS, CC BY 4.0); selected surfaces, simplified",
+      "note": "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md."
+    },
+    {
+      "code": "STOMACH",
+      "name": "胃",
+      "en": "Stomach",
+      "system": "digestive",
+      "color": "#a46a5a",
+      "centerMm": [
+        -41.9,
+        35.8,
+        -18.5
+      ],
+      "sizeMm": [
+        134.3,
+        112.9,
+        117.0
+      ],
+      "mesh": {
+        "type": "glb",
+        "asset": "organs/STOMACH.glb"
+      },
+      "renderable": true,
+      "source": "BodyParts3D 4.0 (DBCLS, CC BY 4.0); selected surfaces, simplified",
+      "note": "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md."
+    },
+    {
+      "code": "SPLEEN",
+      "name": "脾脏",
+      "en": "Spleen",
+      "system": "digestive",
+      "color": "#7a5a86",
+      "centerMm": [
+        -80.9,
+        -37.8,
+        -18.9
+      ],
+      "sizeMm": [
+        112.2,
+        90.0,
+        120.5
+      ],
+      "mesh": {
+        "type": "glb",
+        "asset": "organs/SPLEEN.glb"
+      },
+      "renderable": true,
+      "source": "HuBMAP Human Reference Atlas v1.1 male (CC BY 4.0); selected surfaces, simplified, aligned to the BodyParts3D reference frame",
+      "note": "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md."
+    },
+    {
+      "code": "PANCREAS",
+      "name": "胰腺",
+      "en": "Pancreas",
+      "system": "digestive",
+      "color": "#c0a070",
+      "centerMm": [
+        -20.6,
+        8.7,
+        -49.9
+      ],
+      "sizeMm": [
+        113.3,
+        85.0,
+        73.2
+      ],
+      "mesh": {
+        "type": "glb",
+        "asset": "organs/PANCREAS.glb"
+      },
+      "renderable": true,
+      "source": "HuBMAP Human Reference Atlas v1.1 male (CC BY 4.0); selected surfaces, simplified, aligned to the BodyParts3D reference frame",
+      "note": "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md."
+    },
+    {
+      "code": "KIDNEY_R",
+      "name": "右肾",
+      "en": "Right kidney",
+      "system": "urinary",
+      "color": "#9b86c4",
+      "centerMm": [
+        66.7,
+        -14.1,
+        -105.0
+      ],
+      "sizeMm": [
+        66.5,
+        77.6,
+        114.3
+      ],
+      "mesh": {
+        "type": "glb",
+        "asset": "organs/KIDNEY_R.glb"
+      },
+      "renderable": true,
+      "source": "HuBMAP Human Reference Atlas v1.1 male (CC BY 4.0); selected surfaces, simplified, aligned to the BodyParts3D reference frame",
+      "note": "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md."
+    },
+    {
+      "code": "KIDNEY_L",
+      "name": "左肾",
+      "en": "Left kidney",
+      "system": "urinary",
+      "color": "#9b86c4",
+      "centerMm": [
+        -71.2,
+        -28.5,
+        -86.9
+      ],
+      "sizeMm": [
+        76.9,
+        83.7,
+        108.3
+      ],
+      "mesh": {
+        "type": "glb",
+        "asset": "organs/KIDNEY_L.glb"
+      },
+      "renderable": true,
+      "source": "HuBMAP Human Reference Atlas v1.1 male (CC BY 4.0); selected surfaces, simplified, aligned to the BodyParts3D reference frame",
+      "note": "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md."
+    },
+    {
+      "code": "AORTA",
+      "name": "主动脉",
+      "en": "Aorta",
+      "system": "cardiovascular",
+      "color": "#d0604f",
+      "centerMm": [
+        -17.6,
+        -10.9,
+        15.0
+      ],
+      "sizeMm": [
+        41.7,
+        92.3,
+        370.3
+      ],
+      "mesh": {
+        "type": "glb",
+        "asset": "organs/AORTA.glb"
+      },
+      "renderable": true,
+      "source": "BodyParts3D 4.0 (DBCLS, CC BY 4.0); selected surfaces, simplified",
+      "note": "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md."
+    },
+    {
+      "code": "IVC",
+      "name": "下腔静脉",
+      "en": "Inferior vena cava",
+      "system": "cardiovascular",
+      "color": "#7d9bc4",
+      "centerMm": [
+        10.9,
+        13.9,
+        -46.2
+      ],
+      "sizeMm": [
+        24.5,
+        25.1,
+        239.5
+      ],
+      "mesh": {
+        "type": "glb",
+        "asset": "organs/IVC.glb"
+      },
+      "renderable": true,
+      "source": "BodyParts3D 4.0 (DBCLS, CC BY 4.0); selected surfaces, simplified",
+      "note": "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md."
+    },
+    {
+      "code": "SPINE",
+      "name": "脊柱",
+      "en": "Spine",
+      "system": "skeletal",
+      "color": "#b8b0a0",
+      "centerMm": [
+        -2.9,
+        -47.8,
+        0.0
+      ],
+      "sizeMm": [
+        117.6,
+        123.3,
+        668.1
+      ],
+      "mesh": {
+        "type": "glb",
+        "asset": "organs/SPINE.glb"
+      },
+      "renderable": true,
+      "source": "BodyParts3D 4.0 (DBCLS, CC BY 4.0); selected surfaces, simplified",
+      "note": "Anatomical reference surface; not patient-specific. See src/assets/organs/ATTRIBUTION.md."
+    }
+  ],
+  "segLabelMap": {
+    "LV": "HEART_LV",
+    "RV": "HEART_RV",
+    "LA": "HEART_LA",
+    "RA": "HEART_RA",
+    "AO": "AORTA",
+    "MYO": "HEART_MYOCARDIUM",
+    "CALC": "CORONARY_CALCIFICATION"
+  },
+  "standardCodes": {
+    "HEART_LV": {
+      "name": "左心室腔",
+      "system": "cardiovascular"
+    },
+    "HEART_RV": {
+      "name": "右心室腔",
+      "system": "cardiovascular"
+    },
+    "HEART_LA": {
+      "name": "左心房腔",
+      "system": "cardiovascular"
+    },
+    "HEART_RA": {
+      "name": "右心房腔",
+      "system": "cardiovascular"
+    },
+    "HEART_MYOCARDIUM": {
+      "name": "心肌",
+      "system": "cardiovascular"
+    },
+    "CORONARY_CALCIFICATION": {
+      "name": "冠脉钙化",
+      "system": "cardiovascular"
+    }
+  },
+  "sources": [
+    {
+      "id": "bodyparts3d",
+      "name": "BodyParts3D 4.0",
+      "institution": "Database Center for Life Science (DBCLS)",
+      "license": "CC BY 4.0",
+      "url": "https://dbarchive.biosciencedbc.jp/en/bodyparts3d/download.html"
+    },
+    {
+      "id": "hra",
+      "name": "HuBMAP Human Reference Atlas v1.1 male reference organs",
+      "institution": "HuBMAP Consortium",
+      "license": "CC BY 4.0",
+      "url": "https://github.com/hubmapconsortium/ccf-releases"
+    }
+  ]
+}

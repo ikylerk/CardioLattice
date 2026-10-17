@@ -19,7 +19,7 @@ import VolumeRenderer from '../three/VolumeRenderer.js'
 import { getCardiacVolume } from '../three/volume.js'
 import { getVolumeData } from '../api/client.js'
 import { useStudy } from '../study/StudyContext.jsx'
-import { enumLabel, errorDetail, serverText, useI18n } from '../i18n.js'
+import { dicomLabel, enumLabel, errorDetail, measurementLabel, serverText, useI18n } from '../i18n.js'
 
 const WINDOW_PRESETS = {
   cta: { labelKey: 'cta.windowCta', sub: 'CCTA', width: 800, level: 300 },
@@ -146,7 +146,9 @@ export default function CtaView({ notify, bpm, playing }) {
   }
   const measurementItem = (code) => measurementMap[code] || null
   const selectedSeriesMeta = selectedSeries || {}
-  const seriesLabel = selectedSeriesMeta.description || 'CARDIAC CTA'
+  const seriesLabel = selectedSeriesMeta.description
+    ? (isApi ? dicomLabel(selectedSeriesMeta.description) : selectedSeriesMeta.description)
+    : 'CARDIAC CTA'
   const matrixLabel = selectedSeriesMeta.rows && selectedSeriesMeta.cols
     ? `${selectedSeriesMeta.rows} × ${selectedSeriesMeta.cols} MATRIX`
     : 'MATRIX —'
@@ -276,7 +278,7 @@ export default function CtaView({ notify, bpm, playing }) {
                   windowWidth={windowWidth}
                   windowLevel={windowLevel}
                   lesionVoxel={lesionVoxel}
-                  lesionLabel={marker?.label || ''}
+                  lesionLabel={marker?.label ? serverText(marker.label) : ''}
                   renderTag={isDemo ? 'DEMO · SYNTHETIC' : 'DICOM · RESEARCH'}
                 />
                 <MprViewport
@@ -287,7 +289,7 @@ export default function CtaView({ notify, bpm, playing }) {
                   windowWidth={windowWidth}
                   windowLevel={windowLevel}
                   lesionVoxel={lesionVoxel}
-                  lesionLabel={marker?.label || ''}
+                  lesionLabel={marker?.label ? serverText(marker.label) : ''}
                   renderTag={isDemo ? 'DEMO · SYNTHETIC' : 'DICOM · RESEARCH'}
                 />
                 <MprViewport
@@ -298,7 +300,7 @@ export default function CtaView({ notify, bpm, playing }) {
                   windowWidth={windowWidth}
                   windowLevel={windowLevel}
                   lesionVoxel={lesionVoxel}
-                  lesionLabel={marker?.label || ''}
+                  lesionLabel={marker?.label ? serverText(marker.label) : ''}
                   renderTag={isDemo ? 'DEMO · SYNTHETIC' : 'DICOM · RESEARCH'}
                 />
               </>
@@ -496,7 +498,7 @@ export default function CtaView({ notify, bpm, playing }) {
             </div>
             <div className="cta-slice-note">
               <span className="cta-lesion-pin" />
-              {marker ? t('cta.crosshairAt', { label: marker.label }) : t('cta.crosshairCenter')}
+              {marker ? t('cta.crosshairAt', { label: serverText(marker.label) }) : t('cta.crosshairCenter')}
             </div>
           </Section>
 
@@ -550,7 +552,7 @@ export default function CtaView({ notify, bpm, playing }) {
                   <div key={item.id} className={`cta-finding-row ${item.status === 'computed' ? '' : 'muted'}`}>
                     <span className="finding-index">{String(index + 1).padStart(2, '0')}</span>
                     <div>
-                      <b>{item.label}</b>
+                      <b>{measurementLabel(item)}</b>
                       <small>
                         {item.status === 'computed'
                           ? `${item.value ?? '—'}${item.unit ? ` ${item.unit}` : ''} · ${item.method} · ${item.validationStatus}`
@@ -572,7 +574,7 @@ export default function CtaView({ notify, bpm, playing }) {
 
           <Section title={t('cta.scan')} code="ACQUISITION" right={<ScanLine size={13} />}>
             <div className="scan-params">
-              <div><span>{t('cta.scanMode')}</span><b>{isDemo ? 'ECG-gated CCTA' : (selectedSeriesMeta.description || 'CCTA')}</b></div>
+              <div><span>{t('cta.scanMode')}</span><b>{isDemo ? 'ECG-gated CCTA' : (selectedSeriesMeta.description ? dicomLabel(selectedSeriesMeta.description) : 'CCTA')}</b></div>
               <div><span>{t('cta.kernel')}</span><b>{kernelLabel} · {thicknessLabel}</b></div>
               <div><span>{t('cta.kvp')}</span><b>{selectedSeriesMeta.kvp ? `${selectedSeriesMeta.kvp} kV` : '—'}</b></div>
               <div><span>{t('cta.contrast')}</span><b>{selectedSeriesMeta.contrastAgent || '—'}</b></div>

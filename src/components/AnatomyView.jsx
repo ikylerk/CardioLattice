@@ -82,6 +82,15 @@ const CLINICAL_KEYS = {
   AV: 'anatomy.clinicalAv',
 }
 
+const HEART_NAME = {
+  LV: 'heart.nameLv', RV: 'heart.nameRv', LA: 'heart.nameLa', RA: 'heart.nameRa', AO: 'heart.nameAo', PT: 'heart.namePt',
+  LPA: 'heart.nameLpa', RPA: 'heart.nameRpa', SVC: 'heart.nameSvc', IVC: 'heart.nameIvc',
+  PVLU: 'heart.namePvlu', PVLL: 'heart.namePvll', PVRU: 'heart.namePvru', PVRL: 'heart.namePvrl',
+  MV: 'heart.nameMv', TV: 'heart.nameTv', AV: 'heart.nameAv', PV: 'heart.namePv',
+  LM: 'heart.nameLm', LAD: 'heart.nameLad', LCX: 'heart.nameLcx', D1: 'heart.nameD1', D2: 'heart.nameD2',
+  OM1: 'heart.nameOm1', OM2: 'heart.nameOm2', RCA: 'heart.nameRca', AM: 'heart.nameAm', PDA: 'heart.namePda', PL: 'heart.namePl',
+}
+
 const HEART_DESC = {
   LV: 'heart.lv', RV: 'heart.rv', LA: 'heart.la', RA: 'heart.ra', AO: 'heart.ao', PT: 'heart.pt',
   LPA: 'heart.lpa', RPA: 'heart.rpa', SVC: 'heart.svc', IVC: 'heart.ivc',
@@ -173,8 +182,8 @@ function DemoAnatomyView({ bpm, setBpm, playing, setPlaying, notify, onNavigate,
   const metrics = STRUCTURE_METRICS[selected] || []
   const isLesion = selected === 'LAD'
 
-  const primaryName = lang === 'zh' ? (structure.zh || structure.name) : (structure.en || structure.name)
-  const secondaryName = lang === 'zh' ? structure.en : structure.zh
+  const primaryName = t(HEART_NAME[structure.id] || 'heart.nameLv')
+  const secondaryName = structure.id
   const modes = MODES.map((item) => ({ ...item, label: t(item.labelKey) }))
   const coronaryJump = selected === 'LAD' || selected === 'LCX' || selected === 'RCA' || selected === 'LM'
   const metricText = (value) => (String(value).startsWith('anatomy.') ? t(value) : value)

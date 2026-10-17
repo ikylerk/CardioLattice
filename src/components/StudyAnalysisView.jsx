@@ -11,14 +11,15 @@ import {
 import ViewHeader from './ViewHeader.jsx'
 import { Badge, Button, Section, Stat } from './ui.jsx'
 import { useStudy } from '../study/StudyContext.jsx'
-import { serverText, useI18n } from '../i18n.js'
+import { apiGet } from '../api/client.js'
+import { dicomLabel, measurementLabel, serverText, useI18n } from '../i18n.js'
 
 function MeasurementCard({ item }) {
   const { t } = useI18n()
   const computed = item.status === 'computed' && item.value !== null && item.value !== undefined
   return (
     <div className={`analysis-metric ${computed ? '' : 'not-computed'}`}>
-      <span>{item.label}</span>
+      <span>{measurementLabel(item)}</span>
       <strong>
         {computed ? item.value : '—'}
         {computed && item.unit ? <small>{item.unit}</small> : null}
@@ -31,12 +32,40 @@ function MeasurementCard({ item }) {
 
 export default function StudyAnalysisView({ onNavigate }) {
   const { t } = useI18n()
-  const { study, measurements } = useStudy()
+  const { study, measurements, isApi } = useStudy()
+  const [models, setModels] = React.useState([])
+
+  React.useEffect(() => {
+    if (!isApi) {
+      setModels([])
+      return undefined
+    }
+    let cancelled = false
+    apiGet('/models')
+      .then((data) => {
+        if (!cancelled) setModels(data?.models || [])
+      })
+      .catch(() => {
+        if (!cancelled) setModels([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [isApi])
   const computed = measurements.filter((item) => item.status === 'computed' && item.value !== null)
   const notComputed = measurements.filter((item) => item.status !== 'computed')
   const segmentation = study?.segmentations?.[0]
   const synthetic = measurements.some((item) => item.validationStatus === 'synthetic')
   const current = study?.study
+  const noteTexts = []
+  const warnings = segmentation?.quality?.warnings
+  if (Array.isArray(warnings)) noteTexts.push(...warnings.map((item) => serverText(item)))
+  if (segmentation?.provenance?.note) noteTexts.push(serverText(segmentation.provenance.note))
+  const meshNotes = new Set()
+  for (const mesh of study?.meshes || []) {
+    if (mesh.sceneTransform?.note) meshNotes.add(serverText(mesh.sceneTransform.note))
+  }
+  noteTexts.push(...meshNotes)
 
   return (
     <div className="module-view analysis-view">
@@ -94,7 +123,7 @@ export default function StudyAnalysisView({ onNavigate }) {
             <div className="analysis-not-computed">
               {notComputed.length ? notComputed.map((item) => (
                 <div key={item.id}>
-                  <b>{item.label}</b>
+                  <b>{measurementLabel(item)}</b>
                   <span>{item.reason ? serverText(item.reason) : t('common.missingInput')}</span>
                 </div>
               )) : <div className="wb-empty-line">{t('studyAnalysis.noneMissing')}</div>}
@@ -150,7 +179,7 @@ export default function StudyAnalysisView({ onNavigate }) {
               <span className="structure-swatch swatch-great" />
               <div>
                 <h2>{current?.subject?.pseudonym || t('studyAnalysis.noStudy')}</h2>
-                <small>{current?.description || '—'}</small>
+                <small>{current?.description ? (isApi ? dicomLabel(current.description) : current.description) : '—'}</small>
               </div>
             </div>
             <p>{t('studyAnalysis.traceBody')}</p>
@@ -166,6 +195,28 @@ export default function StudyAnalysisView({ onNavigate }) {
               <div><span>{t('studyAnalysis.audit')}</span><b>{t('studyAnalysis.seeWorkbench')}</b></div>
             </div>
           </Section>
+
+          {noteTexts.length ? (
+            <Section title={t('studyAnalysis.notes')} code="NOTES" right={<CircleAlert size={13} />}>
+              <div className="analysis-not-computed">
+                {noteTexts.map((text) => <div key={text}><span>{text}</span></div>)}
+              </div>
+            </Section>
+          ) : null}
+
+          {models.length ? (
+            <Section title={t('studyAnalysis.models')} code="MODELS" right={<ShieldCheck size={13} />}>
+              <div className="analysis-not-computed">
+                {models.map((model) => (
+                  <div key={model.id}>
+                    <b>{model.id}</b>
+                    <span>{serverText(model.intendedUse)}</span>
+                    <span>{serverText(model.license)}</span>
+                  </div>
+                ))}
+              </div>
+            </Section>
+          ) : null}
 
           <Section title={t('studyAnalysis.shortcuts')} code="NAVIGATION" right={<FileStack size={13} />}>
             <div className="workbench-open-actions">

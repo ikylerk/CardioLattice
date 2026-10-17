@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from ..config import settings
 from ..db import get_db
 from ..models import MeshRecord, VolumeRecord
+from ..organ_library import catalog
 from ..schemas import volume_out
 from ..storage import storage
 
@@ -51,6 +52,15 @@ def get_mesh(mesh_id: str, db: Session = Depends(get_db)):
         filename=f"{mesh.id}.glb",
         headers={"Cache-Control": "private, max-age=300"},
     )
+
+
+@router.get("/organs")
+def organ_atlas():
+    """Standard organ catalogue shared by the frontend and backend.
+
+    These are reference models and codes, not patient anatomy.
+    """
+    return catalog()
 
 
 @router.get("/models")

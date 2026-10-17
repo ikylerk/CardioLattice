@@ -1,5 +1,5 @@
 import React from 'react'
-import { Activity, CircleHelp, FileText, FolderOpen, Layers, Orbit, ScanLine, Settings2, Waves } from 'lucide-react'
+import { Activity, Box, CircleHelp, FileText, FolderOpen, Layers, Orbit, ScanLine, Settings2, Waves } from 'lucide-react'
 import { useI18n } from '../i18n.js'
 
 export const MODULES = [
@@ -9,6 +9,7 @@ export const MODULES = [
   { id: 'cta', labelKey: 'nav.cta', en: 'CCTA', icon: Layers, key: '03' },
   { id: 'echo', labelKey: 'nav.echo', en: 'ECHO', icon: Waves, key: '04' },
   { id: 'analysis', labelKey: 'nav.analysis', en: 'ANALYSIS', icon: Activity, key: '05' },
+  { id: 'organs', labelKey: 'nav.organs', en: 'ORGAN ATLAS', icon: Box, key: '6' },
 ]
 
 export default function SideRail({ active, onChange, onReport }) {

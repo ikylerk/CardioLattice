@@ -15,7 +15,7 @@ import {
 import ViewHeader from './ViewHeader.jsx'
 import { Badge, Button, Divider, Section } from './ui.jsx'
 import { useStudy } from '../study/StudyContext.jsx'
-import { enumLabel, errorDetail, serverText, useI18n } from '../i18n.js'
+import { dicomLabel, enumLabel, errorDetail, serverText, useI18n } from '../i18n.js'
 
 const STATUS_TONE = {
   ready: 'teal',
@@ -253,7 +253,7 @@ export default function StudyWorkbench({ onNavigate, notify }) {
                     <div className="study-card-copy">
                       <b>{item.subject?.pseudonym || t('common.unnamed')}</b>
                       <small>
-                        {item.studyDate || '—'} · {item.description || item.modality}
+                        {item.studyDate || '—'} · {item.description ? (isApi ? dicomLabel(item.description) : item.description) : item.modality}
                       </small>
                       <span>
                         <Badge tone={STATUS_TONE[item.status] || 'neutral'}>
@@ -286,7 +286,10 @@ export default function StudyWorkbench({ onNavigate, notify }) {
                         onChange={() => setSelectedSeries(item.id)}
                       />
                       <span>
-                        <b>{item.description || `Series ${item.number ?? ''}`}</b>
+                        <b>{item.description ? (isApi ? dicomLabel(item.description) : item.description) : `Series ${item.number ?? ''}`}</b>
+                        {Array.isArray(item.reasons) && item.reasons.length ? (
+                          <small>{item.reasons.map((reason) => serverText(reason)).join(' · ')}</small>
+                        ) : null}
                         <small>
                           {t('workbench.seriesMeta', {
                             modality: item.modality,
@@ -317,7 +320,7 @@ export default function StudyWorkbench({ onNavigate, notify }) {
               <span className="structure-swatch swatch-great" />
               <div>
                 <h2>{current?.subject?.pseudonym || t('topbar.noStudy')}</h2>
-                <small>{current?.description || t('workbench.heroEmpty')}</small>
+                <small>{current?.description ? (isApi ? dicomLabel(current.description) : current.description) : t('workbench.heroEmpty')}</small>
               </div>
             </div>
             <p>

@@ -30,7 +30,20 @@ Every clinically meaningful output is advisory:
 | Longitudinal change | M3 | requires registration and comparable acquisitions |
 | Individual event prediction | **Not provided** | no validated longitudinal model; show trends only |
 
-## 3. Model governance
+## 3. Standard organ atlas
+
+The built-in organ library (`shared/organ_library.json`) contains **anatomically
+derived reference meshes** for orientation, teaching, registration placeholders
+and UI standardisation. They come from BodyParts3D 4.0 and the HuBMAP Human
+Reference Atlas (both CC BY 4.0), are not derived from the patient, and must
+never be displayed as patient anatomy. The only patient-specific 3D mesh is the
+one produced by the segmentation pipeline and stored in `MeshRecord`.
+
+Standard codes such as `HEART_LV` or `AORTA` are internal catalogue identifiers,
+not a certified terminology binding. Do not claim SNOMED/RadLex/FMA compliance
+unless the mapping has been reviewed and licensed separately.
+
+## 4. Model governance
 
 A model may only produce a displayed clinical measurement after:
 
@@ -54,7 +67,7 @@ Until then the output is `not_computed` and the UI explains why.
 - ImageCAS is catalogued as Apache-2.0 in several lists, but the download page
   terms must be verified before redistribution.
 
-## 4. Data governance
+## 5. Data governance
 
 - Do not upload identifiable patient data to this prototype without an approved
   protocol, ethics/IRB review, and data-use agreement.
@@ -64,7 +77,7 @@ Until then the output is `not_computed` and the UI explains why.
   add a retention/deletion policy before any shared deployment.
 - Logs must not contain PHI or raw DICOM tags.
 
-## 5. Regulatory
+## 6. Regulatory
 
 Clinical deployment requires a separate regulatory pathway (for example NMPA
 software registration in China, or FDA/CE equivalent) including software life

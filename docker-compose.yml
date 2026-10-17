@@ -3,7 +3,9 @@
 # are deliberate later milestones; see docs/roadmap.md.
 services:
   api:
-    build: ./server
+    build:
+      context: .
+      dockerfile: server/Dockerfile
     environment:
       CARDIOSCOPE_VAR_DIR: /data
       STORAGE_DIR: /data/storage
