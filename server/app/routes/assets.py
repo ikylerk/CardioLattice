@@ -8,6 +8,7 @@ from ..codes import coded
 from ..config import settings
 from ..db import get_db
 from ..models import MeshRecord, VolumeRecord
+from ..organ_library import public_catalog
 from ..schemas import volume_out
 from ..storage import storage
 
@@ -52,6 +53,16 @@ def get_mesh(mesh_id: str, db: Session = Depends(get_db)):
         filename=f"{mesh.id}.glb",
         headers={"Cache-Control": "private, max-age=300"},
     )
+
+
+@router.get("/organs")
+def organ_atlas():
+    """Standard organ catalogue. Names, notes, and sources are ``{code, params}``.
+
+    These are reference models and codes, not patient anatomy. The response
+    does not depend on Accept-Language.
+    """
+    return public_catalog()
 
 
 @router.get("/models")

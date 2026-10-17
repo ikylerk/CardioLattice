@@ -25,6 +25,7 @@ M1 把「演示」换成了可验证的数据链路：
 | 腔室容积测量 | ✅ 已实现 | 体素数 × 体素体积，带 method / source / validation_status |
 | 结构化报告草稿 | ✅ 已实现 | 模板生成；每个结论引用 measurement；医生批准后写入审计链 |
 | 审计哈希链 | ✅ 已实现 | 去标识、体数据、流水线、报告批准等事件 |
+| 标准器官模型库 | ✅ 已实现 | 14 个内置参考器官、统一编码、RAS 坐标系、可导出目录 |
 | LLM 辅助报告（Claude） | 🚧 M2 | 只对结构化事实做语言化，不独立下诊断；接口与校验已设计 |
 | 冠脉管腔/狭窄/FFR-CT | 🚧 M3–M4 | 未接入经过验证的模型，UI 显示 `not_computed`，不编造数值 |
 | 纵向对比/预测 | 🚧 M3 | 先做配准与 delta；没有验证模型前不展示“未来事件概率” |
@@ -129,6 +130,25 @@ queued → validating → anonymizing → building_volume
 
 ---
 
+## 标准器官模型库
+
+侧栏「器官模型库」提供一套内置、可版本化的标准参考模型：
+
+- 心脏、左右肺、气管、肝、胆囊、胃、脾、胰腺、左右肾、主动脉、下腔静脉、脊柱，共 14 个器官；
+- 统一使用 `RAS_BODY_CENTER` 坐标系，单位 mm（+x 右、+y 前、+z 上）；
+- 每个器官有稳定 `code`、系统分类、颜色、标准尺寸/中心、几何类型与来源说明；
+- 支持系统筛选、单器官显示/隐藏、聚焦、半透明模式、截图和 JSON 目录导出；
+- 心脏分割标签通过 `standardLabelMap` 映射到 `HEART_LV`、`AORTA` 等标准代码；
+- 前后端共用 `shared/organ_library.json`。`GET /api/organs` 返回同一套几何，但名称、说明和来源都是 `{"code", "params"}`，不返回中文或英文显示句，也不读取 `Accept-Language`。
+
+> 这些是**标准参考几何**，用于方位、教学、配准占位和界面标准化；不是患者解剖，不能用于诊断。后续可逐个替换为有明确授权的真实器官 GLB，而不改变编码。
+
+当前版本提供标准目录、可视化和编码映射；把图谱配准到患者体数据属于后续工作，并且只能用于方位与质控，不能用于推导患者测量。
+
+详见 [`docs/organ-library.zh-CN.md`](docs/organ-library.zh-CN.md)。
+
+---
+
 ## API（M1）
 
 后端不读取 `Accept-Language`。
@@ -149,6 +169,7 @@ queued → validating → anonymizing → building_volume
 | DELETE | `/api/studies/{id}` | 删除检查与派生文件 |
 | GET | `/api/volumes/{id}/data` | 8-bit 体数据 |
 | GET | `/api/meshes/{id}/glb` | 患者 GLB |
+| GET | `/api/organs` | 标准器官目录，人类可读字段为 `{code, params}` |
 | GET | `/api/models` | 模型注册表与授权状态 |
 | POST | `/api/studies/{id}/reports/{reportId}/approve` | 医生批准报告 |
 
@@ -196,9 +217,10 @@ npm run build:cloud    # 云端构建回归
 src/                        React 前端
   api/                      fetch/upload/SSE 客户端
   study/                    StudyContext、演示适配器
-  components/               工作台、CTA/MPR/VRT、患者 3D、分析、报告
-  three/                    HeartEngine / VolumeRenderer / AngioEngine
+  components/               工作台、CTA/MPR/VRT、患者 3D、分析、报告、器官库
+  three/                    HeartEngine / VolumeRenderer / OrganLibraryEngine
   data/heart-data.json      演示用教学解剖数据
+shared/organ_library.json   前后端共享的标准器官目录
 server/                     FastAPI 后端
   app/imaging/              DICOM 解析、体数据、分割、marching cubes
   app/routes/               studies / assets / reports

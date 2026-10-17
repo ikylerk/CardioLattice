@@ -10,6 +10,7 @@ const MODULE_HINTS = {
   cta: '拖动十字线 · 滚轮切换层面 · 调整窗宽窗位',
   echo: '选择切面 · 播放动态 · 彩色多普勒叠加',
   analysis: '查看 AHA 17 段供血 · 点击热区查看缺血负荷',
+  organs: '标准器官参考模型 · 单击选择 · 系统筛选 · 导出目录',
 }
 
 export default function StatusBar({ active, bpm = 72, playing = true, onTogglePlaying }) {

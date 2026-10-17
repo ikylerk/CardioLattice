@@ -1,3 +1,6 @@
+[![CI](https://github.com/ikylerk/CardioLattice/actions/workflows/ci.yml/badge.svg)](https://github.com/ikylerk/CardioLattice/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 # CardioLattice · CardioScope Pro
 
 [中文](README.zh-CN.md)
@@ -23,6 +26,7 @@ M1 replaces the “demo” with a verifiable data path:
 | Chamber volume measurements | ✅ Implemented | Voxel count × voxel volume, with method / source / validation_status |
 | Structured report draft | ✅ Implemented | Template-generated; every conclusion cites a measurement; clinician approval is written to the audit chain |
 | Audit hash chain | ✅ Implemented | Events for de-identification, volume build, pipeline, and report approval |
+| Standard organ library | ✅ Implemented | 14 built-in reference organs, stable codes, RAS frame, exportable catalog |
 | LLM-assisted reporting (Claude) | 🚧 M2 | Language over structured facts only; it does not diagnose on its own. Interface and checks are designed |
 | Coronary lumen / stenosis / FFR-CT | 🚧 M3–M4 | No validated model is connected. The UI shows `not_computed` and does not invent a number |
 | Longitudinal comparison / prediction | 🚧 M3 | Registration and delta first. No “future event probability” until a model is validated |
@@ -127,6 +131,25 @@ Every measurement includes:
 
 ---
 
+## Standard organ library
+
+The sidebar “Organ library” shows a built-in, versioned set of reference models:
+
+- heart, both lungs, trachea, liver, gallbladder, stomach, spleen, pancreas, both kidneys, aorta, inferior vena cava, and spine — 14 organs;
+- one `RAS_BODY_CENTER` frame, millimetres (+x right, +y anterior, +z superior);
+- each organ has a stable `code`, system, colour, standard size and centre, geometry type, and source;
+- system filter, show/hide, focus, translucency, screenshot, and JSON catalog export;
+- cardiac segmentation labels map through `standardLabelMap` to codes such as `HEART_LV` and `AORTA`;
+- frontend and backend share `shared/organ_library.json`. `GET /api/organs` returns the same geometry with human-readable fields replaced by `{"code", "params"}`. It does not return the Chinese or English display strings, and it ignores `Accept-Language`.
+
+> These are **standard reference geometry** for orientation, teaching, registration placeholders, and UI standardisation. They are not patient anatomy and must not be used for diagnosis. A later version can replace each shape with a clearly licensed organ GLB without changing the codes.
+
+This version provides the catalog, the viewer, and the code mapping. Registering the atlas onto a patient volume is later work, and even then it is only for orientation and quality control.
+
+See [`docs/organ-library.md`](docs/organ-library.md).
+
+---
+
 ## API (M1)
 
 The backend does not read `Accept-Language`.
@@ -147,6 +170,7 @@ Errors, `not_computed` reasons, pipeline messages, series-selection reasons, and
 | DELETE | `/api/studies/{id}` | Delete the study and derived files |
 | GET | `/api/volumes/{id}/data` | 8-bit volume |
 | GET | `/api/meshes/{id}/glb` | Patient GLB |
+| GET | `/api/organs` | Standard organ catalog as `{code, params}` (no display strings) |
 | GET | `/api/models` | Model registry and licence status |
 | POST | `/api/studies/{id}/reports/{reportId}/approve` | Clinician approves the report |
 
@@ -194,9 +218,10 @@ Model licence and validation state are recorded in `/api/models` (`server/app/ro
 src/                        React frontend
   api/                      fetch/upload/SSE client
   study/                    StudyContext, demo adapter
-  components/               workbench, CTA/MPR/VRT, patient 3D, analysis, report
-  three/                    HeartEngine / VolumeRenderer / AngioEngine
+  components/               workbench, CTA/MPR/VRT, patient 3D, analysis, report, organ library
+  three/                    HeartEngine / VolumeRenderer / OrganLibraryEngine
   data/heart-data.json      teaching anatomy for the demo
+shared/organ_library.json   shared standard organ catalog
 server/                     FastAPI backend
   app/imaging/              DICOM parsing, volumes, segmentation, marching cubes
   app/routes/               studies / assets / reports

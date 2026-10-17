@@ -8,11 +8,12 @@ WORKDIR /app
 
 RUN pip install --no-cache-dir uv
 
-COPY pyproject.toml uv.lock ./
+COPY server/pyproject.toml server/uv.lock ./
 RUN uv sync --frozen --no-dev
 
-COPY app ./app
-COPY scripts ./scripts
+COPY server/app ./app
+COPY server/scripts ./scripts
+COPY shared ./shared
 
 RUN mkdir -p /data
 EXPOSE 8000

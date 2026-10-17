@@ -118,7 +118,16 @@ queued → validating → anonymizing → building_volume → segmenting
 - 审计导出、保留与删除任务；
 - DPIA / IRB / 数据使用协议以及供应商 DPA。
 
-## 9. 部署路径
+## 9. 标准器官库
+
+`shared/organ_library.json` 是参考器官编码、系统、颜色、标准位置和心脏标签映射的唯一来源。
+
+- 前端：`src/three/organGeometry.js` 构建参考网格；`OrganLibraryEngine` 在 z 轴向上的 RAS 场景中以毫米渲染。
+- 后端：`server/app/organ_library.py` 加载并校验同一份 JSON。`GET /api/organs` 返回这套几何，名称、说明、来源和坐标系描述都是 `{"code", "params"}`。它不返回显示用的句子，也不读取 `Accept-Language`。分割来源包含 `standard_label_map`（例如 `LV → HEART_LV`）。
+- 目录有版本（`organ-atlas/v1`）。改动已发布的编码是破坏性变更；应提升版本并保持映射稳定。
+- 非心脏器官明确标为参考几何。可以用有许可的 GLB 逐个替换，而不改变目录契约。
+
+## 10. 部署路径
 
 1. **Local-lite**（当前）：`uv run uvicorn` + `npm run dev:api`。
 2. **容器**：`docker compose up --build`（API + web，SQLite 卷）。
@@ -126,7 +135,7 @@ queued → validating → anonymizing → building_volume → segmenting
 
 存储和队列接口故意做窄，这样生产实现可以在不改影像流水线的情况下加进来。
 
-## 10. 语言
+## 11. 语言
 
 API 不读取 `Accept-Language`。
 

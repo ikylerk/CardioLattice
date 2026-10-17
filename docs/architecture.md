@@ -124,7 +124,24 @@ Local-lite is intentionally unauthenticated. Before real data:
 - audit export, retention and deletion jobs;
 - DPIA / IRB / data-use agreements and vendor DPAs.
 
-## 9. Deployment path
+## 9. Standard organ library
+
+`shared/organ_library.json` is the single source of truth for reference organ
+codes, systems, colours, canonical placement and cardiac label mappings.
+
+- Frontend: `src/three/organGeometry.js` builds the reference meshes;
+  `OrganLibraryEngine` renders them in a z-up RAS scene with millimetre units.
+- Backend: `server/app/organ_library.py` loads and validates the same JSON.
+  `GET /api/organs` returns that geometry with names, notes, sources, and the
+  frame description as `{"code", "params"}`. It does not return display
+  sentences and it ignores `Accept-Language`. Segmentation provenance includes
+  `standard_label_map` (for example `LV → HEART_LV`).
+- The catalog is versioned (`organ-atlas/v1`). Changing a published code is a
+  breaking change; bump the version and keep the mapping stable.
+- Non-cardiac organs are deliberately labelled as reference geometry. They can
+  be replaced with licensed GLB models without changing the catalog contract.
+
+## 10. Deployment path
 
 1. **Local-lite** (current): `uv run uvicorn` + `npm run dev:api`.
 2. **Container**: `docker compose up --build` (API + web, SQLite volume).
@@ -134,7 +151,7 @@ Local-lite is intentionally unauthenticated. Before real data:
 The storage/queue interfaces are deliberately narrow so the production
 implementations can be added without changing the imaging pipeline.
 
-## 10. Languages
+## 11. Languages
 
 The API does not read `Accept-Language`.
 

@@ -13,6 +13,15 @@
 - Audit hash chain, report approval, deletion.
 - Backend tests and Playwright E2E; offline demo build preserved.
 
+## Atlas-based normalization (next)
+
+- Register the standard organ atlas to the patient volume/mesh for orientation
+  and left/right sanity checks.
+- Use the atlas as a coordinate/reference layer only; never derive patient
+  measurements from the reference geometry.
+- Require registration QC (landmark error / overlap) and do not claim
+  normalization when quality is low.
+
 ## M2 — Real segmentation and AI-assisted reporting
 
 - TotalSegmentator integration with pinned version and label-map snapshots.

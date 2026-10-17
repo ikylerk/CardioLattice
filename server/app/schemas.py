@@ -114,6 +114,7 @@ def segmentation_out(segmentation: Segmentation) -> dict:
         "modelVersion": segmentation.model_version,
         "status": segmentation.status,
         "labelMap": segmentation.label_map,
+        "standardLabelMap": (segmentation.provenance or {}).get("standard_label_map", {}),
         "quality": _quality(segmentation.quality),
         "provenance": _note_dict(segmentation.provenance),
     }
