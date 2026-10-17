@@ -21,6 +21,9 @@ def test_demo_pipeline_end_to_end():
         assert len(bundle["volumes"]) == 1
         assert len(bundle["meshes"]) == 7
         assert len(bundle["reports"]) == 1
+        segmentation = bundle["segmentations"][0]
+        assert segmentation["standardLabelMap"]["LV"] == "HEART_LV"
+        assert segmentation["standardLabelMap"]["AO"] == "AORTA"
 
         measurements = {item["code"]: item for item in bundle["measurements"]}
         assert measurements["LV_VOLUME"]["status"] == "computed"

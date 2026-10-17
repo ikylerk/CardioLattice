@@ -1,0 +1,238 @@
+{
+  "version": "organ-atlas/v1",
+  "updated": "2026-10-18",
+  "frame": {
+    "name": "RAS_BODY_CENTER",
+    "units": "mm",
+    "description": "Origin at the body centre. +x right, +y anterior, +z superior. Reference geometry only; not patient anatomy."
+  },
+  "systems": [
+    { "id": "cardiovascular", "name": "心血管", "en": "Cardiovascular", "color": "#c45258" },
+    { "id": "respiratory", "name": "呼吸", "en": "Respiratory", "color": "#6ca9b8" },
+    { "id": "digestive", "name": "消化", "en": "Digestive", "color": "#c49a5a" },
+    { "id": "urinary", "name": "泌尿", "en": "Urinary", "color": "#9b86c4" },
+    { "id": "skeletal", "name": "骨骼", "en": "Skeletal", "color": "#b8b0a0" }
+  ],
+  "organs": [
+    {
+      "code": "HEART",
+      "name": "心脏",
+      "en": "Heart",
+      "system": "cardiovascular",
+      "color": "#c45258",
+      "centerMm": [-20, 20, 10],
+      "sizeMm": [110, 90, 110],
+      "mesh": { "type": "glb", "asset": "heart.glb" },
+      "renderable": true,
+      "segLabels": ["LV", "RV", "LA", "RA", "MYO"],
+      "source": "Demo surface: Realistic Human Heart by neshallads, CC BY 4.0; reference placement",
+      "note": "演示心脏表面按标准尺寸归一化放置；子结构代码见 segLabelMap。"
+    },
+    {
+      "code": "LUNG_R",
+      "name": "右肺",
+      "en": "Right lung",
+      "system": "respiratory",
+      "color": "#6ca9b8",
+      "centerMm": [85, 0, 50],
+      "sizeMm": [105, 170, 235],
+      "mesh": { "type": "ellipsoid", "deform": "lung", "side": "right" },
+      "renderable": true,
+      "source": "Standard reference ellipsoid",
+      "note": "标准参考几何；用于方位与体积占位，不是患者肺叶分割。"
+    },
+    {
+      "code": "LUNG_L",
+      "name": "左肺",
+      "en": "Left lung",
+      "system": "respiratory",
+      "color": "#6ca9b8",
+      "centerMm": [-85, 0, 50],
+      "sizeMm": [105, 170, 235],
+      "mesh": { "type": "ellipsoid", "deform": "lung", "side": "left" },
+      "renderable": true,
+      "source": "Standard reference ellipsoid",
+      "note": "标准参考几何；左肺体积略小于右肺的常规假设可通过 sizeMm 调整。"
+    },
+    {
+      "code": "TRACHEA",
+      "name": "气管",
+      "en": "Trachea",
+      "system": "respiratory",
+      "color": "#8ba0a8",
+      "centerMm": [0, -5, 120],
+      "sizeMm": [18, 18, 110],
+      "mesh": {
+        "type": "tube",
+        "pointsMm": [[0, -5, 70], [0, -5, 120], [0, -5, 175]],
+        "radiusMm": 9
+      },
+      "renderable": true,
+      "source": "Standard reference tube",
+      "note": "标准参考几何。"
+    },
+    {
+      "code": "LIVER",
+      "name": "肝脏",
+      "en": "Liver",
+      "system": "digestive",
+      "color": "#8f4a43",
+      "centerMm": [65, 25, -110],
+      "sizeMm": [190, 120, 110],
+      "mesh": { "type": "ellipsoid", "deform": "liver", "side": "right" },
+      "renderable": true,
+      "source": "Standard reference ellipsoid",
+      "note": "标准参考几何；不代表肝段分割。"
+    },
+    {
+      "code": "GALLBLADDER",
+      "name": "胆囊",
+      "en": "Gallbladder",
+      "system": "digestive",
+      "color": "#7d9a52",
+      "centerMm": [95, 40, -145],
+      "sizeMm": [35, 35, 70],
+      "mesh": { "type": "ellipsoid" },
+      "renderable": true,
+      "source": "Standard reference ellipsoid",
+      "note": "标准参考几何。"
+    },
+    {
+      "code": "STOMACH",
+      "name": "胃",
+      "en": "Stomach",
+      "system": "digestive",
+      "color": "#a46a5a",
+      "centerMm": [-45, 20, -125],
+      "sizeMm": [110, 80, 85],
+      "mesh": {
+        "type": "tube",
+        "pointsMm": [[-20, 20, -85], [-45, 20, -105], [-60, 15, -140], [-35, 10, -160], [-5, 0, -150]],
+        "radiusMm": 32
+      },
+      "renderable": true,
+      "source": "Standard reference tube",
+      "note": "标准参考几何；用于方位占位。"
+    },
+    {
+      "code": "SPLEEN",
+      "name": "脾脏",
+      "en": "Spleen",
+      "system": "digestive",
+      "color": "#7a5a86",
+      "centerMm": [-105, 0, -120],
+      "sizeMm": [90, 55, 45],
+      "mesh": { "type": "ellipsoid" },
+      "renderable": true,
+      "source": "Standard reference ellipsoid",
+      "note": "标准参考几何。"
+    },
+    {
+      "code": "PANCREAS",
+      "name": "胰腺",
+      "en": "Pancreas",
+      "system": "digestive",
+      "color": "#c0a070",
+      "centerMm": [0, -5, -150],
+      "sizeMm": [150, 35, 30],
+      "mesh": {
+        "type": "tube",
+        "pointsMm": [[-75, -5, -145], [-30, 0, -150], [20, 5, -150], [70, 5, -145]],
+        "radiusMm": 14
+      },
+      "renderable": true,
+      "source": "Standard reference tube",
+      "note": "标准参考几何。"
+    },
+    {
+      "code": "KIDNEY_R",
+      "name": "右肾",
+      "en": "Right kidney",
+      "system": "urinary",
+      "color": "#9b86c4",
+      "centerMm": [60, -30, -180],
+      "sizeMm": [50, 40, 105],
+      "mesh": { "type": "ellipsoid", "deform": "kidney", "side": "right" },
+      "renderable": true,
+      "source": "Standard reference ellipsoid",
+      "note": "标准参考几何；右肾通常略低于左肾。"
+    },
+    {
+      "code": "KIDNEY_L",
+      "name": "左肾",
+      "en": "Left kidney",
+      "system": "urinary",
+      "color": "#9b86c4",
+      "centerMm": [-60, -30, -170],
+      "sizeMm": [50, 40, 105],
+      "mesh": { "type": "ellipsoid", "deform": "kidney", "side": "left" },
+      "renderable": true,
+      "source": "Standard reference ellipsoid",
+      "note": "标准参考几何。"
+    },
+    {
+      "code": "AORTA",
+      "name": "主动脉",
+      "en": "Aorta",
+      "system": "cardiovascular",
+      "color": "#d0604f",
+      "centerMm": [0, -35, -40],
+      "sizeMm": [28, 28, 300],
+      "mesh": {
+        "type": "tube",
+        "pointsMm": [[0, -35, -190], [0, -35, -80], [0, -30, 20], [-5, -10, 90], [-20, 0, 125]],
+        "radiusMm": 14
+      },
+      "renderable": true,
+      "source": "Standard reference tube",
+      "note": "标准参考几何；不代表患者主动脉中心线。"
+    },
+    {
+      "code": "IVC",
+      "name": "下腔静脉",
+      "en": "Inferior vena cava",
+      "system": "cardiovascular",
+      "color": "#7d9bc4",
+      "centerMm": [20, -35, -50],
+      "sizeMm": [22, 22, 280],
+      "mesh": {
+        "type": "tube",
+        "pointsMm": [[20, -35, -190], [20, -35, -60], [18, -30, 40]],
+        "radiusMm": 11
+      },
+      "renderable": true,
+      "source": "Standard reference tube",
+      "note": "标准参考几何。"
+    },
+    {
+      "code": "SPINE",
+      "name": "脊柱",
+      "en": "Spine",
+      "system": "skeletal",
+      "color": "#b8b0a0",
+      "centerMm": [0, -85, -50],
+      "sizeMm": [45, 45, 350],
+      "mesh": { "type": "stack", "segments": 17, "radiusMm": 22, "gapMm": 4 },
+      "renderable": true,
+      "source": "Standard reference stack",
+      "note": "标准参考几何；仅提供方位与体表参考。"
+    }
+  ],
+  "segLabelMap": {
+    "LV": "HEART_LV",
+    "RV": "HEART_RV",
+    "LA": "HEART_LA",
+    "RA": "HEART_RA",
+    "AO": "AORTA",
+    "MYO": "HEART_MYOCARDIUM",
+    "CALC": "CORONARY_CALCIFICATION"
+  },
+  "standardCodes": {
+    "HEART_LV": { "name": "左心室腔", "system": "cardiovascular" },
+    "HEART_RV": { "name": "右心室腔", "system": "cardiovascular" },
+    "HEART_LA": { "name": "左心房腔", "system": "cardiovascular" },
+    "HEART_RA": { "name": "右心房腔", "system": "cardiovascular" },
+    "HEART_MYOCARDIUM": { "name": "心肌", "system": "cardiovascular" },
+    "CORONARY_CALCIFICATION": { "name": "冠脉钙化", "system": "cardiovascular" }
+  }
+}

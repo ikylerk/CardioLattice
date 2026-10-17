@@ -6,6 +6,7 @@ from pathlib import Path
 import numpy as np
 
 from ..config import settings
+from ..organ_library import ORGAN_LIBRARY, standard_label_map
 from .dicom import PreviewVolume, align_labels_to_preview, load_label_image
 
 # Canonical research label map. These are structure identifiers, not clinical
@@ -63,6 +64,8 @@ def segment_synthetic(study, preview: PreviewVolume) -> SegmentationResult:
         provenance={
             "algorithm": "synthetic_ground_truth",
             "labels_path": str(labels_path),
+            "organ_library_version": ORGAN_LIBRARY["version"],
+            "standard_label_map": standard_label_map(label_map),
             "note": "Generated from the same phantom definition as the DICOM fixture.",
         },
     )
@@ -101,12 +104,18 @@ def segment_totalsegmentator(hu_nifti: Path, preview: PreviewVolume) -> Segmenta
         mask, _ = load_label_image(candidate, resample_mm=settings.resample_mm)
         aligned = align_labels_to_preview((mask > 0).astype(np.uint8), preview)
         combined[aligned > 0] = value
+    label_map = {name: value for value, (name, _) in LABELS.items() if np.any(combined == value)}
     return SegmentationResult(
         label_array=combined,
-        label_map={name: value for value, (name, _) in LABELS.items() if np.any(combined == value)},
+        label_map=label_map,
         model_id="totalsegmentator",
         model_version="2.4.0",
         validation_status="research",
         quality={"warnings": ["Research adapter; not validated for stenosis or FFR."]},
-        provenance={"algorithm": "totalsegmentator", "task": "heartchambers_highres"},
+        provenance={
+            "algorithm": "totalsegmentator",
+            "task": "heartchambers_highres",
+            "organ_library_version": ORGAN_LIBRARY["version"],
+            "standard_label_map": standard_label_map(label_map),
+        },
     )
