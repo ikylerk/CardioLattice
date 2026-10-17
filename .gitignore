@@ -1,0 +1,27 @@
+# Dependencies and builds
+node_modules/
+dist/
+dist-cloud/
+.mimosa/
+
+# Python
+server/.venv/
+server/var/
+server/.pytest_cache/
+server/**/__pycache__/
+__pycache__/
+*.pyc
+*.pyo
+
+# Local configuration and data
+.env
+.env.local
+*.db
+*.sqlite
+*.sqlite3
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.log

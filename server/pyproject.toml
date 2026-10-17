@@ -1,0 +1,42 @@
+[project]
+name = "cardioscope-server"
+version = "0.1.0"
+description = "CardioScope Pro research imaging backend"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115.0",
+  "uvicorn[standard]>=0.30.0",
+  "sqlalchemy>=2.0.30",
+  "pydantic>=2.8.0",
+  "pydantic-settings>=2.4.0",
+  "python-multipart>=0.0.9",
+  "python-dotenv>=1.0.0",
+  "pydicom>=3.0.0",
+  "pylibjpeg>=2.0.0",
+  "pylibjpeg-libjpeg>=2.0.0",
+  "pylibjpeg-openjpeg>=2.2.0",
+  "python-gdcm>=3.0.22",
+  "SimpleITK>=2.4.0",
+  "scikit-image>=0.24.0",
+  "trimesh>=4.5.0",
+  "numpy>=1.26.0",
+  "scipy>=1.13.0",
+  "fast-simplification>=0.1.7",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3.0",
+  "httpx>=0.27.0",
+]
+totalsegmentator = [
+  "totalsegmentator>=2.4.0",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"

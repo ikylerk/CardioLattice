@@ -1,0 +1,29 @@
+# Local container stack for the M1 research prototype.
+# SQLite + local filesystem only. Postgres/S3/Redis and a GPU inference worker
+# are deliberate later milestones; see docs/roadmap.md.
+services:
+  api:
+    build: ./server
+    environment:
+      CARDIOSCOPE_VAR_DIR: /data
+      STORAGE_DIR: /data/storage
+      DB_URL: sqlite:////data/cardioscope.db
+      QUEUE: inline
+      RUN_PIPELINE_SYNC: "0"
+      SEGMENTATION_ADAPTER: synthetic_ground_truth
+      DEID_SALT: change-me-in-production
+      ALLOWED_ORIGINS: http://localhost:8080
+    volumes:
+      - cardio_data:/data
+    expose:
+      - "8000"
+
+  web:
+    build: .
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+
+volumes:
+  cardio_data:

@@ -1,0 +1,13 @@
+node_modules
+dist
+dist-cloud
+.git
+.github
+.mimosa
+server/.venv
+server/var
+server/.pytest_cache
+**/__pycache__
+*.log
+.env
+.DS_Store
