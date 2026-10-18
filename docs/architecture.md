@@ -137,7 +137,7 @@ codes, systems, colours, canonical placement and cardiac label mappings.
 - Each organ also has a `<CODE>_detail.glb` with named sub-structures. The
   engine loads it on demand, exposes per-part visibility/focus, and supports
   axial/coronal/sagittal clipping through a selected target.
-- `shared/organ_targets.json` defines 81 reference targets in the same frame.
+- `shared/organ_targets.json` defines 109 reference targets in the same frame.
   The engine builds a target marker, a straight approach path, a virtual needle,
   and reports path length, depth and approximate structure intersections.
 - `src/three/organGeometry.js` remains as a procedural fallback for missing

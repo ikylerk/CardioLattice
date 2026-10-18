@@ -45,7 +45,7 @@ unless the mapping has been reviewed and licensed separately.
 
 ### Detailed sub-structures and targets
 
-The sub-structure meshes and the 81 reference targets are **reference anatomy**,
+The sub-structure meshes and the 109 reference targets are **reference anatomy**,
 not patient-specific anatomy or lesions. Target coordinates are derived from
 reference part centroids or simple morphological landmarks (for example organ
 poles); they do not represent a patient's pathology and must not be used for

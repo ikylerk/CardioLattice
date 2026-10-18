@@ -7660,3 +7660,9 @@ input:focus-visible {
   line-height: 1.5;
 }
 .organ-target-warning svg { flex-shrink: 0; margin-top: 1px; }
+
+.readiness-list li.ok svg { color: var(--green); }
+.readiness-list li.warn { color: var(--amber); }
+.readiness-list li.warn svg { color: var(--amber); }
+.readiness-list li.stop { color: #d98a90; }
+.readiness-list li.stop svg { color: var(--red); }

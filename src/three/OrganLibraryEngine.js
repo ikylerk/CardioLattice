@@ -45,6 +45,10 @@ const KIND_COLORS = {
   pelvis: '#e8d8b8',
   hilum: '#c0a080',
   vertebra: '#b8b0a0',
+  nucleus: '#c9a06a',
+  ventricle: '#7fc4d8',
+  white_matter: '#d8d0c0',
+  commissure: '#b8a080',
   organ: '#a08a70',
   other: '#9aa8b0',
 }

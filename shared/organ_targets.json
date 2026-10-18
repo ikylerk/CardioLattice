@@ -15,8 +15,8 @@
       "partCode": "HEART_PART_006",
       "coordinateMm": [
         -45.3,
-        18.6,
-        99.0
+        20.1,
+        22.0
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -31,8 +31,8 @@
       "partCode": "HEART_PART_007",
       "coordinateMm": [
         -21.3,
-        45.1,
-        100.6
+        46.7,
+        23.6
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -47,8 +47,8 @@
       "partCode": "HEART_PART_009",
       "coordinateMm": [
         -19.0,
-        -11.8,
-        123.8
+        -10.2,
+        46.8
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -63,8 +63,8 @@
       "partCode": "HEART_PART_008",
       "coordinateMm": [
         12.4,
-        16.1,
-        115.7
+        17.7,
+        38.7
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -79,8 +79,8 @@
       "partCode": "HEART_PART_015",
       "coordinateMm": [
         -39.6,
-        -1.1,
-        96.4
+        0.5,
+        19.4
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -95,8 +95,8 @@
       "partCode": "HEART_PART_018",
       "coordinateMm": [
         -21.9,
-        23.8,
-        125.6
+        25.4,
+        48.6
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -111,8 +111,8 @@
       "partCode": "HEART_PART_016",
       "coordinateMm": [
         0.3,
-        25.7,
-        88.8
+        27.3,
+        11.8
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -127,8 +127,8 @@
       "partCode": "HEART_PART_017",
       "coordinateMm": [
         -21.4,
-        42.6,
-        139.1
+        44.2,
+        62.1
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -143,8 +143,8 @@
       "partCode": "HEART_PART_023",
       "coordinateMm": [
         -53.9,
-        47.7,
-        110.9
+        49.2,
+        33.9
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -159,8 +159,8 @@
       "partCode": "HEART_PART_041",
       "coordinateMm": [
         -49.0,
-        1.6,
-        127.6
+        3.1,
+        50.7
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -175,8 +175,8 @@
       "partCode": "HEART_PART_077",
       "coordinateMm": [
         -0.4,
-        39.8,
-        106.3
+        41.4,
+        29.3
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -191,8 +191,8 @@
       "partCode": "LUNG_L_SEGMENT_01",
       "coordinateMm": [
         -109.1,
-        0.9,
-        65.0
+        2.5,
+        -12.0
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -207,8 +207,8 @@
       "partCode": "LUNG_L_SEGMENT_02",
       "coordinateMm": [
         -71.9,
-        36.5,
-        147.0
+        38.1,
+        70.0
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -223,8 +223,8 @@
       "partCode": "LUNG_L_SEGMENT_03",
       "coordinateMm": [
         -44.6,
-        -6.4,
-        207.8
+        -4.9,
+        130.8
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -239,8 +239,8 @@
       "partCode": "LUNG_L_SEGMENT_04",
       "coordinateMm": [
         -109.1,
-        -44.7,
-        57.7
+        -43.2,
+        -19.3
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -255,8 +255,8 @@
       "partCode": "LUNG_L_SEGMENT_05",
       "coordinateMm": [
         -93.5,
-        43.4,
-        58.2
+        45.0,
+        -18.8
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -271,8 +271,8 @@
       "partCode": "LUNG_L_SEGMENT_06",
       "coordinateMm": [
         -76.2,
-        48.9,
-        95.8
+        50.4,
+        18.8
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -287,8 +287,8 @@
       "partCode": "LUNG_L_SEGMENT_07",
       "coordinateMm": [
         -84.1,
-        0.5,
-        87.2
+        2.1,
+        10.3
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -303,8 +303,8 @@
       "partCode": "LUNG_L_SEGMENT_08",
       "coordinateMm": [
         -52.8,
-        -61.6,
-        39.5
+        -60.0,
+        -37.5
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -319,8 +319,8 @@
       "partCode": "LUNG_L_SEGMENT_09",
       "coordinateMm": [
         -58.6,
-        -47.7,
-        174.3
+        -46.2,
+        97.3
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -335,8 +335,8 @@
       "partCode": "LUNG_L_SEGMENT_10",
       "coordinateMm": [
         -41.9,
-        -62.7,
-        132.6
+        -61.1,
+        55.6
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -351,8 +351,8 @@
       "partCode": "LUNG_R_SEGMENT_01",
       "coordinateMm": [
         101.7,
-        4.9,
-        73.6
+        6.5,
+        -3.4
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -367,8 +367,8 @@
       "partCode": "LUNG_R_SEGMENT_02",
       "coordinateMm": [
         65.7,
-        39.5,
-        139.7
+        41.0,
+        62.7
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -383,8 +383,8 @@
       "partCode": "LUNG_R_SEGMENT_03",
       "coordinateMm": [
         34.1,
-        -2.1,
-        204.0
+        -0.6,
+        127.0
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -399,8 +399,8 @@
       "partCode": "LUNG_R_SEGMENT_04",
       "coordinateMm": [
         94.4,
-        -45.6,
-        47.3
+        -44.0,
+        -29.7
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -415,8 +415,8 @@
       "partCode": "LUNG_R_SEGMENT_05",
       "coordinateMm": [
         97.9,
-        13.7,
-        99.4
+        15.3,
+        22.4
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -431,8 +431,8 @@
       "partCode": "LUNG_R_SEGMENT_06",
       "coordinateMm": [
         32.7,
-        1.4,
-        65.8
+        2.9,
+        -11.2
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -447,8 +447,8 @@
       "partCode": "LUNG_R_SEGMENT_07",
       "coordinateMm": [
         61.1,
-        66.2,
-        72.3
+        67.8,
+        -4.6
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -463,8 +463,8 @@
       "partCode": "LUNG_R_SEGMENT_08",
       "coordinateMm": [
         42.8,
-        -61.0,
-        35.9
+        -59.5,
+        -41.1
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -479,8 +479,8 @@
       "partCode": "LUNG_R_SEGMENT_09",
       "coordinateMm": [
         71.7,
-        -41.8,
-        164.2
+        -40.3,
+        87.2
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -495,8 +495,8 @@
       "partCode": "LUNG_R_SEGMENT_10",
       "coordinateMm": [
         55.2,
-        -63.0,
-        120.9
+        -61.4,
+        43.9
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -511,8 +511,8 @@
       "partCode": "LIVER_CAUDATE",
       "coordinateMm": [
         20.0,
-        -3.6,
-        0.9
+        -2.1,
+        -76.1
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -527,8 +527,8 @@
       "partCode": "LIVER_SEGMENT_RIGHT_POSTEROINFERIOR",
       "coordinateMm": [
         96.4,
-        -48.4,
-        -58.7
+        -46.8,
+        -135.7
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -543,8 +543,8 @@
       "partCode": "LIVER_SEGMENT_RIGHT_POSTEROSUPERIOR",
       "coordinateMm": [
         78.2,
-        -54.4,
-        14.2
+        -52.8,
+        -62.8
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -559,8 +559,8 @@
       "partCode": "LIVER_SEGMENT_RIGHT_ANTEROSUPERIOR",
       "coordinateMm": [
         100.3,
-        21.0,
-        42.2
+        22.5,
+        -34.8
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -575,8 +575,8 @@
       "partCode": "LIVER_SEGMENT_RIGHT_ANTEROINFERIOR",
       "coordinateMm": [
         107.3,
-        26.6,
-        -51.3
+        28.2,
+        -128.3
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -591,8 +591,8 @@
       "partCode": "LIVER_SEGMENT_LEFT_ANTEROLATERAL",
       "coordinateMm": [
         0.1,
-        80.7,
-        -16.0
+        82.2,
+        -93.0
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -607,8 +607,8 @@
       "partCode": "LIVER_SEGMENT_LEFT_POSTEROLATERAL",
       "coordinateMm": [
         -26.2,
-        49.8,
-        23.0
+        51.4,
+        -54.0
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -623,8 +623,8 @@
       "partCode": "LIVER_SEGMENT_LEFT_SUPERIOMEDIAL",
       "coordinateMm": [
         47.8,
-        56.9,
-        36.2
+        58.4,
+        -40.8
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -639,8 +639,8 @@
       "partCode": "LIVER_SEGMENT_LEFT_INFEROMEDIAL",
       "coordinateMm": [
         60.8,
-        90.7,
-        -11.1
+        92.2,
+        -88.1
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -655,8 +655,8 @@
       "partCode": "LIVER_QUADRATE",
       "coordinateMm": [
         49.5,
-        61.0,
-        -21.3
+        62.6,
+        -98.3
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -671,8 +671,8 @@
       "partCode": "LIVER_CAPSULE",
       "coordinateMm": [
         65.7,
-        20.9,
-        -13.0
+        22.5,
+        -90.0
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -687,8 +687,8 @@
       "partCode": "KIDNEY_L_CAPSULE",
       "coordinateMm": [
         -73.8,
-        -29.7,
-        -32.8
+        -28.2,
+        -109.8
       ],
       "standardView": "posterior",
       "approach": "posterior",
@@ -703,8 +703,8 @@
       "partCode": "KIDNEY_L_CAPSULE",
       "coordinateMm": [
         -73.8,
-        -29.7,
-        -141.0
+        -28.2,
+        -218.0
       ],
       "standardView": "posterior",
       "approach": "posterior",
@@ -719,8 +719,8 @@
       "partCode": "KIDNEY_L_CAPSULE",
       "coordinateMm": [
         -73.8,
-        -29.7,
-        -82.4
+        -28.2,
+        -159.4
       ],
       "standardView": "posterior",
       "approach": "posterior",
@@ -735,8 +735,8 @@
       "partCode": "KIDNEY_L_PELVIS",
       "coordinateMm": [
         -63.3,
-        -9.7,
-        -91.8
+        -8.2,
+        -168.8
       ],
       "standardView": "posterior",
       "approach": "posterior",
@@ -751,8 +751,8 @@
       "partCode": "KIDNEY_L_HILUM",
       "coordinateMm": [
         -66.3,
-        -16.2,
-        -86.7
+        -14.7,
+        -163.7
       ],
       "standardView": "posterior",
       "approach": "posterior",
@@ -767,8 +767,8 @@
       "partCode": "KIDNEY_R_CAPSULE",
       "coordinateMm": [
         67.9,
-        -16.2,
-        -47.9
+        -14.6,
+        -124.9
       ],
       "standardView": "posterior",
       "approach": "posterior",
@@ -783,8 +783,8 @@
       "partCode": "KIDNEY_R_CAPSULE",
       "coordinateMm": [
         67.9,
-        -16.2,
-        -162.2
+        -14.6,
+        -239.2
       ],
       "standardView": "posterior",
       "approach": "posterior",
@@ -799,8 +799,8 @@
       "partCode": "KIDNEY_R_CAPSULE",
       "coordinateMm": [
         67.9,
-        -16.2,
-        -103.3
+        -14.6,
+        -180.3
       ],
       "standardView": "posterior",
       "approach": "posterior",
@@ -815,8 +815,8 @@
       "partCode": "KIDNEY_R_PELVIS",
       "coordinateMm": [
         52.8,
-        12.2,
-        -118.0
+        13.7,
+        -195.0
       ],
       "standardView": "posterior",
       "approach": "posterior",
@@ -831,8 +831,8 @@
       "partCode": "KIDNEY_R_HILUM",
       "coordinateMm": [
         58.6,
-        -0.2,
-        -102.6
+        1.3,
+        -179.6
       ],
       "standardView": "posterior",
       "approach": "posterior",
@@ -847,8 +847,8 @@
       "partCode": "PANCREAS_HEAD",
       "coordinateMm": [
         19.9,
-        24.5,
-        -62.1
+        26.1,
+        -139.1
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -863,8 +863,8 @@
       "partCode": "PANCREAS_NECK",
       "coordinateMm": [
         8.2,
-        36.7,
-        -47.8
+        38.3,
+        -124.7
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -879,8 +879,8 @@
       "partCode": "PANCREAS_BODY",
       "coordinateMm": [
         -29.1,
-        11.8,
-        -32.9
+        13.4,
+        -109.9
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -895,8 +895,8 @@
       "partCode": "PANCREAS_TAIL",
       "coordinateMm": [
         -61.1,
-        -24.2,
-        -26.0
+        -22.7,
+        -103.0
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -911,8 +911,8 @@
       "partCode": "PANCREAS_UNCINATE",
       "coordinateMm": [
         13.6,
-        24.2,
-        -79.1
+        25.8,
+        -156.1
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -927,8 +927,8 @@
       "partCode": "SPLEEN_DIAPHRAGMATIC",
       "coordinateMm": [
         -93.6,
-        -45.8,
-        41.4
+        -44.3,
+        -35.6
       ],
       "standardView": "left",
       "approach": "left",
@@ -943,8 +943,8 @@
       "partCode": "SPLEEN_DIAPHRAGMATIC",
       "coordinateMm": [
         -93.6,
-        -45.8,
-        -79.2
+        -44.3,
+        -156.1
       ],
       "standardView": "left",
       "approach": "left",
@@ -959,8 +959,8 @@
       "partCode": "SPLEEN_HILUM",
       "coordinateMm": [
         -82.7,
-        -38.1,
-        -23.2
+        -36.6,
+        -100.2
       ],
       "standardView": "left",
       "approach": "left",
@@ -975,8 +975,8 @@
       "partCode": "AORTA_ASCENDING",
       "coordinateMm": [
         -14.3,
-        20.4,
-        143.3
+        21.9,
+        66.3
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -991,8 +991,8 @@
       "partCode": "AORTA_ARCH",
       "coordinateMm": [
         -19.8,
-        -6.4,
-        180.3
+        -4.9,
+        103.3
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -1007,8 +1007,8 @@
       "partCode": "AORTA_DESCENDING",
       "coordinateMm": [
         -16.3,
-        -11.4,
-        16.2
+        -9.9,
+        -60.8
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -1023,8 +1023,8 @@
       "partCode": "IVC_SUPERIOR",
       "coordinateMm": [
         11.7,
-        12.8,
-        27.7
+        14.4,
+        -49.3
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -1039,8 +1039,8 @@
       "partCode": "IVC_INFERIOR",
       "coordinateMm": [
         8.1,
-        15.3,
-        -89.0
+        16.9,
+        -166.0
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -1055,8 +1055,8 @@
       "partCode": "TRACHEA_MAIN",
       "coordinateMm": [
         -2.9,
-        -8.6,
-        168.2
+        -7.1,
+        91.2
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -1071,8 +1071,8 @@
       "partCode": "TRACHEA_MAIN",
       "coordinateMm": [
         -2.9,
-        -8.6,
-        224.2
+        -7.1,
+        147.2
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -1087,8 +1087,8 @@
       "partCode": "STOMACH_BODY",
       "coordinateMm": [
         -1.1,
-        69.7,
-        -58.3
+        71.2,
+        -135.3
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -1103,8 +1103,8 @@
       "partCode": "STOMACH_BODY",
       "coordinateMm": [
         -18.2,
-        56.9,
-        -42.1
+        58.5,
+        -119.1
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -1119,8 +1119,8 @@
       "partCode": "STOMACH_BODY",
       "coordinateMm": [
         -48.8,
-        34.1,
-        -13.2
+        35.7,
+        -90.2
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -1135,8 +1135,8 @@
       "partCode": "STOMACH_BODY",
       "coordinateMm": [
         -65.3,
-        21.8,
-        2.5
+        23.4,
+        -74.5
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -1151,8 +1151,8 @@
       "partCode": "STOMACH_BODY",
       "coordinateMm": [
         -81.0,
-        10.1,
-        17.4
+        11.6,
+        -59.6
       ],
       "standardView": "anterior",
       "approach": "anterior",
@@ -1167,8 +1167,8 @@
       "partCode": "SPINE_T12",
       "coordinateMm": [
         -2.9,
-        -37.6,
-        -37.3
+        -36.0,
+        -114.3
       ],
       "standardView": "posterior",
       "approach": "posterior",
@@ -1183,8 +1183,8 @@
       "partCode": "SPINE_L1",
       "coordinateMm": [
         -2.9,
-        -30.8,
-        -68.1
+        -29.2,
+        -145.1
       ],
       "standardView": "posterior",
       "approach": "posterior",
@@ -1199,8 +1199,8 @@
       "partCode": "SPINE_T1",
       "coordinateMm": [
         -2.9,
-        -41.8,
-        244.5
+        -40.2,
+        167.5
       ],
       "standardView": "posterior",
       "approach": "posterior",
@@ -1215,8 +1215,8 @@
       "partCode": "SPINE_L4",
       "coordinateMm": [
         -2.9,
-        -30.4,
-        -155.6
+        -28.9,
+        -232.6
       ],
       "standardView": "posterior",
       "approach": "posterior",
@@ -1231,8 +1231,8 @@
       "partCode": "SPINE_T4",
       "coordinateMm": [
         -2.9,
-        -64.4,
-        183.2
+        -62.8,
+        106.2
       ],
       "standardView": "posterior",
       "approach": "posterior",
@@ -1247,8 +1247,8 @@
       "partCode": "SPINE_L5",
       "coordinateMm": [
         -2.9,
-        -39.9,
-        -185.8
+        -38.3,
+        -262.8
       ],
       "standardView": "posterior",
       "approach": "posterior",
@@ -1263,8 +1263,8 @@
       "partCode": "SPINE_C7",
       "coordinateMm": [
         -3.0,
-        -38.7,
-        260.5
+        -37.2,
+        183.5
       ],
       "standardView": "posterior",
       "approach": "posterior",
@@ -1279,8 +1279,8 @@
       "partCode": "SPINE_T8",
       "coordinateMm": [
         -2.9,
-        -66.8,
-        73.6
+        -65.2,
+        -3.4
       ],
       "standardView": "posterior",
       "approach": "posterior",
@@ -1295,13 +1295,461 @@
       "partCode": "SPINE_SACRUM",
       "coordinateMm": [
         -2.9,
-        -68.9,
-        -241.6
+        -67.3,
+        -318.6
       ],
       "standardView": "posterior",
       "approach": "posterior",
       "reference": "BodyParts3D vertebra",
       "description": "参考椎体中心，不是病变"
+    },
+    {
+      "id": "BRAIN_FRONTAL_TARGET",
+      "organ": "BRAIN",
+      "name": "额叶",
+      "category": "brain",
+      "partCode": "BRAIN_FRONTAL",
+      "coordinateMm": [
+        -2.9,
+        17.8,
+        391.7
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "BodyParts3D brain structures",
+      "description": "参考脑结构中心，不是病变"
+    },
+    {
+      "id": "BRAIN_PARIETAL_TARGET",
+      "organ": "BRAIN",
+      "name": "顶叶",
+      "category": "brain",
+      "partCode": "BRAIN_PARIETAL",
+      "coordinateMm": [
+        -2.9,
+        -46.6,
+        394.2
+      ],
+      "standardView": "right",
+      "approach": "right",
+      "reference": "BodyParts3D brain structures",
+      "description": "参考脑结构中心，不是病变"
+    },
+    {
+      "id": "BRAIN_TEMPORAL_TARGET",
+      "organ": "BRAIN",
+      "name": "颞叶",
+      "category": "brain",
+      "partCode": "BRAIN_TEMPORAL",
+      "coordinateMm": [
+        -2.9,
+        -26.1,
+        346.6
+      ],
+      "standardView": "left",
+      "approach": "left",
+      "reference": "BodyParts3D brain structures",
+      "description": "参考脑结构中心，不是病变"
+    },
+    {
+      "id": "BRAIN_OCCIPITAL_TARGET",
+      "organ": "BRAIN",
+      "name": "枕叶",
+      "category": "brain",
+      "partCode": "BRAIN_OCCIPITAL",
+      "coordinateMm": [
+        -2.8,
+        -84.6,
+        346.5
+      ],
+      "standardView": "posterior",
+      "approach": "posterior",
+      "reference": "BodyParts3D brain structures",
+      "description": "参考脑结构中心，不是病变"
+    },
+    {
+      "id": "BRAIN_INSULA_TARGET",
+      "organ": "BRAIN",
+      "name": "岛叶",
+      "category": "brain",
+      "partCode": "BRAIN_INSULA",
+      "coordinateMm": [
+        -2.9,
+        -2.3,
+        369.5
+      ],
+      "standardView": "left",
+      "approach": "left",
+      "reference": "BodyParts3D brain structures",
+      "description": "参考脑结构中心，不是病变"
+    },
+    {
+      "id": "BRAIN_CINGULATE_TARGET",
+      "organ": "BRAIN",
+      "name": "扣带回",
+      "category": "brain",
+      "partCode": "BRAIN_CINGULATE",
+      "coordinateMm": [
+        -2.9,
+        -20.6,
+        377.5
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "BodyParts3D brain structures",
+      "description": "参考脑结构中心，不是病变"
+    },
+    {
+      "id": "BRAIN_CEREBELLUM_TARGET",
+      "organ": "BRAIN",
+      "name": "小脑",
+      "category": "brain",
+      "partCode": "BRAIN_CEREBELLUM",
+      "coordinateMm": [
+        -2.9,
+        -58.5,
+        317.6
+      ],
+      "standardView": "posterior",
+      "approach": "posterior",
+      "reference": "BodyParts3D brain structures",
+      "description": "参考脑结构中心，不是病变"
+    },
+    {
+      "id": "BRAIN_BRAINSTEM_TARGET",
+      "organ": "BRAIN",
+      "name": "脑干",
+      "category": "brain",
+      "partCode": "BRAIN_BRAINSTEM",
+      "coordinateMm": [
+        -2.9,
+        -23.3,
+        322.6
+      ],
+      "standardView": "posterior",
+      "approach": "posterior",
+      "reference": "BodyParts3D brain structures",
+      "description": "参考脑结构中心，不是病变"
+    },
+    {
+      "id": "BRAIN_THALAMUS_TARGET",
+      "organ": "BRAIN",
+      "name": "丘脑/下丘脑",
+      "category": "brain",
+      "partCode": "BRAIN_THALAMUS",
+      "coordinateMm": [
+        -2.9,
+        -15.5,
+        356.8
+      ],
+      "standardView": "left",
+      "approach": "left",
+      "reference": "BodyParts3D brain structures",
+      "description": "参考脑结构中心，不是病变"
+    },
+    {
+      "id": "BRAIN_BASAL_GANGLIA_TARGET",
+      "organ": "BRAIN",
+      "name": "基底节",
+      "category": "brain",
+      "partCode": "BRAIN_BASAL_GANGLIA",
+      "coordinateMm": [
+        -2.9,
+        -4.8,
+        363.4
+      ],
+      "standardView": "right",
+      "approach": "right",
+      "reference": "BodyParts3D brain structures",
+      "description": "参考脑结构中心，不是病变"
+    },
+    {
+      "id": "BRAIN_HIPPOCAMPUS_TARGET",
+      "organ": "BRAIN",
+      "name": "海马",
+      "category": "brain",
+      "partCode": "BRAIN_HIPPOCAMPUS",
+      "coordinateMm": [
+        -2.9,
+        -19.5,
+        343.2
+      ],
+      "standardView": "left",
+      "approach": "left",
+      "reference": "BodyParts3D brain structures",
+      "description": "参考脑结构中心，不是病变"
+    },
+    {
+      "id": "BRAIN_VENTRICLES_TARGET",
+      "organ": "BRAIN",
+      "name": "脑室系统",
+      "category": "brain",
+      "partCode": "BRAIN_VENTRICLES",
+      "coordinateMm": [
+        -2.9,
+        -21.7,
+        357.2
+      ],
+      "standardView": "right",
+      "approach": "right",
+      "reference": "BodyParts3D brain structures",
+      "description": "参考脑结构中心，不是病变"
+    },
+    {
+      "id": "BRAIN_WHITE_MATTER_TARGET",
+      "organ": "BRAIN",
+      "name": "白质",
+      "category": "brain",
+      "partCode": "BRAIN_WHITE_MATTER",
+      "coordinateMm": [
+        -2.9,
+        -28.3,
+        377.4
+      ],
+      "standardView": "right",
+      "approach": "right",
+      "reference": "BodyParts3D brain structures",
+      "description": "参考脑结构中心，不是病变"
+    },
+    {
+      "id": "BRAIN_CORPUS_CALLOSUM_TARGET",
+      "organ": "BRAIN",
+      "name": "胼胝体/穹窿",
+      "category": "brain",
+      "partCode": "BRAIN_CORPUS_CALLOSUM",
+      "coordinateMm": [
+        -2.9,
+        -17.2,
+        369.4
+      ],
+      "standardView": "right",
+      "approach": "right",
+      "reference": "BodyParts3D brain structures",
+      "description": "参考脑结构中心，不是病变"
+    },
+    {
+      "id": "BRAIN_OTHER_TARGET",
+      "organ": "BRAIN",
+      "name": "其他脑结构",
+      "category": "brain",
+      "partCode": "BRAIN_OTHER",
+      "coordinateMm": [
+        -2.9,
+        -13.3,
+        358.8
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "BodyParts3D brain structures",
+      "description": "参考脑结构中心，不是病变"
+    },
+    {
+      "id": "SMALL_INTESTINE_DUODENUM_TARGET",
+      "organ": "SMALL_INTESTINE",
+      "name": "十二指肠",
+      "category": "segment",
+      "partCode": "SMALL_INTESTINE_DUODENUM",
+      "coordinateMm": [
+        24.7,
+        28.8,
+        -165.2
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "BodyParts3D small intestine",
+      "description": "参考肠段中心，不是病变"
+    },
+    {
+      "id": "SMALL_INTESTINE_JEJUNUM_TARGET",
+      "organ": "SMALL_INTESTINE",
+      "name": "空肠",
+      "category": "segment",
+      "partCode": "SMALL_INTESTINE_JEJUNUM",
+      "coordinateMm": [
+        -22.0,
+        57.5,
+        -228.3
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "BodyParts3D small intestine",
+      "description": "参考肠段中心，不是病变"
+    },
+    {
+      "id": "SMALL_INTESTINE_ILEUM_TARGET",
+      "organ": "SMALL_INTESTINE",
+      "name": "回肠",
+      "category": "segment",
+      "partCode": "SMALL_INTESTINE_ILEUM",
+      "coordinateMm": [
+        0.4,
+        46.8,
+        -319.7
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "BodyParts3D small intestine",
+      "description": "参考肠段中心，不是病变"
+    },
+    {
+      "id": "LARGE_INTESTINE_ASCENDING_TARGET",
+      "organ": "LARGE_INTESTINE",
+      "name": "升结肠",
+      "category": "segment",
+      "partCode": "LARGE_INTESTINE_ASCENDING",
+      "coordinateMm": [
+        89.3,
+        14.3,
+        -237.5
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "BodyParts3D large intestine",
+      "description": "参考肠段中心，不是病变"
+    },
+    {
+      "id": "LARGE_INTESTINE_TRANSVERSE_TARGET",
+      "organ": "LARGE_INTESTINE",
+      "name": "横结肠",
+      "category": "segment",
+      "partCode": "LARGE_INTESTINE_TRANSVERSE",
+      "coordinateMm": [
+        -10.2,
+        57.6,
+        -168.3
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "BodyParts3D large intestine",
+      "description": "参考肠段中心，不是病变"
+    },
+    {
+      "id": "LARGE_INTESTINE_DESCENDING_TARGET",
+      "organ": "LARGE_INTESTINE",
+      "name": "降结肠",
+      "category": "segment",
+      "partCode": "LARGE_INTESTINE_DESCENDING",
+      "coordinateMm": [
+        -70.7,
+        4.4,
+        -276.4
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "BodyParts3D large intestine",
+      "description": "参考肠段中心，不是病变"
+    },
+    {
+      "id": "LARGE_INTESTINE_RECTUM_TARGET",
+      "organ": "LARGE_INTESTINE",
+      "name": "直肠",
+      "category": "segment",
+      "partCode": "LARGE_INTESTINE_RECTUM",
+      "coordinateMm": [
+        -5.1,
+        -59.7,
+        -370.3
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "BodyParts3D large intestine",
+      "description": "参考肠段中心，不是病变"
+    },
+    {
+      "id": "BLADDER_DOME",
+      "organ": "URINARY_BLADDER",
+      "name": "膀胱顶（参考）",
+      "category": "landmark",
+      "partCode": "URINARY_BLADDER_BODY",
+      "coordinateMm": [
+        -2.7,
+        -16.9,
+        -363.9
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "anatomical landmark",
+      "description": "参考位置，不是病变"
+    },
+    {
+      "id": "BLADDER_NECK",
+      "organ": "URINARY_BLADDER",
+      "name": "膀胱颈（参考）",
+      "category": "landmark",
+      "partCode": "URINARY_BLADDER_BODY",
+      "coordinateMm": [
+        -2.7,
+        -16.9,
+        -404.2
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "anatomical landmark",
+      "description": "参考位置，不是病变"
+    },
+    {
+      "id": "BLADDER_BODY",
+      "organ": "URINARY_BLADDER",
+      "name": "膀胱体（参考）",
+      "category": "landmark",
+      "partCode": "URINARY_BLADDER_BODY",
+      "coordinateMm": [
+        -2.7,
+        -16.9,
+        -382.6
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "anatomical landmark",
+      "description": "参考位置，不是病变"
+    },
+    {
+      "id": "ESOPHAGUS_SEGMENT_1",
+      "organ": "ESOPHAGUS",
+      "name": "颈段食管（参考）",
+      "category": "segment",
+      "partCode": "ESOPHAGUS_BODY",
+      "coordinateMm": [
+        -6.2,
+        -15.5,
+        196.5
+      ],
+      "standardView": "posterior",
+      "approach": "posterior",
+      "reference": "anatomical landmark",
+      "description": "参考位置，不是病变"
+    },
+    {
+      "id": "ESOPHAGUS_SEGMENT_2",
+      "organ": "ESOPHAGUS",
+      "name": "胸段食管（参考）",
+      "category": "segment",
+      "partCode": "ESOPHAGUS_BODY",
+      "coordinateMm": [
+        -6.2,
+        -15.5,
+        59.3
+      ],
+      "standardView": "posterior",
+      "approach": "posterior",
+      "reference": "anatomical landmark",
+      "description": "参考位置，不是病变"
+    },
+    {
+      "id": "ESOPHAGUS_SEGMENT_3",
+      "organ": "ESOPHAGUS",
+      "name": "腹段食管（参考）",
+      "category": "segment",
+      "partCode": "ESOPHAGUS_BODY",
+      "coordinateMm": [
+        -6.2,
+        -15.5,
+        -77.9
+      ],
+      "standardView": "posterior",
+      "approach": "posterior",
+      "reference": "anatomical landmark",
+      "description": "参考位置，不是病变"
     }
   ]
 }

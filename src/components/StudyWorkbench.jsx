@@ -375,13 +375,16 @@ export default function StudyWorkbench({ onNavigate, notify }) {
             </Section>
           ) : null}
 
-          <Section title="能力边界" code="SCOPE" right={<CircleAlert size={13} />}>
-            <ul className="scope-list">
-              <li><CheckCircle2 size={13} /> 真实 DICOM 解析、去标识、体数据重建、MPR/VRT</li>
-              <li><CheckCircle2 size={13} /> 分割掩膜 → marching cubes → GLB</li>
-              <li><CheckCircle2 size={13} /> 体素级腔室容积（标注来源与验证状态）</li>
-              <li><CircleAlert size={13} /> 冠脉狭窄、FFR-CT、单时相 EF：未接入验证模型，显示为 not_computed</li>
-              <li><CircleAlert size={13} /> 非医疗器械，不用于临床诊断或治疗决策</li>
+          <Section title="临床就绪度" code="READINESS" right={<CircleAlert size={13} />}>
+            <ul className="scope-list readiness-list">
+              <li className="ok"><CheckCircle2 size={13} /> DICOM、去标识、体数据、MPR/VRT</li>
+              <li className="ok"><CheckCircle2 size={13} /> 分割 → GLB、腔室容积（研究/合成）</li>
+              <li className="ok"><CheckCircle2 size={13} /> 19 个参考器官、109 个参考靶点</li>
+              <li className="warn"><CircleAlert size={13} /> 图谱与靶点未做患者级配准</li>
+              <li className="warn"><CircleAlert size={13} /> 分割与测量未通过外部临床验证</li>
+              <li className="stop"><CircleAlert size={13} /> 狭窄、FFR-CT、单时相 EF、钙化积分、AHA 未计算</li>
+              <li className="stop"><CircleAlert size={13} /> 靶点模拟仅教学，不是手术导航</li>
+              <li className="stop"><CircleAlert size={13} /> 非医疗器械，不可用于诊断或治疗</li>
             </ul>
           </Section>
 

@@ -96,6 +96,40 @@ SPLEEN_NODES = {
     "VH_M_hilum_of_spleen": ("SPLEEN_HILUM", "脾门"),
 }
 
+BRAIN_INCLUDE = (
+    "gyrus", "lobe", "insula", "cerebellum", "midbrain", "pons", "medulla oblongata",
+    "thalamus", "hypothalamus", "hippocampus", "amygdala", "caudate", "putamen",
+    "globus pallidus", "internal capsule", "fornix", "corpus callosum",
+    "septum of telencephalon", "white matter of", "ventricle", "cerebral aqueduct",
+    "colliculus", "geniculate", "mammillary", "optic chiasm", "optic tract",
+    "tuber cinereum", "lamina terminalis", "habenula", "stria ", "commissure",
+    "peduncle of midbrain",
+)
+BRAIN_EXCLUDE = (
+    "artery", "vein", "nerve", "ganglion", "ciliary", "ophthalmic", "trigeminal",
+    "facial", "vestibulocochlear", "glossopharyngeal", "vagus", "hypoglossal",
+    "spinal", "accessory", "olfactory", "central canal",
+)
+BRAIN_GROUPS = (
+    ("BRAIN_FRONTAL", "额叶", "lobe", ("frontal gyrus", "orbital gyrus")),
+    ("BRAIN_PARIETAL", "顶叶", "lobe", ("postcentral gyrus", "precentral gyrus", "superior parietal lobule", "supramarginal gyrus", "angular gyrus")),
+    ("BRAIN_TEMPORAL", "颞叶", "lobe", ("temporal gyrus", "fusiform gyrus", "parahippocampal gyrus")),
+    ("BRAIN_OCCIPITAL", "枕叶", "lobe", ("occipital lobe",)),
+    ("BRAIN_INSULA", "岛叶", "lobe", ("insula",)),
+    ("BRAIN_CINGULATE", "扣带回", "lobe", ("cingulate gyrus",)),
+    ("BRAIN_CEREBELLUM", "小脑", "segment", ("cerebellum",)),
+    ("BRAIN_BRAINSTEM", "脑干", "segment", ("midbrain", "pons", "medulla oblongata", "peduncle of midbrain")),
+    ("BRAIN_THALAMUS", "丘脑/下丘脑", "nucleus", ("thalamus", "hypothalamus", "mammillary", "tuber cinereum", "lamina terminalis")),
+    ("BRAIN_BASAL_GANGLIA", "基底节", "nucleus", ("caudate", "putamen", "globus pallidus", "amygdala")),
+    ("BRAIN_HIPPOCAMPUS", "海马", "nucleus", ("hippocampus",)),
+    ("BRAIN_VENTRICLES", "脑室系统", "ventricle", ("ventricle", "interventricular foramen", "cerebral aqueduct")),
+    ("BRAIN_WHITE_MATTER", "白质", "white_matter", ("white matter",)),
+    ("BRAIN_CORPUS_CALLOSUM", "胼胝体/穹窿", "commissure", ("corpus callosum", "fornix", "septum of telencephalon", "commissure")),
+    ("BRAIN_OTHER", "其他脑结构", "other", ()),
+)
+SMALL_INTESTINE_TERMS = ("duodenum", "jejunum", "ileum", "ileocecal junction")
+LARGE_INTESTINE_NAMES = {"Ascending colon", "Transverse colon", "Descending colon", "Rectum"}
+
 
 @dataclass
 class DetailPart:
@@ -142,6 +176,35 @@ def concept_parts(manifest: dict, concept_id: str) -> list[dict]:
     concept = next(item for item in manifest["concepts"] if item["id"] == concept_id)
     lookup = {part["id"]: part for part in manifest["parts"]}
     return [lookup[element] for element in concept["elements"] if element in lookup]
+
+
+def is_brain_part(part: dict) -> bool:
+    name = part["name"].lower()
+    if any(term in name for term in BRAIN_EXCLUDE):
+        return False
+    if not any(term in name for term in BRAIN_INCLUDE):
+        return False
+    center_y = (part["bounds"][0][1] + part["bounds"][1][1]) / 2.0
+    return center_y > 1.50
+
+
+def brain_parts(manifest: dict) -> list[dict]:
+    return [part for part in manifest["parts"] if is_brain_part(part)]
+
+
+def small_intestine_parts(manifest: dict) -> list[dict]:
+    result = []
+    for part in manifest["parts"]:
+        name = part["name"].lower()
+        if "mesentery" in name or "mesoappendix" in name:
+            continue
+        if any(term in name for term in SMALL_INTESTINE_TERMS):
+            result.append(part)
+    return result
+
+
+def large_intestine_parts(manifest: dict) -> list[dict]:
+    return [part for part in manifest["parts"] if part["name"] in LARGE_INTESTINE_NAMES]
 
 
 def load_hra_scene(path: Path):
@@ -193,6 +256,19 @@ def build_bp3d_organs(manifest: dict, chunks: dict[int, bytes]) -> dict[str, tri
         and "artery" not in part["name"].lower()
     ]
     organs["SPINE"] = concat([decode_part(chunks, part) for part in spine])
+    organs["BRAIN"] = concat([decode_part(chunks, part) for part in brain_parts(manifest)])
+    organs["SMALL_INTESTINE"] = concat(
+        [decode_part(chunks, part) for part in small_intestine_parts(manifest)]
+    )
+    organs["LARGE_INTESTINE"] = concat(
+        [decode_part(chunks, part) for part in large_intestine_parts(manifest)]
+    )
+    organs["URINARY_BLADDER"] = concat(
+        [decode_part(chunks, part) for part in manifest["parts"] if part["name"] == "Urinary bladder"]
+    )
+    organs["ESOPHAGUS"] = concat(
+        [decode_part(chunks, part) for part in manifest["parts"] if part["name"] == "Esophagus"]
+    )
     return organs
 
 
@@ -411,6 +487,64 @@ def build_detail_parts(
         for node, (code, name) in SPLEEN_NODES.items()
         if node in spleen_scene.geometry
     ]
+
+    brain_meshes: dict[str, list[trimesh.Trimesh]] = {code: [] for code, _, _, _ in BRAIN_GROUPS}
+    for part in brain_parts(manifest):
+        lower = part["name"].lower()
+        matched = False
+        for code, _, _, terms in BRAIN_GROUPS:
+            if terms and any(term in lower for term in terms):
+                brain_meshes[code].append(decode_part(chunks, part))
+                matched = True
+                break
+        if not matched:
+            brain_meshes["BRAIN_OTHER"].append(decode_part(chunks, part))
+    details["BRAIN"] = [
+        DetailPart(code, label, kind, concat(brain_meshes[code]), "bodyparts3d")
+        for code, label, kind, _ in BRAIN_GROUPS
+        if brain_meshes[code]
+    ]
+
+    small_groups: dict[str, list[trimesh.Trimesh]] = {"DUODENUM": [], "JEJUNUM": [], "ILEUM": []}
+    for part in small_intestine_parts(manifest):
+        lower = part["name"].lower()
+        key = "DUODENUM" if "duodenum" in lower else "JEJUNUM" if "jejunum" in lower else "ILEUM"
+        small_groups[key].append(decode_part(chunks, part))
+    details["SMALL_INTESTINE"] = [
+        DetailPart(f"SMALL_INTESTINE_{key}", label, "segment", concat(meshes), "bodyparts3d")
+        for key, label, meshes in (
+            ("DUODENUM", "十二指肠", small_groups["DUODENUM"]),
+            ("JEJUNUM", "空肠", small_groups["JEJUNUM"]),
+            ("ILEUM", "回肠", small_groups["ILEUM"]),
+        )
+        if meshes
+    ]
+
+    large_groups: dict[str, list[trimesh.Trimesh]] = {
+        "ASCENDING": [], "TRANSVERSE": [], "DESCENDING": [], "RECTUM": []
+    }
+    for part in large_intestine_parts(manifest):
+        name = part["name"]
+        key = "ASCENDING" if "Ascending" in name else "TRANSVERSE" if "Transverse" in name else "DESCENDING" if "Descending" in name else "RECTUM"
+        large_groups[key].append(decode_part(chunks, part))
+    details["LARGE_INTESTINE"] = [
+        DetailPart(f"LARGE_INTESTINE_{key}", label, "segment", concat(meshes), "bodyparts3d")
+        for key, label, meshes in (
+            ("ASCENDING", "升结肠", large_groups["ASCENDING"]),
+            ("TRANSVERSE", "横结肠", large_groups["TRANSVERSE"]),
+            ("DESCENDING", "降结肠", large_groups["DESCENDING"]),
+            ("RECTUM", "直肠", large_groups["RECTUM"]),
+        )
+        if meshes
+    ]
+
+    for organ, part_name, code, name in (
+        ("URINARY_BLADDER", "Urinary bladder", "URINARY_BLADDER_BODY", "膀胱"),
+        ("ESOPHAGUS", "Esophagus", "ESOPHAGUS_BODY", "食管"),
+    ):
+        part = next(part for part in manifest["parts"] if part["name"] == part_name)
+        details[organ] = [DetailPart(code, name, "organ", decode_part(chunks, part), "bodyparts3d")]
+
     return details
 
 
@@ -484,13 +618,17 @@ TARGET_FACES = {
     "HEART": 70_000, "LIVER": 45_000, "LUNG_L": 40_000, "LUNG_R": 40_000,
     "KIDNEY_L": 25_000, "KIDNEY_R": 25_000, "SPLEEN": 20_000, "PANCREAS": 18_000,
     "STOMACH": 18_000, "GALLBLADDER": 10_000, "AORTA": 24_000, "IVC": 14_000,
-    "TRACHEA": 12_000, "SPINE": 70_000,
+    "TRACHEA": 12_000, "SPINE": 70_000, "BRAIN": 80_000,
+    "SMALL_INTESTINE": 45_000, "LARGE_INTESTINE": 40_000,
+    "URINARY_BLADDER": 12_000, "ESOPHAGUS": 12_000,
 }
 DETAIL_TARGET_FACES = {
     "HEART": 2_800, "SPINE": 4_000, "LIVER": 4_000, "LUNG_L": 3_000,
     "LUNG_R": 3_000, "KIDNEY_L": 4_000, "KIDNEY_R": 4_000,
     "PANCREAS": 4_000, "SPLEEN": 4_000, "AORTA": 8_000, "IVC": 6_000,
     "STOMACH": 12_000, "GALLBLADDER": 8_000, "TRACHEA": 8_000,
+    "BRAIN": 4_000, "SMALL_INTESTINE": 3_000, "LARGE_INTESTINE": 3_000,
+    "URINARY_BLADDER": 8_000, "ESOPHAGUS": 8_000,
 }
 
 SOURCE = {
@@ -655,6 +793,51 @@ def build_targets(
         if part.code in {"SPINE_C7", "SPINE_T1", "SPINE_T4", "SPINE_T8", "SPINE_T12", "SPINE_L1", "SPINE_L4", "SPINE_L5", "SPINE_SACRUM"}:
             add("SPINE", f"{part.code}_TARGET", part.name, "vertebra", part.code, part.mesh.centroid, "posterior", "posterior", "BodyParts3D vertebra", "参考椎体中心，不是病变")
 
+    brain_views = {
+        "BRAIN_FRONTAL": ("anterior", "anterior"),
+        "BRAIN_PARIETAL": ("right", "right"),
+        "BRAIN_TEMPORAL": ("left", "left"),
+        "BRAIN_OCCIPITAL": ("posterior", "posterior"),
+        "BRAIN_INSULA": ("left", "left"),
+        "BRAIN_CINGULATE": ("anterior", "anterior"),
+        "BRAIN_CEREBELLUM": ("posterior", "posterior"),
+        "BRAIN_BRAINSTEM": ("posterior", "posterior"),
+        "BRAIN_THALAMUS": ("left", "left"),
+        "BRAIN_BASAL_GANGLIA": ("right", "right"),
+        "BRAIN_HIPPOCAMPUS": ("left", "left"),
+        "BRAIN_VENTRICLES": ("right", "right"),
+        "BRAIN_WHITE_MATTER": ("right", "right"),
+        "BRAIN_CORPUS_CALLOSUM": ("right", "right"),
+        "BRAIN_OTHER": ("anterior", "anterior"),
+    }
+    for part in parts_by_organ.get("BRAIN", {}).values():
+        view, approach = brain_views.get(part.code, ("anterior", "anterior"))
+        add("BRAIN", f"{part.code}_TARGET", part.name, "brain", part.code, part.mesh.centroid, view, approach, "BodyParts3D brain structures", "参考脑结构中心，不是病变")
+
+    for part in parts_by_organ.get("SMALL_INTESTINE", {}).values():
+        add("SMALL_INTESTINE", f"{part.code}_TARGET", part.name, "segment", part.code, part.mesh.centroid, "anterior", "anterior", "BodyParts3D small intestine", "参考肠段中心，不是病变")
+    for part in parts_by_organ.get("LARGE_INTESTINE", {}).values():
+        add("LARGE_INTESTINE", f"{part.code}_TARGET", part.name, "segment", part.code, part.mesh.centroid, "anterior", "anterior", "BodyParts3D large intestine", "参考肠段中心，不是病变")
+
+    bladder = parts_by_organ.get("URINARY_BLADDER", {}).get("URINARY_BLADDER_BODY")
+    if bladder:
+        bounds = bladder.mesh.bounds
+        x, y = bladder.mesh.centroid[0], bladder.mesh.centroid[1]
+        add("URINARY_BLADDER", "BLADDER_DOME", "膀胱顶（参考）", "landmark", bladder.code, [x, y, bounds[1][2]], "anterior", "anterior", "anatomical landmark", "参考位置，不是病变")
+        add("URINARY_BLADDER", "BLADDER_NECK", "膀胱颈（参考）", "landmark", bladder.code, [x, y, bounds[0][2]], "anterior", "anterior", "anatomical landmark", "参考位置，不是病变")
+        add("URINARY_BLADDER", "BLADDER_BODY", "膀胱体（参考）", "landmark", bladder.code, bladder.mesh.centroid, "anterior", "anterior", "anatomical landmark", "参考位置，不是病变")
+
+    esophagus = parts_by_organ.get("ESOPHAGUS", {}).get("ESOPHAGUS_BODY")
+    if esophagus:
+        bounds = esophagus.mesh.bounds
+        x, y = esophagus.mesh.centroid[0], esophagus.mesh.centroid[1]
+        for index, (name, z) in enumerate((
+            ("颈段食管（参考）", bounds[1][2]),
+            ("胸段食管（参考）", (bounds[0][2] + bounds[1][2]) / 2),
+            ("腹段食管（参考）", bounds[0][2]),
+        )):
+            add("ESOPHAGUS", f"ESOPHAGUS_SEGMENT_{index + 1}", name, "segment", esophagus.code, [x, y, z], "posterior", "posterior", "anatomical landmark", "参考位置，不是病变")
+
     return targets
 
 
@@ -716,6 +899,9 @@ def main() -> None:
         "AORTA": "bodyparts3d", "IVC": "bodyparts3d", "TRACHEA": "bodyparts3d", "SPINE": "bodyparts3d",
         "LIVER": "hra", "LUNG_L": "hra", "LUNG_R": "hra", "KIDNEY_L": "hra",
         "KIDNEY_R": "hra", "SPLEEN": "hra", "PANCREAS": "hra",
+        "BRAIN": "bodyparts3d", "SMALL_INTESTINE": "bodyparts3d",
+        "LARGE_INTESTINE": "bodyparts3d", "URINARY_BLADDER": "bodyparts3d",
+        "ESOPHAGUS": "bodyparts3d",
     }
 
     catalog_parts: dict[str, list[dict]] = {}
@@ -799,8 +985,9 @@ remains MIT.
   - Official license page (updated 2025-02-27): https://dbarchive.biosciencedbc.jp/en/bodyparts3d/lic.html
   - The original OBJ headers reference the legacy CC BY-SA 2.1 Japan text; the
     current official database license supersedes it.
-- Used for: heart, stomach, gallbladder, aorta, inferior vena cava, trachea,
-  and the vertebral column.
+- Used for: brain, heart, stomach, gallbladder, small and large intestine,
+  urinary bladder, esophagus, aorta, inferior vena cava, trachea, and the
+  vertebral column.
 - Adaptations: selected parts merged or exported as named sub-structures,
   simplified, axes/units converted to RAS millimetres, and the reference organ
   set centred at the origin.

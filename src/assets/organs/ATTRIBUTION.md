@@ -12,8 +12,9 @@ remains MIT.
   - Official license page (updated 2025-02-27): https://dbarchive.biosciencedbc.jp/en/bodyparts3d/lic.html
   - The original OBJ headers reference the legacy CC BY-SA 2.1 Japan text; the
     current official database license supersedes it.
-- Used for: heart, stomach, gallbladder, aorta, inferior vena cava, trachea,
-  and the vertebral column.
+- Used for: brain, heart, stomach, gallbladder, small and large intestine,
+  urinary bladder, esophagus, aorta, inferior vena cava, trachea, and the
+  vertebral column.
 - Adaptations: selected parts merged or exported as named sub-structures,
   simplified, axes/units converted to RAS millimetres, and the reference organ
   set centred at the origin.

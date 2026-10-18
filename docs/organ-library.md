@@ -32,7 +32,7 @@ right appears on the viewer's left (radiological convention).
 
 | Source | Structures used | Licence |
 | --- | --- | --- |
-| **BodyParts3D 4.0** (DBCLS) | heart, stomach, gallbladder, aorta, IVC, trachea, vertebral column | CC BY 4.0 |
+| **BodyParts3D 4.0** (DBCLS) | brain, heart, stomach, gallbladder, small/large intestine, urinary bladder, esophagus, aorta, IVC, trachea, vertebral column | CC BY 4.0 |
 | **HuBMAP Human Reference Atlas v1.1 male** | liver, left/right lung, left/right kidney, spleen, pancreas | CC BY 4.0 |
 
 Adaptations: selected parts/nodes were merged, simplified, converted to RAS
@@ -45,10 +45,15 @@ MIT licence. See [`src/assets/organs/ATTRIBUTION.md`](../src/assets/organs/ATTRI
 
 | Code | Organ | System | Source |
 | --- | --- | --- | --- |
+| `BRAIN` | 脑 | nervous | BodyParts3D |
 | `HEART` | 心脏 | cardiovascular | BodyParts3D |
 | `LUNG_R` | 右肺 | respiratory | HRA |
 | `LUNG_L` | 左肺 | respiratory | HRA |
 | `TRACHEA` | 气管 | respiratory | BodyParts3D |
+| `SMALL_INTESTINE` | 小肠 | digestive | BodyParts3D |
+| `LARGE_INTESTINE` | 大肠 | digestive | BodyParts3D |
+| `URINARY_BLADDER` | 膀胱 | urinary | BodyParts3D |
+| `ESOPHAGUS` | 食管 | digestive | BodyParts3D |
 | `LIVER` | 肝脏 | digestive | HRA |
 | `GALLBLADDER` | 胆囊 | digestive | BodyParts3D |
 | `STOMACH` | 胃 | digestive | BodyParts3D |
@@ -68,6 +73,7 @@ individual parts.
 
 | Organ | Detail parts | Examples |
 | --- | --- | --- |
+| BRAIN | 15 groups | frontal/parietal/temporal/occipital lobes, insula, cingulate, cerebellum, brainstem, thalamus, basal ganglia, hippocampus, ventricles, white matter, corpus callosum |
 | HEART | 83 | chambers, valves, coronary branches, papillary muscles |
 | LIVER | 12 | capsule, eight HRA segments, caudate, quadrate, ligaments |
 | LUNG_L / LUNG_R | 10 each | bronchopulmonary segments |
@@ -77,11 +83,13 @@ individual parts.
 | AORTA | 3 | ascending, arch, descending |
 | IVC | 2 | proximal and abdominal segments |
 | SPINE | 23 | cervical, thoracic, lumbar vertebrae and sacrum |
-| STOMACH / GALLBLADDER / TRACHEA | 1 | whole-organ surface |
+| SMALL_INTESTINE | 3 | duodenum, jejunum, ileum |
+| LARGE_INTESTINE | 4 | ascending, transverse, descending colon, rectum |
+| STOMACH / GALLBLADDER / TRACHEA / URINARY_BLADDER / ESOPHAGUS | 1 | whole-organ surface |
 
 ## Targets and simulation
 
-`shared/organ_targets.json` defines 81 reference targets. Each target has:
+`shared/organ_targets.json` defines 109 reference targets. Each target has:
 
 ```json
 {
@@ -98,9 +106,11 @@ individual parts.
 }
 ```
 
-Targets cover cardiac chambers/valves/coronaries, liver segments, lung
-segments, kidney poles/hilum/pelvis, pancreas segments, spleen poles/hilum,
-aortic segments, IVC, trachea and selected vertebrae. Coordinates are in the
+Targets cover brain lobes/cerebellum/brainstem/thalamus/basal ganglia/
+hippocampus/ventricles, cardiac chambers/valves/coronaries, liver segments,
+lung segments, kidney poles/hilum/pelvis, pancreas segments, spleen
+poles/hilum, small/large bowel segments, bladder, esophagus, aortic segments,
+IVC, trachea and selected vertebrae. Coordinates are in the
 same `RAS_ORGAN_REFERENCE` frame as the meshes.
 
 The **target simulation** view in the Organ Atlas provides:
