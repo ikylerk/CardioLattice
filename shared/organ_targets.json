@@ -1,0 +1,1755 @@
+{
+  "version": "organ-targets/v1",
+  "frame": {
+    "name": "RAS_ORGAN_REFERENCE",
+    "units": "mm",
+    "description": "Origin at the centre of the reference organ set. +x right, +y anterior, +z superior. Adapted from BodyParts3D 4.0 and HuBMAP HRA v1.1; not patient anatomy."
+  },
+  "disclaimer": "Reference targets for orientation, teaching and workflow simulation only. Not a diagnosis, biopsy plan, or surgical navigation system.",
+  "targets": [
+    {
+      "id": "CHAMBER_LV",
+      "organ": "HEART",
+      "name": "左心室腔",
+      "category": "chamber",
+      "partCode": "HEART_PART_006",
+      "coordinateMm": [
+        -45.3,
+        20.1,
+        22.0
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "BodyParts3D",
+      "description": "参考心腔中心"
+    },
+    {
+      "id": "CHAMBER_RV",
+      "organ": "HEART",
+      "name": "右心室腔",
+      "category": "chamber",
+      "partCode": "HEART_PART_007",
+      "coordinateMm": [
+        -21.3,
+        46.7,
+        23.6
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "BodyParts3D",
+      "description": "参考心腔中心"
+    },
+    {
+      "id": "CHAMBER_LA",
+      "organ": "HEART",
+      "name": "左心房腔",
+      "category": "chamber",
+      "partCode": "HEART_PART_009",
+      "coordinateMm": [
+        -19.0,
+        -10.2,
+        46.8
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "BodyParts3D",
+      "description": "参考心腔中心"
+    },
+    {
+      "id": "CHAMBER_RA",
+      "organ": "HEART",
+      "name": "右心房腔",
+      "category": "chamber",
+      "partCode": "HEART_PART_008",
+      "coordinateMm": [
+        12.4,
+        17.7,
+        38.7
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "BodyParts3D",
+      "description": "参考心腔中心"
+    },
+    {
+      "id": "VALVE_MITRAL",
+      "organ": "HEART",
+      "name": "二尖瓣",
+      "category": "valve",
+      "partCode": "HEART_PART_015",
+      "coordinateMm": [
+        -39.6,
+        0.5,
+        19.4
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "BodyParts3D",
+      "description": "参考瓣膜中心"
+    },
+    {
+      "id": "VALVE_AORTIC",
+      "organ": "HEART",
+      "name": "主动脉瓣",
+      "category": "valve",
+      "partCode": "HEART_PART_018",
+      "coordinateMm": [
+        -21.9,
+        25.4,
+        48.6
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "BodyParts3D",
+      "description": "参考瓣膜中心"
+    },
+    {
+      "id": "VALVE_TRICUSPID",
+      "organ": "HEART",
+      "name": "三尖瓣",
+      "category": "valve",
+      "partCode": "HEART_PART_016",
+      "coordinateMm": [
+        0.3,
+        27.3,
+        11.8
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "BodyParts3D",
+      "description": "参考瓣膜中心"
+    },
+    {
+      "id": "VALVE_PULMONARY",
+      "organ": "HEART",
+      "name": "肺动脉瓣",
+      "category": "valve",
+      "partCode": "HEART_PART_017",
+      "coordinateMm": [
+        -21.4,
+        44.2,
+        62.1
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "BodyParts3D",
+      "description": "参考瓣膜中心"
+    },
+    {
+      "id": "CORONARY_LAD_PROX",
+      "organ": "HEART",
+      "name": "LAD 近段（解剖参考）",
+      "category": "coronary",
+      "partCode": "HEART_PART_023",
+      "coordinateMm": [
+        -53.9,
+        49.2,
+        33.9
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "AHA 17-segment model",
+      "description": "参考冠脉中心，不含患者病变信息"
+    },
+    {
+      "id": "CORONARY_LCX_PROX",
+      "organ": "HEART",
+      "name": "LCX 近段（解剖参考）",
+      "category": "coronary",
+      "partCode": "HEART_PART_041",
+      "coordinateMm": [
+        -49.0,
+        3.1,
+        50.7
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "AHA 17-segment model",
+      "description": "参考冠脉中心，不含患者病变信息"
+    },
+    {
+      "id": "CORONARY_RCA_PROX",
+      "organ": "HEART",
+      "name": "RCA 近段（解剖参考）",
+      "category": "coronary",
+      "partCode": "HEART_PART_077",
+      "coordinateMm": [
+        -0.4,
+        41.4,
+        29.3
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "AHA 17-segment model",
+      "description": "参考冠脉中心，不含患者病变信息"
+    },
+    {
+      "id": "LUNG_L_01_TARGET",
+      "organ": "LUNG_L",
+      "name": "左肺anterior basal 段",
+      "category": "segment",
+      "partCode": "LUNG_L_SEGMENT_01",
+      "coordinateMm": [
+        -109.1,
+        2.5,
+        -12.0
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "HRA bronchopulmonary segment",
+      "description": "参考肺段中心"
+    },
+    {
+      "id": "LUNG_L_02_TARGET",
+      "organ": "LUNG_L",
+      "name": "左肺anterior 段",
+      "category": "segment",
+      "partCode": "LUNG_L_SEGMENT_02",
+      "coordinateMm": [
+        -71.9,
+        38.1,
+        70.0
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "HRA bronchopulmonary segment",
+      "description": "参考肺段中心"
+    },
+    {
+      "id": "LUNG_L_03_TARGET",
+      "organ": "LUNG_L",
+      "name": "左肺apical 段",
+      "category": "segment",
+      "partCode": "LUNG_L_SEGMENT_03",
+      "coordinateMm": [
+        -44.6,
+        -4.9,
+        130.8
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "HRA bronchopulmonary segment",
+      "description": "参考肺段中心"
+    },
+    {
+      "id": "LUNG_L_04_TARGET",
+      "organ": "LUNG_L",
+      "name": "左肺lateral basal 段",
+      "category": "segment",
+      "partCode": "LUNG_L_SEGMENT_04",
+      "coordinateMm": [
+        -109.1,
+        -43.2,
+        -19.3
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "HRA bronchopulmonary segment",
+      "description": "参考肺段中心"
+    },
+    {
+      "id": "LUNG_L_05_TARGET",
+      "organ": "LUNG_L",
+      "name": "左肺lingula inferior 段",
+      "category": "segment",
+      "partCode": "LUNG_L_SEGMENT_05",
+      "coordinateMm": [
+        -93.5,
+        45.0,
+        -18.8
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "HRA bronchopulmonary segment",
+      "description": "参考肺段中心"
+    },
+    {
+      "id": "LUNG_L_06_TARGET",
+      "organ": "LUNG_L",
+      "name": "左肺lingula superior 段",
+      "category": "segment",
+      "partCode": "LUNG_L_SEGMENT_06",
+      "coordinateMm": [
+        -76.2,
+        50.4,
+        18.8
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "HRA bronchopulmonary segment",
+      "description": "参考肺段中心"
+    },
+    {
+      "id": "LUNG_L_07_TARGET",
+      "organ": "LUNG_L",
+      "name": "左肺medial basal 段",
+      "category": "segment",
+      "partCode": "LUNG_L_SEGMENT_07",
+      "coordinateMm": [
+        -84.1,
+        2.1,
+        10.3
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "HRA bronchopulmonary segment",
+      "description": "参考肺段中心"
+    },
+    {
+      "id": "LUNG_L_08_TARGET",
+      "organ": "LUNG_L",
+      "name": "左肺posetrior basal 段",
+      "category": "segment",
+      "partCode": "LUNG_L_SEGMENT_08",
+      "coordinateMm": [
+        -52.8,
+        -60.0,
+        -37.5
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "HRA bronchopulmonary segment",
+      "description": "参考肺段中心"
+    },
+    {
+      "id": "LUNG_L_09_TARGET",
+      "organ": "LUNG_L",
+      "name": "左肺posterior 段",
+      "category": "segment",
+      "partCode": "LUNG_L_SEGMENT_09",
+      "coordinateMm": [
+        -58.6,
+        -46.2,
+        97.3
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "HRA bronchopulmonary segment",
+      "description": "参考肺段中心"
+    },
+    {
+      "id": "LUNG_L_10_TARGET",
+      "organ": "LUNG_L",
+      "name": "左肺superior 段",
+      "category": "segment",
+      "partCode": "LUNG_L_SEGMENT_10",
+      "coordinateMm": [
+        -41.9,
+        -61.1,
+        55.6
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "HRA bronchopulmonary segment",
+      "description": "参考肺段中心"
+    },
+    {
+      "id": "LUNG_R_01_TARGET",
+      "organ": "LUNG_R",
+      "name": "右肺anterior basal 段",
+      "category": "segment",
+      "partCode": "LUNG_R_SEGMENT_01",
+      "coordinateMm": [
+        101.7,
+        6.5,
+        -3.4
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "HRA bronchopulmonary segment",
+      "description": "参考肺段中心"
+    },
+    {
+      "id": "LUNG_R_02_TARGET",
+      "organ": "LUNG_R",
+      "name": "右肺anterior 段",
+      "category": "segment",
+      "partCode": "LUNG_R_SEGMENT_02",
+      "coordinateMm": [
+        65.7,
+        41.0,
+        62.7
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "HRA bronchopulmonary segment",
+      "description": "参考肺段中心"
+    },
+    {
+      "id": "LUNG_R_03_TARGET",
+      "organ": "LUNG_R",
+      "name": "右肺apical 段",
+      "category": "segment",
+      "partCode": "LUNG_R_SEGMENT_03",
+      "coordinateMm": [
+        34.1,
+        -0.6,
+        127.0
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "HRA bronchopulmonary segment",
+      "description": "参考肺段中心"
+    },
+    {
+      "id": "LUNG_R_04_TARGET",
+      "organ": "LUNG_R",
+      "name": "右肺lateral basal 段",
+      "category": "segment",
+      "partCode": "LUNG_R_SEGMENT_04",
+      "coordinateMm": [
+        94.4,
+        -44.0,
+        -29.7
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "HRA bronchopulmonary segment",
+      "description": "参考肺段中心"
+    },
+    {
+      "id": "LUNG_R_05_TARGET",
+      "organ": "LUNG_R",
+      "name": "右肺lateral 段",
+      "category": "segment",
+      "partCode": "LUNG_R_SEGMENT_05",
+      "coordinateMm": [
+        97.9,
+        15.3,
+        22.4
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "HRA bronchopulmonary segment",
+      "description": "参考肺段中心"
+    },
+    {
+      "id": "LUNG_R_06_TARGET",
+      "organ": "LUNG_R",
+      "name": "右肺medial basal 段",
+      "category": "segment",
+      "partCode": "LUNG_R_SEGMENT_06",
+      "coordinateMm": [
+        32.7,
+        2.9,
+        -11.2
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "HRA bronchopulmonary segment",
+      "description": "参考肺段中心"
+    },
+    {
+      "id": "LUNG_R_07_TARGET",
+      "organ": "LUNG_R",
+      "name": "右肺medial 段",
+      "category": "segment",
+      "partCode": "LUNG_R_SEGMENT_07",
+      "coordinateMm": [
+        61.1,
+        67.8,
+        -4.6
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "HRA bronchopulmonary segment",
+      "description": "参考肺段中心"
+    },
+    {
+      "id": "LUNG_R_08_TARGET",
+      "organ": "LUNG_R",
+      "name": "右肺posterior basal 段",
+      "category": "segment",
+      "partCode": "LUNG_R_SEGMENT_08",
+      "coordinateMm": [
+        42.8,
+        -59.5,
+        -41.1
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "HRA bronchopulmonary segment",
+      "description": "参考肺段中心"
+    },
+    {
+      "id": "LUNG_R_09_TARGET",
+      "organ": "LUNG_R",
+      "name": "右肺posterior 段",
+      "category": "segment",
+      "partCode": "LUNG_R_SEGMENT_09",
+      "coordinateMm": [
+        71.7,
+        -40.3,
+        87.2
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "HRA bronchopulmonary segment",
+      "description": "参考肺段中心"
+    },
+    {
+      "id": "LUNG_R_10_TARGET",
+      "organ": "LUNG_R",
+      "name": "右肺superior 段",
+      "category": "segment",
+      "partCode": "LUNG_R_SEGMENT_10",
+      "coordinateMm": [
+        55.2,
+        -61.4,
+        43.9
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "HRA bronchopulmonary segment",
+      "description": "参考肺段中心"
+    },
+    {
+      "id": "LIVER_CAUDATE_TARGET",
+      "organ": "LIVER",
+      "name": "尾状叶",
+      "category": "segment",
+      "partCode": "LIVER_CAUDATE",
+      "coordinateMm": [
+        20.0,
+        -2.1,
+        -76.1
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "HRA liver segment",
+      "description": "参考肝段中心；未做 Couinaud 临床分级"
+    },
+    {
+      "id": "LIVER_SEGMENT_RIGHT_POSTEROINFERIOR_TARGET",
+      "organ": "LIVER",
+      "name": "右后下段",
+      "category": "segment",
+      "partCode": "LIVER_SEGMENT_RIGHT_POSTEROINFERIOR",
+      "coordinateMm": [
+        96.4,
+        -46.8,
+        -135.7
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "HRA liver segment",
+      "description": "参考肝段中心；未做 Couinaud 临床分级"
+    },
+    {
+      "id": "LIVER_SEGMENT_RIGHT_POSTEROSUPERIOR_TARGET",
+      "organ": "LIVER",
+      "name": "右后上段",
+      "category": "segment",
+      "partCode": "LIVER_SEGMENT_RIGHT_POSTEROSUPERIOR",
+      "coordinateMm": [
+        78.2,
+        -52.8,
+        -62.8
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "HRA liver segment",
+      "description": "参考肝段中心；未做 Couinaud 临床分级"
+    },
+    {
+      "id": "LIVER_SEGMENT_RIGHT_ANTEROSUPERIOR_TARGET",
+      "organ": "LIVER",
+      "name": "右前上段",
+      "category": "segment",
+      "partCode": "LIVER_SEGMENT_RIGHT_ANTEROSUPERIOR",
+      "coordinateMm": [
+        100.3,
+        22.5,
+        -34.8
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "HRA liver segment",
+      "description": "参考肝段中心；未做 Couinaud 临床分级"
+    },
+    {
+      "id": "LIVER_SEGMENT_RIGHT_ANTEROINFERIOR_TARGET",
+      "organ": "LIVER",
+      "name": "右前下段",
+      "category": "segment",
+      "partCode": "LIVER_SEGMENT_RIGHT_ANTEROINFERIOR",
+      "coordinateMm": [
+        107.3,
+        28.2,
+        -128.3
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "HRA liver segment",
+      "description": "参考肝段中心；未做 Couinaud 临床分级"
+    },
+    {
+      "id": "LIVER_SEGMENT_LEFT_ANTEROLATERAL_TARGET",
+      "organ": "LIVER",
+      "name": "左前外侧段",
+      "category": "segment",
+      "partCode": "LIVER_SEGMENT_LEFT_ANTEROLATERAL",
+      "coordinateMm": [
+        0.1,
+        82.2,
+        -93.0
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "HRA liver segment",
+      "description": "参考肝段中心；未做 Couinaud 临床分级"
+    },
+    {
+      "id": "LIVER_SEGMENT_LEFT_POSTEROLATERAL_TARGET",
+      "organ": "LIVER",
+      "name": "左后外侧段",
+      "category": "segment",
+      "partCode": "LIVER_SEGMENT_LEFT_POSTEROLATERAL",
+      "coordinateMm": [
+        -26.2,
+        51.4,
+        -54.0
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "HRA liver segment",
+      "description": "参考肝段中心；未做 Couinaud 临床分级"
+    },
+    {
+      "id": "LIVER_SEGMENT_LEFT_SUPERIOMEDIAL_TARGET",
+      "organ": "LIVER",
+      "name": "左内侧上段",
+      "category": "segment",
+      "partCode": "LIVER_SEGMENT_LEFT_SUPERIOMEDIAL",
+      "coordinateMm": [
+        47.8,
+        58.4,
+        -40.8
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "HRA liver segment",
+      "description": "参考肝段中心；未做 Couinaud 临床分级"
+    },
+    {
+      "id": "LIVER_SEGMENT_LEFT_INFEROMEDIAL_TARGET",
+      "organ": "LIVER",
+      "name": "左内侧下段",
+      "category": "segment",
+      "partCode": "LIVER_SEGMENT_LEFT_INFEROMEDIAL",
+      "coordinateMm": [
+        60.8,
+        92.2,
+        -88.1
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "HRA liver segment",
+      "description": "参考肝段中心；未做 Couinaud 临床分级"
+    },
+    {
+      "id": "LIVER_QUADRATE_TARGET",
+      "organ": "LIVER",
+      "name": "方叶",
+      "category": "segment",
+      "partCode": "LIVER_QUADRATE",
+      "coordinateMm": [
+        49.5,
+        62.6,
+        -98.3
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "HRA liver segment",
+      "description": "参考肝段中心；未做 Couinaud 临床分级"
+    },
+    {
+      "id": "LIVER_SURFACE",
+      "organ": "LIVER",
+      "name": "肝脏表面",
+      "category": "capsule",
+      "partCode": "LIVER_CAPSULE",
+      "coordinateMm": [
+        65.7,
+        22.5,
+        -90.0
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "HRA liver capsule",
+      "description": "参考表面中心"
+    },
+    {
+      "id": "KIDNEY_L_UPPER",
+      "organ": "KIDNEY_L",
+      "name": "上极（参考）",
+      "category": "pole",
+      "partCode": "KIDNEY_L_CAPSULE",
+      "coordinateMm": [
+        -73.8,
+        -28.2,
+        -109.8
+      ],
+      "standardView": "posterior",
+      "approach": "posterior",
+      "reference": "anatomical landmark",
+      "description": "参考极点，不是病变"
+    },
+    {
+      "id": "KIDNEY_L_LOWER",
+      "organ": "KIDNEY_L",
+      "name": "下极（参考）",
+      "category": "pole",
+      "partCode": "KIDNEY_L_CAPSULE",
+      "coordinateMm": [
+        -73.8,
+        -28.2,
+        -218.0
+      ],
+      "standardView": "posterior",
+      "approach": "posterior",
+      "reference": "anatomical landmark",
+      "description": "参考极点，不是病变"
+    },
+    {
+      "id": "KIDNEY_L_MID",
+      "organ": "KIDNEY_L",
+      "name": "中部（参考）",
+      "category": "pole",
+      "partCode": "KIDNEY_L_CAPSULE",
+      "coordinateMm": [
+        -73.8,
+        -28.2,
+        -159.4
+      ],
+      "standardView": "posterior",
+      "approach": "posterior",
+      "reference": "anatomical landmark",
+      "description": "参考中心"
+    },
+    {
+      "id": "KIDNEY_L_PELVIS_TARGET",
+      "organ": "KIDNEY_L",
+      "name": "肾盂",
+      "category": "hilum",
+      "partCode": "KIDNEY_L_PELVIS",
+      "coordinateMm": [
+        -63.3,
+        -8.2,
+        -168.8
+      ],
+      "standardView": "posterior",
+      "approach": "posterior",
+      "reference": "HRA kidney node",
+      "description": "参考解剖中心"
+    },
+    {
+      "id": "KIDNEY_L_HILUM_TARGET",
+      "organ": "KIDNEY_L",
+      "name": "肾门",
+      "category": "hilum",
+      "partCode": "KIDNEY_L_HILUM",
+      "coordinateMm": [
+        -66.3,
+        -14.7,
+        -163.7
+      ],
+      "standardView": "posterior",
+      "approach": "posterior",
+      "reference": "HRA kidney node",
+      "description": "参考解剖中心"
+    },
+    {
+      "id": "KIDNEY_R_UPPER",
+      "organ": "KIDNEY_R",
+      "name": "上极（参考）",
+      "category": "pole",
+      "partCode": "KIDNEY_R_CAPSULE",
+      "coordinateMm": [
+        67.9,
+        -14.6,
+        -124.9
+      ],
+      "standardView": "posterior",
+      "approach": "posterior",
+      "reference": "anatomical landmark",
+      "description": "参考极点，不是病变"
+    },
+    {
+      "id": "KIDNEY_R_LOWER",
+      "organ": "KIDNEY_R",
+      "name": "下极（参考）",
+      "category": "pole",
+      "partCode": "KIDNEY_R_CAPSULE",
+      "coordinateMm": [
+        67.9,
+        -14.6,
+        -239.2
+      ],
+      "standardView": "posterior",
+      "approach": "posterior",
+      "reference": "anatomical landmark",
+      "description": "参考极点，不是病变"
+    },
+    {
+      "id": "KIDNEY_R_MID",
+      "organ": "KIDNEY_R",
+      "name": "中部（参考）",
+      "category": "pole",
+      "partCode": "KIDNEY_R_CAPSULE",
+      "coordinateMm": [
+        67.9,
+        -14.6,
+        -180.3
+      ],
+      "standardView": "posterior",
+      "approach": "posterior",
+      "reference": "anatomical landmark",
+      "description": "参考中心"
+    },
+    {
+      "id": "KIDNEY_R_PELVIS_TARGET",
+      "organ": "KIDNEY_R",
+      "name": "肾盂",
+      "category": "hilum",
+      "partCode": "KIDNEY_R_PELVIS",
+      "coordinateMm": [
+        52.8,
+        13.7,
+        -195.0
+      ],
+      "standardView": "posterior",
+      "approach": "posterior",
+      "reference": "HRA kidney node",
+      "description": "参考解剖中心"
+    },
+    {
+      "id": "KIDNEY_R_HILUM_TARGET",
+      "organ": "KIDNEY_R",
+      "name": "肾门",
+      "category": "hilum",
+      "partCode": "KIDNEY_R_HILUM",
+      "coordinateMm": [
+        58.6,
+        1.3,
+        -179.6
+      ],
+      "standardView": "posterior",
+      "approach": "posterior",
+      "reference": "HRA kidney node",
+      "description": "参考解剖中心"
+    },
+    {
+      "id": "PANCREAS_HEAD_TARGET",
+      "organ": "PANCREAS",
+      "name": "胰头",
+      "category": "segment",
+      "partCode": "PANCREAS_HEAD",
+      "coordinateMm": [
+        19.9,
+        26.1,
+        -139.1
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "HRA pancreas",
+      "description": "参考解剖中心"
+    },
+    {
+      "id": "PANCREAS_NECK_TARGET",
+      "organ": "PANCREAS",
+      "name": "胰颈",
+      "category": "segment",
+      "partCode": "PANCREAS_NECK",
+      "coordinateMm": [
+        8.2,
+        38.3,
+        -124.7
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "HRA pancreas",
+      "description": "参考解剖中心"
+    },
+    {
+      "id": "PANCREAS_BODY_TARGET",
+      "organ": "PANCREAS",
+      "name": "胰体",
+      "category": "segment",
+      "partCode": "PANCREAS_BODY",
+      "coordinateMm": [
+        -29.1,
+        13.4,
+        -109.9
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "HRA pancreas",
+      "description": "参考解剖中心"
+    },
+    {
+      "id": "PANCREAS_TAIL_TARGET",
+      "organ": "PANCREAS",
+      "name": "胰尾",
+      "category": "segment",
+      "partCode": "PANCREAS_TAIL",
+      "coordinateMm": [
+        -61.1,
+        -22.7,
+        -103.0
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "HRA pancreas",
+      "description": "参考解剖中心"
+    },
+    {
+      "id": "PANCREAS_UNCINATE_TARGET",
+      "organ": "PANCREAS",
+      "name": "钩突",
+      "category": "segment",
+      "partCode": "PANCREAS_UNCINATE",
+      "coordinateMm": [
+        13.6,
+        25.8,
+        -156.1
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "HRA pancreas",
+      "description": "参考解剖中心"
+    },
+    {
+      "id": "SPLEEN_UPPER",
+      "organ": "SPLEEN",
+      "name": "上极（参考）",
+      "category": "pole",
+      "partCode": "SPLEEN_DIAPHRAGMATIC",
+      "coordinateMm": [
+        -93.6,
+        -44.3,
+        -35.6
+      ],
+      "standardView": "left",
+      "approach": "left",
+      "reference": "anatomical landmark",
+      "description": "参考极点"
+    },
+    {
+      "id": "SPLEEN_LOWER",
+      "organ": "SPLEEN",
+      "name": "下极（参考）",
+      "category": "pole",
+      "partCode": "SPLEEN_DIAPHRAGMATIC",
+      "coordinateMm": [
+        -93.6,
+        -44.3,
+        -156.1
+      ],
+      "standardView": "left",
+      "approach": "left",
+      "reference": "anatomical landmark",
+      "description": "参考极点"
+    },
+    {
+      "id": "SPLEEN_HILUM_TARGET",
+      "organ": "SPLEEN",
+      "name": "脾门",
+      "category": "hilum",
+      "partCode": "SPLEEN_HILUM",
+      "coordinateMm": [
+        -82.7,
+        -36.6,
+        -100.2
+      ],
+      "standardView": "left",
+      "approach": "left",
+      "reference": "HRA spleen",
+      "description": "参考解剖中心"
+    },
+    {
+      "id": "AORTA_ASCENDING_TARGET",
+      "organ": "AORTA",
+      "name": "升主动脉",
+      "category": "segment",
+      "partCode": "AORTA_ASCENDING",
+      "coordinateMm": [
+        -14.3,
+        21.9,
+        66.3
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "BodyParts3D",
+      "description": "参考解剖中心"
+    },
+    {
+      "id": "AORTA_ARCH_TARGET",
+      "organ": "AORTA",
+      "name": "主动脉弓",
+      "category": "segment",
+      "partCode": "AORTA_ARCH",
+      "coordinateMm": [
+        -19.8,
+        -4.9,
+        103.3
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "BodyParts3D",
+      "description": "参考解剖中心"
+    },
+    {
+      "id": "AORTA_DESCENDING_TARGET",
+      "organ": "AORTA",
+      "name": "降主动脉",
+      "category": "segment",
+      "partCode": "AORTA_DESCENDING",
+      "coordinateMm": [
+        -16.3,
+        -9.9,
+        -60.8
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "BodyParts3D",
+      "description": "参考解剖中心"
+    },
+    {
+      "id": "IVC_SUPERIOR_TARGET",
+      "organ": "IVC",
+      "name": "下腔静脉（近心段）",
+      "category": "segment",
+      "partCode": "IVC_SUPERIOR",
+      "coordinateMm": [
+        11.7,
+        14.4,
+        -49.3
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "BodyParts3D",
+      "description": "参考解剖中心"
+    },
+    {
+      "id": "IVC_INFERIOR_TARGET",
+      "organ": "IVC",
+      "name": "下腔静脉（腹段）",
+      "category": "segment",
+      "partCode": "IVC_INFERIOR",
+      "coordinateMm": [
+        8.1,
+        16.9,
+        -166.0
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "BodyParts3D",
+      "description": "参考解剖中心"
+    },
+    {
+      "id": "TRACHEA_CARINA",
+      "organ": "TRACHEA",
+      "name": "隆突（参考）",
+      "category": "landmark",
+      "partCode": "TRACHEA_MAIN",
+      "coordinateMm": [
+        -2.9,
+        -7.1,
+        91.2
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "anatomical landmark",
+      "description": "参考位置，不是病变"
+    },
+    {
+      "id": "TRACHEA_MID",
+      "organ": "TRACHEA",
+      "name": "气管中段",
+      "category": "landmark",
+      "partCode": "TRACHEA_MAIN",
+      "coordinateMm": [
+        -2.9,
+        -7.1,
+        147.2
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "anatomical landmark",
+      "description": "参考位置，不是病变"
+    },
+    {
+      "id": "STOMACH_REGION_1",
+      "organ": "STOMACH",
+      "name": "贲门/胃底（参考）",
+      "category": "region",
+      "partCode": "STOMACH_BODY",
+      "coordinateMm": [
+        -1.1,
+        71.2,
+        -135.3
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "morphological reference",
+      "description": "按形态主轴划分的参考区域，不是内镜定位"
+    },
+    {
+      "id": "STOMACH_REGION_2",
+      "organ": "STOMACH",
+      "name": "胃体上部（参考）",
+      "category": "region",
+      "partCode": "STOMACH_BODY",
+      "coordinateMm": [
+        -18.2,
+        58.5,
+        -119.1
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "morphological reference",
+      "description": "按形态主轴划分的参考区域，不是内镜定位"
+    },
+    {
+      "id": "STOMACH_REGION_3",
+      "organ": "STOMACH",
+      "name": "胃体（参考）",
+      "category": "region",
+      "partCode": "STOMACH_BODY",
+      "coordinateMm": [
+        -48.8,
+        35.7,
+        -90.2
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "morphological reference",
+      "description": "按形态主轴划分的参考区域，不是内镜定位"
+    },
+    {
+      "id": "STOMACH_REGION_4",
+      "organ": "STOMACH",
+      "name": "胃窦（参考）",
+      "category": "region",
+      "partCode": "STOMACH_BODY",
+      "coordinateMm": [
+        -65.3,
+        23.4,
+        -74.5
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "morphological reference",
+      "description": "按形态主轴划分的参考区域，不是内镜定位"
+    },
+    {
+      "id": "STOMACH_REGION_5",
+      "organ": "STOMACH",
+      "name": "幽门（参考）",
+      "category": "region",
+      "partCode": "STOMACH_BODY",
+      "coordinateMm": [
+        -81.0,
+        11.6,
+        -59.6
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "morphological reference",
+      "description": "按形态主轴划分的参考区域，不是内镜定位"
+    },
+    {
+      "id": "SPINE_T12_TARGET",
+      "organ": "SPINE",
+      "name": "第12胸椎",
+      "category": "vertebra",
+      "partCode": "SPINE_T12",
+      "coordinateMm": [
+        -2.9,
+        -36.0,
+        -114.3
+      ],
+      "standardView": "posterior",
+      "approach": "posterior",
+      "reference": "BodyParts3D vertebra",
+      "description": "参考椎体中心，不是病变"
+    },
+    {
+      "id": "SPINE_L1_TARGET",
+      "organ": "SPINE",
+      "name": "第1腰椎",
+      "category": "vertebra",
+      "partCode": "SPINE_L1",
+      "coordinateMm": [
+        -2.9,
+        -29.2,
+        -145.1
+      ],
+      "standardView": "posterior",
+      "approach": "posterior",
+      "reference": "BodyParts3D vertebra",
+      "description": "参考椎体中心，不是病变"
+    },
+    {
+      "id": "SPINE_T1_TARGET",
+      "organ": "SPINE",
+      "name": "第1胸椎",
+      "category": "vertebra",
+      "partCode": "SPINE_T1",
+      "coordinateMm": [
+        -2.9,
+        -40.2,
+        167.5
+      ],
+      "standardView": "posterior",
+      "approach": "posterior",
+      "reference": "BodyParts3D vertebra",
+      "description": "参考椎体中心，不是病变"
+    },
+    {
+      "id": "SPINE_L4_TARGET",
+      "organ": "SPINE",
+      "name": "第4腰椎",
+      "category": "vertebra",
+      "partCode": "SPINE_L4",
+      "coordinateMm": [
+        -2.9,
+        -28.9,
+        -232.6
+      ],
+      "standardView": "posterior",
+      "approach": "posterior",
+      "reference": "BodyParts3D vertebra",
+      "description": "参考椎体中心，不是病变"
+    },
+    {
+      "id": "SPINE_T4_TARGET",
+      "organ": "SPINE",
+      "name": "第4胸椎",
+      "category": "vertebra",
+      "partCode": "SPINE_T4",
+      "coordinateMm": [
+        -2.9,
+        -62.8,
+        106.2
+      ],
+      "standardView": "posterior",
+      "approach": "posterior",
+      "reference": "BodyParts3D vertebra",
+      "description": "参考椎体中心，不是病变"
+    },
+    {
+      "id": "SPINE_L5_TARGET",
+      "organ": "SPINE",
+      "name": "第5腰椎",
+      "category": "vertebra",
+      "partCode": "SPINE_L5",
+      "coordinateMm": [
+        -2.9,
+        -38.3,
+        -262.8
+      ],
+      "standardView": "posterior",
+      "approach": "posterior",
+      "reference": "BodyParts3D vertebra",
+      "description": "参考椎体中心，不是病变"
+    },
+    {
+      "id": "SPINE_C7_TARGET",
+      "organ": "SPINE",
+      "name": "第7颈椎",
+      "category": "vertebra",
+      "partCode": "SPINE_C7",
+      "coordinateMm": [
+        -3.0,
+        -37.2,
+        183.5
+      ],
+      "standardView": "posterior",
+      "approach": "posterior",
+      "reference": "BodyParts3D vertebra",
+      "description": "参考椎体中心，不是病变"
+    },
+    {
+      "id": "SPINE_T8_TARGET",
+      "organ": "SPINE",
+      "name": "第8胸椎",
+      "category": "vertebra",
+      "partCode": "SPINE_T8",
+      "coordinateMm": [
+        -2.9,
+        -65.2,
+        -3.4
+      ],
+      "standardView": "posterior",
+      "approach": "posterior",
+      "reference": "BodyParts3D vertebra",
+      "description": "参考椎体中心，不是病变"
+    },
+    {
+      "id": "SPINE_SACRUM_TARGET",
+      "organ": "SPINE",
+      "name": "骶骨",
+      "category": "vertebra",
+      "partCode": "SPINE_SACRUM",
+      "coordinateMm": [
+        -2.9,
+        -67.3,
+        -318.6
+      ],
+      "standardView": "posterior",
+      "approach": "posterior",
+      "reference": "BodyParts3D vertebra",
+      "description": "参考椎体中心，不是病变"
+    },
+    {
+      "id": "BRAIN_FRONTAL_TARGET",
+      "organ": "BRAIN",
+      "name": "额叶",
+      "category": "brain",
+      "partCode": "BRAIN_FRONTAL",
+      "coordinateMm": [
+        -2.9,
+        17.8,
+        391.7
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "BodyParts3D brain structures",
+      "description": "参考脑结构中心，不是病变"
+    },
+    {
+      "id": "BRAIN_PARIETAL_TARGET",
+      "organ": "BRAIN",
+      "name": "顶叶",
+      "category": "brain",
+      "partCode": "BRAIN_PARIETAL",
+      "coordinateMm": [
+        -2.9,
+        -46.6,
+        394.2
+      ],
+      "standardView": "right",
+      "approach": "right",
+      "reference": "BodyParts3D brain structures",
+      "description": "参考脑结构中心，不是病变"
+    },
+    {
+      "id": "BRAIN_TEMPORAL_TARGET",
+      "organ": "BRAIN",
+      "name": "颞叶",
+      "category": "brain",
+      "partCode": "BRAIN_TEMPORAL",
+      "coordinateMm": [
+        -2.9,
+        -26.1,
+        346.6
+      ],
+      "standardView": "left",
+      "approach": "left",
+      "reference": "BodyParts3D brain structures",
+      "description": "参考脑结构中心，不是病变"
+    },
+    {
+      "id": "BRAIN_OCCIPITAL_TARGET",
+      "organ": "BRAIN",
+      "name": "枕叶",
+      "category": "brain",
+      "partCode": "BRAIN_OCCIPITAL",
+      "coordinateMm": [
+        -2.8,
+        -84.6,
+        346.5
+      ],
+      "standardView": "posterior",
+      "approach": "posterior",
+      "reference": "BodyParts3D brain structures",
+      "description": "参考脑结构中心，不是病变"
+    },
+    {
+      "id": "BRAIN_INSULA_TARGET",
+      "organ": "BRAIN",
+      "name": "岛叶",
+      "category": "brain",
+      "partCode": "BRAIN_INSULA",
+      "coordinateMm": [
+        -2.9,
+        -2.3,
+        369.5
+      ],
+      "standardView": "left",
+      "approach": "left",
+      "reference": "BodyParts3D brain structures",
+      "description": "参考脑结构中心，不是病变"
+    },
+    {
+      "id": "BRAIN_CINGULATE_TARGET",
+      "organ": "BRAIN",
+      "name": "扣带回",
+      "category": "brain",
+      "partCode": "BRAIN_CINGULATE",
+      "coordinateMm": [
+        -2.9,
+        -20.6,
+        377.5
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "BodyParts3D brain structures",
+      "description": "参考脑结构中心，不是病变"
+    },
+    {
+      "id": "BRAIN_CEREBELLUM_TARGET",
+      "organ": "BRAIN",
+      "name": "小脑",
+      "category": "brain",
+      "partCode": "BRAIN_CEREBELLUM",
+      "coordinateMm": [
+        -2.9,
+        -58.5,
+        317.6
+      ],
+      "standardView": "posterior",
+      "approach": "posterior",
+      "reference": "BodyParts3D brain structures",
+      "description": "参考脑结构中心，不是病变"
+    },
+    {
+      "id": "BRAIN_BRAINSTEM_TARGET",
+      "organ": "BRAIN",
+      "name": "脑干",
+      "category": "brain",
+      "partCode": "BRAIN_BRAINSTEM",
+      "coordinateMm": [
+        -2.9,
+        -23.3,
+        322.6
+      ],
+      "standardView": "posterior",
+      "approach": "posterior",
+      "reference": "BodyParts3D brain structures",
+      "description": "参考脑结构中心，不是病变"
+    },
+    {
+      "id": "BRAIN_THALAMUS_TARGET",
+      "organ": "BRAIN",
+      "name": "丘脑/下丘脑",
+      "category": "brain",
+      "partCode": "BRAIN_THALAMUS",
+      "coordinateMm": [
+        -2.9,
+        -15.5,
+        356.8
+      ],
+      "standardView": "left",
+      "approach": "left",
+      "reference": "BodyParts3D brain structures",
+      "description": "参考脑结构中心，不是病变"
+    },
+    {
+      "id": "BRAIN_BASAL_GANGLIA_TARGET",
+      "organ": "BRAIN",
+      "name": "基底节",
+      "category": "brain",
+      "partCode": "BRAIN_BASAL_GANGLIA",
+      "coordinateMm": [
+        -2.9,
+        -4.8,
+        363.4
+      ],
+      "standardView": "right",
+      "approach": "right",
+      "reference": "BodyParts3D brain structures",
+      "description": "参考脑结构中心，不是病变"
+    },
+    {
+      "id": "BRAIN_HIPPOCAMPUS_TARGET",
+      "organ": "BRAIN",
+      "name": "海马",
+      "category": "brain",
+      "partCode": "BRAIN_HIPPOCAMPUS",
+      "coordinateMm": [
+        -2.9,
+        -19.5,
+        343.2
+      ],
+      "standardView": "left",
+      "approach": "left",
+      "reference": "BodyParts3D brain structures",
+      "description": "参考脑结构中心，不是病变"
+    },
+    {
+      "id": "BRAIN_VENTRICLES_TARGET",
+      "organ": "BRAIN",
+      "name": "脑室系统",
+      "category": "brain",
+      "partCode": "BRAIN_VENTRICLES",
+      "coordinateMm": [
+        -2.9,
+        -21.7,
+        357.2
+      ],
+      "standardView": "right",
+      "approach": "right",
+      "reference": "BodyParts3D brain structures",
+      "description": "参考脑结构中心，不是病变"
+    },
+    {
+      "id": "BRAIN_WHITE_MATTER_TARGET",
+      "organ": "BRAIN",
+      "name": "白质",
+      "category": "brain",
+      "partCode": "BRAIN_WHITE_MATTER",
+      "coordinateMm": [
+        -2.9,
+        -28.3,
+        377.4
+      ],
+      "standardView": "right",
+      "approach": "right",
+      "reference": "BodyParts3D brain structures",
+      "description": "参考脑结构中心，不是病变"
+    },
+    {
+      "id": "BRAIN_CORPUS_CALLOSUM_TARGET",
+      "organ": "BRAIN",
+      "name": "胼胝体/穹窿",
+      "category": "brain",
+      "partCode": "BRAIN_CORPUS_CALLOSUM",
+      "coordinateMm": [
+        -2.9,
+        -17.2,
+        369.4
+      ],
+      "standardView": "right",
+      "approach": "right",
+      "reference": "BodyParts3D brain structures",
+      "description": "参考脑结构中心，不是病变"
+    },
+    {
+      "id": "BRAIN_OTHER_TARGET",
+      "organ": "BRAIN",
+      "name": "其他脑结构",
+      "category": "brain",
+      "partCode": "BRAIN_OTHER",
+      "coordinateMm": [
+        -2.9,
+        -13.3,
+        358.8
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "BodyParts3D brain structures",
+      "description": "参考脑结构中心，不是病变"
+    },
+    {
+      "id": "SMALL_INTESTINE_DUODENUM_TARGET",
+      "organ": "SMALL_INTESTINE",
+      "name": "十二指肠",
+      "category": "segment",
+      "partCode": "SMALL_INTESTINE_DUODENUM",
+      "coordinateMm": [
+        24.7,
+        28.8,
+        -165.2
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "BodyParts3D small intestine",
+      "description": "参考肠段中心，不是病变"
+    },
+    {
+      "id": "SMALL_INTESTINE_JEJUNUM_TARGET",
+      "organ": "SMALL_INTESTINE",
+      "name": "空肠",
+      "category": "segment",
+      "partCode": "SMALL_INTESTINE_JEJUNUM",
+      "coordinateMm": [
+        -22.0,
+        57.5,
+        -228.3
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "BodyParts3D small intestine",
+      "description": "参考肠段中心，不是病变"
+    },
+    {
+      "id": "SMALL_INTESTINE_ILEUM_TARGET",
+      "organ": "SMALL_INTESTINE",
+      "name": "回肠",
+      "category": "segment",
+      "partCode": "SMALL_INTESTINE_ILEUM",
+      "coordinateMm": [
+        0.4,
+        46.8,
+        -319.7
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "BodyParts3D small intestine",
+      "description": "参考肠段中心，不是病变"
+    },
+    {
+      "id": "LARGE_INTESTINE_ASCENDING_TARGET",
+      "organ": "LARGE_INTESTINE",
+      "name": "升结肠",
+      "category": "segment",
+      "partCode": "LARGE_INTESTINE_ASCENDING",
+      "coordinateMm": [
+        89.3,
+        14.3,
+        -237.5
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "BodyParts3D large intestine",
+      "description": "参考肠段中心，不是病变"
+    },
+    {
+      "id": "LARGE_INTESTINE_TRANSVERSE_TARGET",
+      "organ": "LARGE_INTESTINE",
+      "name": "横结肠",
+      "category": "segment",
+      "partCode": "LARGE_INTESTINE_TRANSVERSE",
+      "coordinateMm": [
+        -10.2,
+        57.6,
+        -168.3
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "BodyParts3D large intestine",
+      "description": "参考肠段中心，不是病变"
+    },
+    {
+      "id": "LARGE_INTESTINE_DESCENDING_TARGET",
+      "organ": "LARGE_INTESTINE",
+      "name": "降结肠",
+      "category": "segment",
+      "partCode": "LARGE_INTESTINE_DESCENDING",
+      "coordinateMm": [
+        -70.7,
+        4.4,
+        -276.4
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "BodyParts3D large intestine",
+      "description": "参考肠段中心，不是病变"
+    },
+    {
+      "id": "LARGE_INTESTINE_RECTUM_TARGET",
+      "organ": "LARGE_INTESTINE",
+      "name": "直肠",
+      "category": "segment",
+      "partCode": "LARGE_INTESTINE_RECTUM",
+      "coordinateMm": [
+        -5.1,
+        -59.7,
+        -370.3
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "BodyParts3D large intestine",
+      "description": "参考肠段中心，不是病变"
+    },
+    {
+      "id": "BLADDER_DOME",
+      "organ": "URINARY_BLADDER",
+      "name": "膀胱顶（参考）",
+      "category": "landmark",
+      "partCode": "URINARY_BLADDER_BODY",
+      "coordinateMm": [
+        -2.7,
+        -16.9,
+        -363.9
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "anatomical landmark",
+      "description": "参考位置，不是病变"
+    },
+    {
+      "id": "BLADDER_NECK",
+      "organ": "URINARY_BLADDER",
+      "name": "膀胱颈（参考）",
+      "category": "landmark",
+      "partCode": "URINARY_BLADDER_BODY",
+      "coordinateMm": [
+        -2.7,
+        -16.9,
+        -404.2
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "anatomical landmark",
+      "description": "参考位置，不是病变"
+    },
+    {
+      "id": "BLADDER_BODY",
+      "organ": "URINARY_BLADDER",
+      "name": "膀胱体（参考）",
+      "category": "landmark",
+      "partCode": "URINARY_BLADDER_BODY",
+      "coordinateMm": [
+        -2.7,
+        -16.9,
+        -382.6
+      ],
+      "standardView": "anterior",
+      "approach": "anterior",
+      "reference": "anatomical landmark",
+      "description": "参考位置，不是病变"
+    },
+    {
+      "id": "ESOPHAGUS_SEGMENT_1",
+      "organ": "ESOPHAGUS",
+      "name": "颈段食管（参考）",
+      "category": "segment",
+      "partCode": "ESOPHAGUS_BODY",
+      "coordinateMm": [
+        -6.2,
+        -15.5,
+        196.5
+      ],
+      "standardView": "posterior",
+      "approach": "posterior",
+      "reference": "anatomical landmark",
+      "description": "参考位置，不是病变"
+    },
+    {
+      "id": "ESOPHAGUS_SEGMENT_2",
+      "organ": "ESOPHAGUS",
+      "name": "胸段食管（参考）",
+      "category": "segment",
+      "partCode": "ESOPHAGUS_BODY",
+      "coordinateMm": [
+        -6.2,
+        -15.5,
+        59.3
+      ],
+      "standardView": "posterior",
+      "approach": "posterior",
+      "reference": "anatomical landmark",
+      "description": "参考位置，不是病变"
+    },
+    {
+      "id": "ESOPHAGUS_SEGMENT_3",
+      "organ": "ESOPHAGUS",
+      "name": "腹段食管（参考）",
+      "category": "segment",
+      "partCode": "ESOPHAGUS_BODY",
+      "coordinateMm": [
+        -6.2,
+        -15.5,
+        -77.9
+      ],
+      "standardView": "posterior",
+      "approach": "posterior",
+      "reference": "anatomical landmark",
+      "description": "参考位置，不是病变"
+    }
+  ]
+}

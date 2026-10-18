@@ -85,6 +85,7 @@ export default function StudyWorkbench({ onNavigate, notify }) {
     selectStudy,
     createServerDemoStudy,
     upload,
+    importPublic,
     chooseSeries,
     refreshCurrent,
     loadAudit,
@@ -92,6 +93,10 @@ export default function StudyWorkbench({ onNavigate, notify }) {
   } = useStudy()
   const [dragging, setDragging] = React.useState(false)
   const [selectedSeries, setSelectedSeries] = React.useState('')
+  const [publicImage, setPublicImage] = React.useState(null)
+  const [publicLabels, setPublicLabels] = React.useState(null)
+  const [publicDataset, setPublicDataset] = React.useState('ImageCAS')
+  const [publicLabelMap, setPublicLabelMap] = React.useState('')
   const fileInputRef = React.useRef(null)
 
   const latestJob = study?.jobs?.length ? study.jobs[study.jobs.length - 1] : null
@@ -124,6 +129,16 @@ export default function StudyWorkbench({ onNavigate, notify }) {
       }
     } catch (err) {
       setError(errorDetail(err))
+    }
+  }
+
+  const handlePublicImport = async () => {
+    if (!isApi || !publicImage || !publicLabels) return
+    try {
+      await importPublic(publicImage, publicLabels, publicDataset || 'public_dataset', publicLabelMap)
+      notify?.('公开病例导入完成')
+    } catch (err) {
+      setError(err.message || String(err))
     }
   }
 
@@ -226,6 +241,45 @@ export default function StudyWorkbench({ onNavigate, notify }) {
               </span>
             </div>
           ) : null}
+
+          <Section title="公开数据导入（NIfTI）" code="PUBLIC DATASET" right={<Database size={13} />}>
+            <div className="public-import-grid">
+              <label className="public-file">
+                <span>影像 .nii.gz</span>
+                <input type="file" accept=".nii,.nii.gz,.gz" onChange={(event) => setPublicImage(event.target.files?.[0] || null)} />
+                <b>{publicImage?.name || '未选择'}</b>
+              </label>
+              <label className="public-file">
+                <span>标签 .nii.gz</span>
+                <input type="file" accept=".nii,.nii.gz,.gz" onChange={(event) => setPublicLabels(event.target.files?.[0] || null)} />
+                <b>{publicLabels?.name || '未选择'}</b>
+              </label>
+            </div>
+            <div className="public-import-row">
+              <label>
+                数据集
+                <input value={publicDataset} onChange={(event) => setPublicDataset(event.target.value)} placeholder="ImageCAS / ASOCA" />
+              </label>
+              <label>
+                标签映射 JSON（可选）
+                <input value={publicLabelMap} onChange={(event) => setPublicLabelMap(event.target.value)} placeholder='{"1":{"code":"CORONARY_TREE","name":"冠脉树"}}' />
+              </label>
+            </div>
+            <div className="workbench-actions">
+              <Button
+                variant="primary"
+                size="sm"
+                icon={<CloudUpload size={14} />}
+                disabled={!isApi || uploading || !publicImage || !publicLabels}
+                onClick={handlePublicImport}
+              >
+                {uploading ? '导入中…' : '导入公开病例'}
+              </Button>
+              <span className="workbench-hint">
+                仅用于公开/研究数据；NIfTI 导入不经过 DICOM 去标识与临床上传路径。
+              </span>
+            </div>
+          </Section>
 
           {error ? (
             <div className="workbench-error"><CircleAlert size={14} /> {serverText(error)}</div>

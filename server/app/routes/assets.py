@@ -7,7 +7,9 @@ from sqlalchemy.orm import Session
 from ..config import settings
 from ..db import get_db
 from ..models import MeshRecord, VolumeRecord
+from ..coronary_model import catalog as coronary_catalog
 from ..organ_library import catalog
+from ..organ_targets import catalog as target_catalog
 from ..schemas import volume_out
 from ..storage import storage
 
@@ -61,6 +63,18 @@ def organ_atlas():
     These are reference models and codes, not patient anatomy.
     """
     return catalog()
+
+
+@router.get("/coronary-model")
+def coronary_model():
+    """Reference coronary segments, AHA mapping and teaching projections."""
+    return coronary_catalog()
+
+
+@router.get("/organ-targets")
+def organ_targets():
+    """Reference targets for teaching, orientation and workflow simulation."""
+    return target_catalog()
 
 
 @router.get("/models")

@@ -1,8 +1,10 @@
 import React from 'react'
 import {
+  Activity,
   Boxes,
   Camera,
   CircleAlert,
+  Crosshair,
   Download,
   Eye,
   EyeOff,
@@ -17,8 +19,26 @@ import OrganLibraryEngine from '../three/OrganLibraryEngine.js'
 import { apiGet } from '../api/client.js'
 import { serverText, useI18n } from '../i18n.js'
 import ORGAN_LIBRARY from '../../shared/organ_library.json'
+import ORGAN_TARGETS from '../../shared/organ_targets.json'
 
 const RENDERABLE = ORGAN_LIBRARY.organs.filter((organ) => organ.renderable)
+const TARGETS = ORGAN_TARGETS.targets || []
+const APPROACH_LABELS = { anterior: '前面入路', posterior: '后面入路', left: '左侧入路', right: '右侧入路' }
+const KIND_LABELS = {
+  capsule: '包膜', segment: '段/叶', lobe: '叶', ligament: '韧带/压迹', surface: '表面',
+  chamber: '心腔', valve: '瓣膜', coronary: '冠脉', muscle: '乳头肌', cortex: '皮质',
+  medulla: '髓质', calyx: '肾盏', pelvis: '肾盂', hilum: '肾门', vertebra: '椎体',
+  nucleus: '核团', ventricle: '脑室', white_matter: '白质', commissure: '连合/胼胝体',
+  organ: '整体', other: '其他',
+}
+const KIND_ORDER = ['chamber', 'valve', 'coronary', 'muscle', 'capsule', 'segment', 'lobe', 'surface', 'ligament', 'cortex', 'medulla', 'calyx', 'pelvis', 'hilum', 'vertebra', 'nucleus', 'ventricle', 'white_matter', 'commissure', 'organ', 'other']
+const PART_KIND_COLORS = {
+  chamber: '#c45258', valve: '#e0b07a', coronary: '#d46a5a', muscle: '#a85b50',
+  capsule: '#8f4a43', segment: '#b06a5a', lobe: '#a65a50', surface: '#8a5a6a',
+  ligament: '#8a7a60', cortex: '#b06a7a', medulla: '#d0a0a8', calyx: '#e0c8a0',
+  pelvis: '#e8d8b8', hilum: '#c0a080', vertebra: '#b8b0a0', nucleus: '#c9a06a',
+  ventricle: '#7fc4d8', white_matter: '#d8d0c0', commissure: '#b8a080', organ: '#a08a70', other: '#9aa8b0',
+}
 
 const SOURCE_META = {
   bodyparts3d: {
@@ -112,8 +132,22 @@ export default function OrganLibraryView({ notify }) {
       const engine = new OrganLibraryEngine(hostRef.current, {
         autoRotate,
         opacity,
-        onSelect: (code) => setSelected(code),
+        onSelect: (code) => {
+          setSelected(code)
+          setSelectedTargetId(null)
+          setPathInfo(null)
+          setDepth(0)
+          engineRef.current?.clearTarget()
+        },
         onReady: () => setLoading(false),
+        onTargetUpdate: (info) => {
+          setPathInfo(info)
+          if (info && Number.isFinite(info.depth)) setDepth(info.depth)
+        },
+        onInsertionEnd: (finalDepth) => {
+          setSimulating(false)
+          if (Number.isFinite(finalDepth)) setDepth(finalDepth)
+        },
       })
       engineRef.current = engine
     } catch (err) {
@@ -167,8 +201,17 @@ export default function OrganLibraryView({ notify }) {
 
   const focusOrgan = (code) => {
     setSelected(code)
+    setSelectedPart(null)
+    setSelectedTargetId(null)
+    setPathInfo(null)
+    setDepth(0)
+    engineRef.current?.clearTarget()
     engineRef.current?.focus(code)
     engineRef.current?.setSelected(code)
+    if (targetMode) {
+      const first = TARGETS.find((target) => target.organ === code)
+      if (first) selectTarget(first)
+    }
   }
 
   const selectView = (nextView) => {
@@ -228,6 +271,8 @@ export default function OrganLibraryView({ notify }) {
             <span>{t('organ.count', { count: RENDERABLE.length })}</span>
             <i />
             <span>{ORGAN_LIBRARY.frame.name} · mm</span>
+            <i />
+            <span>{TARGETS.length} 个参考靶点</span>
           </>
         }
         actions={

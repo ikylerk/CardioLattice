@@ -32,6 +32,14 @@
 - Report editing UI, PDF export, report comparison.
 - Model registry and task-level licence review.
 
+## M2.5 — Public data validation
+
+- Import ImageCAS/ASOCA cases through the public NIfTI path.
+- Run a coronary centerline/lumen model and compare against the public labels.
+- Report Dice/HD95/centerline distance; keep the model research-only until the
+  external validation is complete.
+- Add patient-specific coronary metrics only after model-registry approval.
+
 ## M3 — Longitudinal comparison
 
 - Prior-study selection by pseudonymous subject.

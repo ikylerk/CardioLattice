@@ -109,6 +109,20 @@ export async function getAudit(studyId) {
   return apiGet(`/studies/${studyId}/audit`)
 }
 
+export async function importPublicCase(image, labels, dataset, labelMap = '') {
+  const form = new FormData()
+  form.append('image', image)
+  form.append('labels', labels)
+  form.append('dataset', dataset || 'public_dataset')
+  form.append('label_map', labelMap || '')
+  const response = await fetch(`${API_BASE}/public/import`, {
+    method: 'POST',
+    credentials: 'same-origin',
+    body: form,
+  })
+  return parseResponse(response)
+}
+
 export function uploadStudies(files, onProgress) {
   return new Promise((resolve, reject) => {
     const form = new FormData()

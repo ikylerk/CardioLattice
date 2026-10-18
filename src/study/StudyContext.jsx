@@ -4,6 +4,7 @@ import {
   createDemoStudy,
   getAudit,
   getStudy,
+  importPublicCase,
   listStudies,
   resolveMode,
   selectSeries,
@@ -179,6 +180,23 @@ export function StudyProvider({ children }) {
     }
   }, [refreshStudies])
 
+  const importPublic = React.useCallback(async (image, labels, dataset, labelMap = '') => {
+    setError('')
+    setUploading(true)
+    setStudy(null)
+    try {
+      const response = await importPublicCase(image, labels, dataset, labelMap)
+      setStudy(response.study)
+      await refreshStudies()
+      return response
+    } catch (err) {
+      setError(err.message || String(err))
+      throw err
+    } finally {
+      setUploading(false)
+    }
+  }, [refreshStudies])
+
   const chooseSeries = React.useCallback(async (seriesId) => {
     if (!study?.study?.id) return null
     setError('')
@@ -226,6 +244,7 @@ export function StudyProvider({ children }) {
     refreshCurrent,
     createServerDemoStudy,
     upload,
+    importPublic,
     chooseSeries,
     approve,
     loadAudit,
@@ -233,7 +252,7 @@ export function StudyProvider({ children }) {
   }), [
     mode, loading, error, studies, study, audit, uploading, uploadProgress,
     selectStudy, refreshStudies, refreshCurrent, createServerDemoStudy, upload,
-    chooseSeries, approve, loadAudit,
+    importPublic, chooseSeries, approve, loadAudit,
   ])
 
   return <StudyContext.Provider value={value}>{children}</StudyContext.Provider>

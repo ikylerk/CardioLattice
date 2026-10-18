@@ -24,7 +24,9 @@ M1 把「演示」换成了可验证的数据链路：
 | 腔室容积测量 | ✅ 已实现 | 体素数 × 体素体积，带 method / source / validation_status |
 | 结构化报告草稿 | ✅ 已实现 | 模板生成；每个结论引用 measurement；医生批准后写入审计链 |
 | 审计哈希链 | ✅ 已实现 | 去标识、体数据、流水线、报告批准等事件 |
-| 标准器官模型库 | ✅ 已实现 | 14 个解剖参考器官、统一编码、RAS 坐标系、可导出目录 |
+| 标准器官模型库 | ✅ 已实现 | 19 个解剖参考器官、详细子结构、109 个参考靶点、靶点模拟 |
+| 冠脉分段与参考分析 | ✅ 已实现 | 17 个冠脉分段、AHA 1–17 心肌段映射、C 臂体位、参考 QCA |
+| 公开 NIfTI 导入 | ✅ 已实现 | ImageCAS/ASOCA 等公开影像 + 标签导入、预览体数据、GLB、报告草稿 |
 | LLM 辅助报告（Claude） | 🚧 M2 | 只对结构化事实做语言化，不独立下诊断；接口与校验已设计 |
 | 冠脉管腔/狭窄/FFR-CT | 🚧 M3–M4 | 未接入经过验证的模型，UI 显示 `not_computed`，不编造数值 |
 | 纵向对比/预测 | 🚧 M3 | 先做配准与 delta；没有验证模型前不展示“未来事件概率” |
@@ -127,19 +129,55 @@ queued → validating → anonymizing → building_volume
 
 侧栏「器官模型库」提供一套内置、可版本化的标准参考模型：
 
-- 心脏、左右肺、气管、肝、胆囊、胃、脾、胰腺、左右肾、主动脉、下腔静脉、脊柱，共 14 个器官；
-- 使用真实解剖参考网格：心、胃、胆囊、主动脉、下腔静脉、气管、脊柱来自 **BodyParts3D 4.0**；肝、肺、肾、脾、胰来自 **HuBMAP HRA v1.1**；
+- 脑、心脏、左右肺、气管、肝、胆囊、胃、脾、胰腺、左右肾、小肠、大肠、膀胱、食管、主动脉、下腔静脉、脊柱，共 19 个器官；
+- 使用真实解剖参考网格：脑、心、胃、胆囊、小肠、大肠、膀胱、食管、主动脉、下腔静脉、气管、脊柱来自 **BodyParts3D 4.0**；肝、肺、肾、脾、胰来自 **HuBMAP HRA v1.1**；
 - 统一使用 `RAS_ORGAN_REFERENCE` 坐标系，单位 mm（+x 右、+y 前、+z 上），原点位于参考器官集合中心；
 - 每个器官有稳定 `code`、系统分类、颜色、实际网格尺寸/中心与来源说明；
 - 支持系统筛选、单器官显示/隐藏、聚焦、实体/半透明、前面观/后面观/左侧观/右侧观、截图和 JSON 目录导出；
+- **详细子结构**：脑 15 组（额/顶/颞/枕叶、岛叶、扣带回、小脑、脑干、丘脑、基底节、海马、脑室、白质、胼胝体等）、心脏 83 个解剖部件（心腔、瓣膜、冠脉、乳头肌）、肝 12、左右肺各 10、左右肾各 7、胰 5、脾 5、小肠 3、大肠 4、主动脉 3、下腔静脉 2、脊柱 23；
+- 子结构可独立显示/隐藏、点击聚焦，并支持轴位 / 冠状位 / 矢状位裁剪切面；
+- **109 个标准参考靶点**：脑叶/小脑/脑干/丘脑/基底节/海马/脑室、心腔、瓣膜、冠脉、肝段、肺段、肾极/肾门/肾盂、胰头/颈/体/尾、脾门、小肠/大肠肠段、膀胱、食管、主动脉、IVC、气管、椎体等；
+- **靶点模拟**：选择靶点 → 选择前/后/左/右入路 → 调整进针深度 → 正交切面 → 模拟进针；显示路径长度、距靶点距离和近似路径经过器官；
 - 心脏分割标签通过 `standardLabelMap` 映射到 `HEART_LV`、`AORTA` 等标准代码；
-- 前后端共用 `shared/organ_library.json`，后端通过 `GET /api/organs` 暴露同一目录。
+- 前后端共用 `shared/organ_library.json` 和 `shared/organ_targets.json`，后端通过 `GET /api/organs` 与 `GET /api/organ-targets` 暴露同一目录。
 
 > 这些是**解剖参考模型**，不是患者解剖，不能用于诊断或测量。器官 GLB 采用 **CC BY 4.0** 授权，与仓库代码的 MIT 授权分开；详见 [`src/assets/organs/ATTRIBUTION.md`](src/assets/organs/ATTRIBUTION.md)。
 
-当前版本提供标准目录、可视化和编码映射；把图谱配准到患者体数据（atlas-to-patient registration）属于后续工作，并且只能用于方位/质控，不能用于推导患者测量。
+当前版本提供标准目录、详细子结构、参考靶点和模拟操作界面；把图谱配准到患者体数据（atlas-to-patient registration）属于后续工作，并且只能用于方位/质控，不能用于推导患者测量。靶点与进针演示仅用于教学和流程演练，不是手术规划或导航系统。
 
 详见 [`docs/organ-library.md`](docs/organ-library.md)。
+
+---
+
+## 冠脉模型与参考分析
+
+冠脉造影模块按 **AngioView（angioview.com）** 的教育模拟标准补齐了交互层，模型由 `shared/coronary_model.json` 驱动：
+
+- **3D 心脏 + 骨架面板**：与 C 臂角度联动的探测器视图、缩短提示、骨骼、半透明、标签、平面开关；
+- **3D C 臂机房**：探测器、X 射线管、检查床和患者体模随 LAO/RAO · CRA/CAU 运动；
+- **17 个冠脉分段**：LM、LAD 近/中/远段、LCX 近/中/远段、RCA 近/中/远段、D1/D2、OM1/OM2、AM、PDA、PL；
+- 每段包含 AHA 1–17 心肌供血区映射、参考直径与长度；
+- **标准体位**：Spider、RAO caudal、AP caudal、AP cranial、LAO cranial、RAO cranial、Lateral、AP；右冠 LAO、RAO、AP、AP cranial、LAO cranial；
+- **优势型/桥血管/分支**：右优势、左优势、共优势；LIMA、SVG-OM、SVG-PDA；Ramus intermedius；
+- **Color** 彩色血管叠加、Labels 标签、CINE、DSA、骨骼模式；
+- 点击分段高亮对应血管并匹配推荐体位；「运行参考分析」生成参考狭窄指标和合成 FFR 提示；
+- 支持与 AngioView 相同的 hash 参数，例如 `#a=-30&b=-30&sys=left`（RAO 30 / CAU 30，左冠）；
+- 后端 `GET /api/coronary-model` 暴露同一模型。
+
+> 这是参考冠脉模型与教育模拟，不是患者造影，也不读取当前检查；QCA/FFR 为参考/合成值，不能用于临床决策。参考界面标准来自 [AngioView](https://angioview.com)，本项目与其无隶属关系。详见 [`docs/coronary-model.md`](docs/coronary-model.md)。
+
+---
+
+## 公开数据导入（NIfTI）
+
+「检查工作台」新增 **公开数据导入（NIfTI）**，用于 ImageCAS / ASOCA 等公开 CCTA 数据：
+
+- 上传影像 `.nii.gz` + 标签 `.nii.gz`，可提供标签映射 JSON；
+- 服务端重采样、对齐标签、生成预览体数据、marching cubes 网格、标签体积和报告草稿；
+- 研究路径标记为 `source=public_dataset`，与临床 DICOM 上传路径分开；
+- 不运行临床去标识、不计算狭窄/FFR/EF 等未验证指标。
+
+详见 [`docs/public-data.md`](docs/public-data.md)。
 
 ---
 
@@ -160,6 +198,9 @@ queued → validating → anonymizing → building_volume
 | GET | `/api/volumes/{id}/data` | 8-bit 体数据 |
 | GET | `/api/meshes/{id}/glb` | 患者 GLB |
 | GET | `/api/organs` | 标准器官目录（与前端共享同一 JSON） |
+| GET | `/api/organ-targets` | 参考靶点目录（教学/流程演练） |
+| GET | `/api/coronary-model` | 参考冠脉分段、AHA 映射与体位 |
+| POST | `/api/public/import` | 导入公开 NIfTI 影像 + 标签（研究路径） |
 | GET | `/api/models` | 模型注册表与授权状态 |
 | POST | `/api/studies/{id}/reports/{reportId}/approve` | 医生批准报告 |
 
@@ -197,6 +238,8 @@ src/                        React 前端
   three/                    HeartEngine / VolumeRenderer / OrganLibraryEngine
   data/heart-data.json      演示用教学解剖数据
 shared/organ_library.json   前后端共享的标准器官目录
+shared/organ_targets.json   109 个参考靶点
+shared/coronary_model.json  冠脉分段、AHA 映射与参考分析
 server/                     FastAPI 后端
   app/imaging/              DICOM 解析、体数据、分割、marching cubes
   app/routes/               studies / assets / reports
@@ -218,6 +261,20 @@ docs/                       架构、临床边界、路线图
 - 任何面向临床的发布都需要另行评估 NMPA 软件注册、数据合规与临床验证。
 
 详见 [`docs/clinical-boundaries.md`](docs/clinical-boundaries.md)。
+
+---
+
+## 临床就绪度
+
+**当前状态：研究原型，不可用于临床。**
+
+- 已具备：DICOM 上传、去标识、体数据、MPR/VRT、解剖参考器官/子结构、参考靶点与教学模拟、公开 NIfTI 研究导入、冠脉分段与参考分析。
+- 尚未具备：患者级图谱配准、经过外部验证的分割/测量模型、狭窄/FFR-CT/单时相 EF/钙化积分/AHA 计算、纵向对比与预测、临床导航/手术规划。
+- 进入临床前必须完成：患者级配准与质控、模型外部验证、测量一致性验证、报告与权限体系、安全合规、临床评价与法规注册。
+
+> 继续增加器官模型或子结构不会自动让系统“临床可用”；参考解剖不能替代患者影像与验证。
+
+详见 [`docs/clinical-readiness.md`](docs/clinical-readiness.md)。
 
 ---
 

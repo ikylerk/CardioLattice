@@ -26,10 +26,11 @@ const VIEWS = {
 }
 
 const MODULE_IDS = new Set(MODULES.map((item) => item.id))
-const API_ONLY_DISABLED = new Set(['angio', 'echo'])
+const API_ONLY_DISABLED = new Set(['echo'])
 
 function moduleFromHash() {
   const value = window.location.hash.replace(/^#\/?/, '')
+  if (value.startsWith('a=') || value.includes('&sys=')) return 'angio'
   return MODULE_IDS.has(value) ? value : 'anatomy'
 }
 

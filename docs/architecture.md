@@ -134,17 +134,39 @@ codes, systems, colours, canonical placement and cardiac label mappings.
   spine) and HuBMAP HRA v1.1 (liver, lungs, kidneys, spleen, pancreas), both
   CC BY 4.0. The HRA organs are aligned to the BodyParts3D frame with a uniform
   scale + translation solved from shared landmarks.
+- Each organ also has a `<CODE>_detail.glb` with named sub-structures. The
+  engine loads it on demand, exposes per-part visibility/focus, and supports
+  axial/coronal/sagittal clipping through a selected target.
+- `shared/coronary_model.json` defines 17 coronary segments, AHA 1–17
+  myocardial territories, C-arm projections and reference QCA values. The
+  AngioView reads it directly; `GET /api/coronary-model` exposes it.
+- `shared/organ_targets.json` defines 109 reference targets in the same frame.
+  The engine builds a target marker, a straight approach path, a virtual needle,
+  and reports path length, depth and approximate structure intersections.
 - `src/three/organGeometry.js` remains as a procedural fallback for missing
   assets; it is explicitly labelled reference geometry.
-- Backend: `server/app/organ_library.py` loads and validates the same JSON;
-  `GET /api/organs` exposes it; segmentation provenance includes
-  `standard_label_map` (for example `LV → HEART_LV`).
+- Backend: `server/app/organ_library.py` and `server/app/organ_targets.py` load
+  and validate the same JSON; `GET /api/organs` and `GET /api/organ-targets`
+  expose them; segmentation provenance includes `standard_label_map` (for
+  example `LV → HEART_LV`).
 - The catalog is versioned (`organ-atlas/v2`). Changing a published code is a
   breaking change; bump the version and keep the mapping stable.
 - The organ GLBs are CC BY 4.0 and are not covered by the repository MIT licence.
   See `src/assets/organs/ATTRIBUTION.md`.
 
-## 10. Deployment path
+## 10. Public NIfTI research path
+
+`POST /api/public/import` accepts a NIfTI image and label map, resamples both,
+builds a preview volume, extracts label surfaces and writes a draft report.
+
+- It is marked `source=public_dataset` and does not run the clinical DICOM
+  de-identification path.
+- It uses `server/app/imaging/nifti.py` and `server/app/public_import.py`.
+- It produces label volumes only; stenosis/FFR/EF/calcium/AHA remain
+  `not_computed`.
+- Public and clinical paths must remain separate in the UI, storage and audit.
+
+## 11. Deployment path
 
 1. **Local-lite** (current): `uv run uvicorn` + `npm run dev:api`.
 2. **Container**: `docker compose up --build` (API + web, SQLite volume).

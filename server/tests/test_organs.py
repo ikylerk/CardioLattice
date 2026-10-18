@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 from app.organ_library import ORGAN_LIBRARY, SEG_LABEL_MAP, standard_label_map, validate
+from app.organ_targets import ORGAN_TARGETS, TARGETS, validate as validate_targets
 
 
 def test_organ_catalog_is_valid():
@@ -32,6 +33,24 @@ def test_organ_api_matches_catalog():
         assert len(data["organs"]) == len(ORGAN_LIBRARY["organs"])
 
 
+def test_organ_target_catalog_is_valid():
+    assert validate_targets() == []
+    assert len(TARGETS) >= 50
+    assert len({target["id"] for target in TARGETS}) == len(TARGETS)
+    known_organs = {organ["code"] for organ in ORGAN_LIBRARY["organs"]}
+    assert {target["organ"] for target in TARGETS} <= known_organs
+    assert all(len(target["coordinateMm"]) == 3 for target in TARGETS)
+
+
+def test_organ_target_api():
+    with TestClient(app) as client:
+        response = client.get("/api/organ-targets")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["version"] == ORGAN_TARGETS["version"]
+        assert len(data["targets"]) == len(TARGETS)
+
+
 def test_organ_glb_assets_exist_and_load():
     project = Path(__file__).resolve().parents[2]
     assert ORGAN_LIBRARY["version"] == "organ-atlas/v2"
@@ -49,3 +68,12 @@ def test_organ_glb_assets_exist_and_load():
         assert np.isfinite(bounds).all()
         size = bounds[1] - bounds[0]
         assert size.max() > 10.0, f"{organ['code']} has an implausible size {size}"
+
+        if organ.get("detailAsset"):
+            detail_path = project / "src" / "assets" / organ["detailAsset"]
+            assert detail_path.exists(), f"missing detail asset {detail_path}"
+            detail = trimesh.load(str(detail_path), force="scene")
+            part_codes = {part["code"] for part in organ.get("parts", [])}
+            assert part_codes <= set(detail.geometry.keys()), (
+                f"{organ['code']} detail nodes do not match catalogue parts"
+            )

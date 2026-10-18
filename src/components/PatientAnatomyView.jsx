@@ -27,6 +27,7 @@ const STRUCTURE_KEYS = {
 }
 
 const STRUCTURE_COLORS = {
+  CORONARY_TREE: 0xc45258,
   LV: 0xc45258,
   RV: 0x5684be,
   LA: 0xd69a52,
@@ -219,6 +220,12 @@ export default function PatientAnatomyView({ notify, onNavigate }) {
 
   const computed = measurements.filter((item) => item.status === 'computed')
   const synthetic = measurements.some((item) => item.validationStatus === 'synthetic')
+  const isPublic = study?.study?.source === 'public_dataset'
+  const sourceText = isPublic
+    ? '来自公开数据集的 NIfTI 标签与 GLB 表面；不是患者级临床分割。'
+    : '来自上传 DICOM 的分割掩膜与 GLB 表面；非演示心脏模型。'
+  const title = isPublic ? '研究三维重建' : '患者三维重建'
+  const surfaceTitle = isPublic ? '研究三维表面' : '患者级三维表面' 
 
   if (!modelUrl) {
     return (

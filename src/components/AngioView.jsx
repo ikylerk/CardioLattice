@@ -99,6 +99,18 @@ function angleLabel(rot, tilt) {
   return `${h} / ${v}`
 }
 
+function readAngioHash() {
+  const params = new URLSearchParams(window.location.hash.replace(/^#/, ''))
+  const a = Number(params.get('a'))
+  const b = Number(params.get('b'))
+  const system = params.get('sys')
+  return {
+    rot: params.has('a') && Number.isFinite(a) ? a : -30,
+    tilt: params.has('b') && Number.isFinite(b) ? b : -30,
+    side: system === 'right' ? 'right' : system === 'both' ? 'both' : 'left',
+  }
+}
+
 function downloadDataUrl(dataUrl, name) {
   const link = document.createElement('a')
   link.href = dataUrl
@@ -110,15 +122,29 @@ export default function AngioView({ playing, setPlaying, notify }) {
   const { t } = useI18n()
   const [side, setSide] = React.useState('left')
   const [mode, setMode] = React.useState('fluoro')
-  const [rot, setRot] = React.useState(30)
-  const [tilt, setTilt] = React.useState(30)
+  const [rot, setRot] = React.useState(initial.rot)
+  const [tilt, setTilt] = React.useState(initial.tilt)
   const [labels, setLabels] = React.useState(true)
   const [frame, setFrame] = React.useState(128)
   const [qca, setQca] = React.useState('idle')
   const [qcaStep, setQcaStep] = React.useState(0)
+  const [selectedSegmentId, setSelectedSegmentId] = React.useState(null)
+  const [skeleton, setSkeleton] = React.useState(true)
+  const [seeThrough, setSeeThrough] = React.useState(false)
+  const [heartLabels, setHeartLabels] = React.useState(false)
+  const [detectorView, setDetectorView] = React.useState(false)
+  const [foreshortening, setForeshortening] = React.useState(true)
+  const [planes, setPlanes] = React.useState(false)
+  const [dominance, setDominance] = React.useState('right')
+  const [graftsOn, setGraftsOn] = React.useState(false)
+  const [graftVisibility, setGraftVisibility] = React.useState({ LIMA: true, 'SVG-OM': true, 'SVG-PDA': true })
+  const [ramusVisible, setRamusVisible] = React.useState(false)
+  const [colorMode, setColorMode] = React.useState(false)
   const [error, setError] = React.useState('')
   const hostRef = React.useRef(null)
   const engineRef = React.useRef(null)
+  const heartHostRef = React.useRef(null)
+  const heartEngineRef = React.useRef(null)
   const timers = React.useRef([])
 
   React.useEffect(() => {
@@ -143,6 +169,68 @@ export default function AngioView({ playing, setPlaying, notify }) {
   }, [])
 
   React.useEffect(() => {
+    if (!heartHostRef.current) return undefined
+    try {
+      const engine = new HeartEngine(heartHostRef.current, { bpm: 72, playing })
+      heartEngineRef.current = engine
+      engine.setMode('xray')
+      engine.setContextVisible(true)
+      engine.setLabelsVisible(false)
+      engine.setAutoRotate(false)
+      engine.camera.fov = 52
+      engine.camera.updateProjectionMatrix()
+      engine.setViewAngle(22, 10, 1.15)
+    } catch (err) {
+      console.error(err)
+    }
+    return () => {
+      heartEngineRef.current?.dispose()
+      heartEngineRef.current = null
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  React.useEffect(() => {
+    heartEngineRef.current?.setContextVisible(skeleton)
+  }, [skeleton])
+
+  React.useEffect(() => {
+    heartEngineRef.current?.setMode(seeThrough ? 'xray' : 'all')
+  }, [seeThrough])
+
+  React.useEffect(() => {
+    heartEngineRef.current?.setLabelsVisible(heartLabels)
+  }, [heartLabels])
+
+  React.useEffect(() => {
+    if (!detectorView) return
+    heartEngineRef.current?.setAutoRotate(false)
+    heartEngineRef.current?.setViewAngle(rot, tilt)
+  }, [detectorView, rot, tilt])
+
+  React.useEffect(() => {
+    engineRef.current?.setDominance(dominance)
+  }, [dominance])
+
+  React.useEffect(() => {
+    engineRef.current?.setGrafts(graftsOn)
+  }, [graftsOn])
+
+  React.useEffect(() => {
+    for (const [id, visible] of Object.entries(graftVisibility)) {
+      engineRef.current?.setGraft(id, visible)
+    }
+  }, [graftVisibility])
+
+  React.useEffect(() => {
+    engineRef.current?.setRamusVisible(ramusVisible)
+  }, [ramusVisible])
+
+  React.useEffect(() => {
+    engineRef.current?.setColorMode(colorMode)
+  }, [colorMode])
+
+  React.useEffect(() => {
     engineRef.current?.setAngles(rot, tilt)
   }, [rot, tilt])
 
@@ -153,7 +241,9 @@ export default function AngioView({ playing, setPlaying, notify }) {
     })
     timers.current = []
     engineRef.current?.setSide(side)
+    engineRef.current?.setSelectedVessel(null)
     setQca('idle')
+    setSelectedSegmentId(null)
     engineRef.current?.setQcaVisible(false)
   }, [side])
 
@@ -197,6 +287,19 @@ export default function AngioView({ playing, setPlaying, notify }) {
 
   const runQca = () => {
     if (qca === 'analyzing') return
+    const reference = QCA_RESULTS[side === 'right' ? 'right' : 'left']
+    const lesion = SEGMENTS.find((segment) => segment.id === reference.segmentId)
+    if (lesion) {
+      setSelectedSegmentId(lesion.id)
+      engineRef.current?.setSelectedVessel(lesion.vessel)
+      const projection = (PRESETS[side === 'right' ? 'right' : 'left'] || []).find(
+        (item) => item.optimalFor?.includes(lesion.id),
+      )
+      if (projection) {
+        setRot(projection.rot)
+        setTilt(projection.tilt)
+      }
+    }
     clearTimers()
     setQca('analyzing')
     setQcaStep(0)
@@ -214,6 +317,16 @@ export default function AngioView({ playing, setPlaying, notify }) {
   const sideOptions = SIDE_OPTIONS.map((item) => ({ ...item, label: t(item.labelKey) }))
   const modeOptions = MODE_OPTIONS.map((item) => ({ ...item, label: t(item.labelKey) }))
   const presetActive = (preset) => preset.rot === rot && preset.tilt === tilt
+
+  const selectSegment = (segment) => {
+    setSelectedSegmentId(segment.id)
+    engineRef.current?.setSelectedVessel(segment.vessel)
+    const projection = (currentPresets || []).find((item) => item.optimalFor?.includes(segment.id))
+    if (projection) {
+      setRot(projection.rot)
+      setTilt(projection.tilt)
+    }
+  }
 
   const capture = () => {
     const url = engineRef.current?.capture()
@@ -274,7 +387,85 @@ export default function AngioView({ playing, setPlaying, notify }) {
           </div>
 
           <div className="angio-screen-area">
-            <div className="angio-monitor">
+            <div className="angio-anatomy-panel">
+              <div className="angio-anatomy-toolbar">
+                {[
+                  ['Detector view', detectorView, () => setDetectorView((value) => !value)],
+                  ['Foreshortening', foreshortening, () => setForeshortening((value) => !value)],
+                  ['Skeleton', skeleton, () => setSkeleton((value) => !value)],
+                  ['See-through', seeThrough, () => setSeeThrough((value) => !value)],
+                  ['Labels', heartLabels, () => setHeartLabels((value) => !value)],
+                  ['Planes', planes, () => setPlanes((value) => !value)],
+                ].map(([label, active, onClick]) => (
+                  <button key={label} type="button" className={active ? 'active' : ''} onClick={onClick}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <div className="angio-anatomy-host" ref={heartHostRef} />
+              {planes ? <div className="angio-detector-plane" /> : null}
+              {foreshortening && selectedSegment ? (
+                <div className={`angio-foreshorten ${activeProjectionOptimal ? 'ok' : 'warn'}`}>
+                  {activeProjectionOptimal ? '当前体位为该段推荐体位' : '当前体位可能造成缩短'}
+                </div>
+              ) : null}
+              <div className="angio-anatomy-foot">3D HEART · CORONARY OVERLAY</div>
+            </div>
+
+            <div className="angio-center-column">
+              <div className="angio-protocol-bar">
+                <span className="protocol-label">DOMINANCE</span>
+                <Segmented
+                  options={[
+                    { value: 'right', label: '右优势' },
+                    { value: 'left', label: '左优势' },
+                    { value: 'co', label: '共优势' },
+                  ]}
+                  value={dominance}
+                  onChange={setDominance}
+                  ariaLabel="冠脉优势型"
+                />
+                <span className="protocol-label">GRAFTS</span>
+                <Segmented
+                  options={[
+                    { value: 'off', label: 'Off' },
+                    { value: 'on', label: 'On' },
+                  ]}
+                  value={graftsOn ? 'on' : 'off'}
+                  onChange={(value) => setGraftsOn(value === 'on')}
+                  ariaLabel="桥血管"
+                />
+                <button
+                  type="button"
+                  className={`protocol-chip ${ramusVisible ? 'active' : ''}`}
+                  onClick={() => setRamusVisible((value) => !value)}
+                >
+                  Ramus intermedius
+                </button>
+                <button
+                  type="button"
+                  className={`protocol-chip ${colorMode ? 'active' : ''}`}
+                  onClick={() => setColorMode((value) => !value)}
+                >
+                  Color
+                </button>
+                {graftsOn ? (
+                  <span className="protocol-grafts">
+                    {['LIMA', 'SVG-OM', 'SVG-PDA'].map((id) => (
+                      <button
+                        key={id}
+                        type="button"
+                        className={graftVisibility[id] ? 'active' : ''}
+                        onClick={() => setGraftVisibility((current) => ({ ...current, [id]: !current[id] }))}
+                      >
+                        {id}
+                      </button>
+                    ))}
+                  </span>
+                ) : null}
+              </div>
+
+              <div className="angio-monitor">
               <div className="angio-monitor-bezel">
                 <div className={`angio-film film-${mode}`}>
                   <div className="angio-canvas-host" ref={hostRef} />
@@ -293,7 +484,7 @@ export default function AngioView({ playing, setPlaying, notify }) {
                       <span>CINE 15 FPS</span>
                       <span>ARTERIAL PHASE</span>
                     </div>
-                    <span className="film-disclaimer">NON-DIAGNOSTIC SIMULATION</span>
+                    <span className="film-disclaimer">REFERENCE MODEL · NON-DIAGNOSTIC</span>
                   </div>
                   <div className="film-reticle" aria-hidden="true">
                     <span />
@@ -340,6 +531,7 @@ export default function AngioView({ playing, setPlaying, notify }) {
                 <div><span>FOV</span><b>18 cm</b></div>
                 <div><span>DOSE</span><b>0.8 Gy·cm²</b></div>
               </div>
+            </div>
             </div>
           </div>
         </div>
@@ -420,6 +612,40 @@ export default function AngioView({ playing, setPlaying, notify }) {
             />
           </Section>
 
+          <Section title="冠脉分段" code="CORONARY SEGMENTS" right={<span className="section-hint">{currentSegments.length} 段</span>} className="segment-section">
+            <div className="angio-segment-list">
+              {currentSegments.map((segment) => (
+                <button
+                  key={segment.id}
+                  type="button"
+                  className={`angio-segment-row ${selectedSegmentId === segment.id ? 'active' : ''}`}
+                  onClick={() => selectSegment(segment)}
+                >
+                  <span className="segment-name">
+                    <b>{segment.name}</b>
+                    <small>{segment.coronarySegment} · {segment.territory} · AHA {segment.ahaMyocardialSegments.join('/')}</small>
+                  </span>
+                  <span className="segment-metrics">
+                    <em>{segment.referenceDiameterMm.toFixed(1)} mm</em>
+                    <small>{segment.lengthMm} mm</small>
+                  </span>
+                  {segment.referenceLesion ? <i className="segment-lesion">参考病变</i> : null}
+                </button>
+              ))}
+            </div>
+            {selectedSegment ? (
+              <div className="angio-segment-detail">
+                <div><span>分段</span><b>{selectedSegment.name} · {selectedSegment.coronarySegment}</b></div>
+                <div><span>供血区</span><b>{selectedSegment.territory}</b></div>
+                <div><span>参考直径 / 长度</span><b>{selectedSegment.referenceDiameterMm} mm / {selectedSegment.lengthMm} mm</b></div>
+                <div><span>AHA 心肌段</span><b>{selectedSegment.ahaMyocardialSegments.map((id) => `${id} ${MYOCARDIAL_SEGMENTS[id]?.name || ''}`).join(' · ')}</b></div>
+                <p>参考冠脉模型分段，用于投照体位与教学分析；不是患者病变。</p>
+              </div>
+            ) : (
+              <div className="angio-model-note">选择分段以高亮血管并匹配推荐投照体位；数据来自参考冠脉模型，不是患者影像。</div>
+            )}
+          </Section>
+
           <Section
             title={t('angio.qca')}
             code="AUTOMATED QCA"
@@ -491,6 +717,7 @@ export default function AngioView({ playing, setPlaying, notify }) {
                   <span>SYNTAX {result.syntax}</span>
                   <span>{t('angio.refFrame')}</span>
                 </div>
+                <p className="angio-model-note">{result.note}</p>
                 <div className="qca-conclusion">
                   <CircleAlert size={14} />
                   <p>
