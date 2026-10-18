@@ -29,6 +29,7 @@ from .models import (
     VolumeRecord,
     utcnow,
 )
+from .registration import register_cardiac_atlas
 from .reporting import template_report
 from .storage import storage
 
@@ -263,6 +264,23 @@ def run_pipeline(study_id: str, job_id: str) -> None:
                     validation_status="not_computed",
                     status="not_computed",
                     reason=reason,
+                )
+            )
+        if segmentation is not None and segmentation_result is not None:
+            register_cardiac_atlas(db, study, volume, segmentation, segmentation_result.label_array)
+        else:
+            db.add(
+                Measurement(
+                    study_id=study.id,
+                    code="ATLAS_REGISTRATION",
+                    label="参考图谱—患者配准",
+                    value=None,
+                    unit=None,
+                    method="chamber_centroid_similarity",
+                    source="reference_atlas",
+                    validation_status="not_computed",
+                    status="not_computed",
+                    reason="需要至少 3 个心腔分割标签。",
                 )
             )
         db.commit()

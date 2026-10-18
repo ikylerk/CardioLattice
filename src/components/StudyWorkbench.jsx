@@ -434,8 +434,8 @@ export default function StudyWorkbench({ onNavigate, notify }) {
               <li className="ok"><CheckCircle2 size={13} /> DICOM、去标识、体数据、MPR/VRT</li>
               <li className="ok"><CheckCircle2 size={13} /> 分割 → GLB、腔室容积（研究/合成）</li>
               <li className="ok"><CheckCircle2 size={13} /> 19 个参考器官、109 个参考靶点</li>
-              <li className="warn"><CircleAlert size={13} /> 图谱与靶点未做患者级配准</li>
-              <li className="warn"><CircleAlert size={13} /> 分割与测量未通过外部临床验证</li>
+              <li className="warn"><CircleAlert size={13} /> 图谱/靶点：研究性相似配准，未外部验证</li>
+              <li className="warn"><CircleAlert size={13} /> 分割/测量/AI 草稿未通过外部临床验证</li>
               <li className="stop"><CircleAlert size={13} /> 狭窄、FFR-CT、单时相 EF、钙化积分、AHA 未计算</li>
               <li className="stop"><CircleAlert size={13} /> 靶点模拟仅教学，不是手术导航</li>
               <li className="stop"><CircleAlert size={13} /> 非医疗器械，不可用于诊断或治疗</li>

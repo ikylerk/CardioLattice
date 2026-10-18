@@ -243,6 +243,29 @@ def get_audit(study_id: str, db: Session = Depends(get_db)):
     }
 
 
+@router.get("/studies/{study_id}/registration")
+def get_registration(study_id: str, db: Session = Depends(get_db)):
+    from ..models import Measurement
+
+    study = db.get(Study, study_id)
+    if study is None:
+        raise HTTPException(status_code=404, detail="study not found")
+    measurement = db.scalars(
+        select(Measurement)
+        .where(Measurement.study_id == study_id)
+        .where(Measurement.code == "ATLAS_REGISTRATION_RMS")
+    ).first()
+    if measurement is None or not measurement.provenance:
+        raise HTTPException(status_code=404, detail="registration not available")
+    relative = measurement.provenance.get("registration_path")
+    if not relative:
+        raise HTTPException(status_code=404, detail="registration artifact not available")
+    path = storage.path_for(relative)
+    if not path.exists():
+        raise HTTPException(status_code=410, detail="registration artifact no longer available")
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
 @router.delete("/studies/{study_id}")
 def delete_study(study_id: str, db: Session = Depends(get_db)):
     study = db.get(Study, study_id)

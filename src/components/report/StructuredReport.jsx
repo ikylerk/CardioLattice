@@ -78,7 +78,10 @@ export default function StructuredReport({ report, study, onApprove, approveBusy
           <h2><span>{String(index + 1).padStart(2, '0')}</span> {section.title}</h2>
           {(section.claims || []).map((claim) => (
             <div className="report-claim" key={claim.id}>
-              <p>{claim.text}</p>
+              <p>
+                {claim.text}
+                {claim.status === 'needs_review' ? <Badge tone="amber">待复核</Badge> : null}
+              </p>
               {(claim.evidence_refs || []).length ? (
                 <div className="report-citations">
                   {claim.evidence_refs.map((ref) => (

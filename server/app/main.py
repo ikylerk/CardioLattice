@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .db import init_db
+from .routes.ai import router as ai_router
 from .routes.assets import router as assets_router
 from .routes.public_data import router as public_router
 from .routes.reports import router as reports_router
@@ -46,6 +47,7 @@ app.add_middleware(
 
 app.include_router(studies_router)
 app.include_router(assets_router)
+app.include_router(ai_router)
 app.include_router(public_router)
 app.include_router(reports_router)
 

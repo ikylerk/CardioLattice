@@ -68,8 +68,9 @@ function MiniEcho() {
 }
 
 export default function ReportDrawer({ open, onClose, notify }) {
-  const { study, isApi, reports, approve } = useStudy()
+  const { study, isApi, isDemo, reports, approve, generateAiDraft } = useStudy()
   const [approveBusy, setApproveBusy] = React.useState(false)
+  const [aiBusy, setAiBusy] = React.useState(false)
   if (!open) return null
 
   const report = reports?.[0] || null
@@ -100,6 +101,23 @@ ${(content.sections || []).map((section) => `${section.title}：${(section.claim
     }
   }
 
+  const handleAiDraft = async () => {
+    if (!isApi) return
+    setAiBusy(true)
+    try {
+      const report = await generateAiDraft()
+      notify(
+        report?.generator === 'claude'
+          ? 'Claude 草稿已生成，请医生逐条复核'
+          : '未配置 Claude API，已生成模板草稿',
+      )
+    } catch (error) {
+      notify(error.message || 'AI 草稿生成失败')
+    } finally {
+      setAiBusy(false)
+    }
+  }
+
   const handleApprove = async () => {
     if (!report) return
     setApproveBusy(true)
@@ -123,6 +141,11 @@ ${(content.sections || []).map((section) => `${section.title}：${(section.claim
             <b>{structured ? (subject?.pseudonym ? `${subject.pseudonym} · 结构化报告` : '结构化报告') : '冠状动脉综合影像评估报告'}</b>
           </div>
           <div className="report-toolbar-actions">
+            {isApi ? (
+              <button type="button" onClick={handleAiDraft} disabled={aiBusy} title="生成 AI 辅助报告草稿">
+                <Sparkles size={14} /> {aiBusy ? '生成中…' : 'AI 草稿'}
+              </button>
+            ) : null}
             <button type="button" onClick={copySummary} title="复制摘要"><Copy size={14} /> 复制</button>
             <button type="button" onClick={() => window.print()} title="打印或导出 PDF"><Printer size={14} /> 打印 / PDF</button>
             <button type="button" className="report-close" onClick={onClose} aria-label="关闭报告"><X size={16} /></button>

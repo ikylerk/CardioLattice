@@ -27,6 +27,9 @@ M1 把「演示」换成了可验证的数据链路：
 | 标准器官模型库 | ✅ 已实现 | 19 个解剖参考器官、详细子结构、109 个参考靶点、靶点模拟 |
 | 冠脉分段与参考分析 | ✅ 已实现 | 17 个冠脉分段、AHA 1–17 心肌段映射、C 臂体位、参考 QCA |
 | 公开 NIfTI 导入 | ✅ 已实现 | ImageCAS/ASOCA 等公开影像 + 标签导入、预览体数据、GLB、报告草稿 |
+| 冠脉标签分析 | ✅ 已实现 | 骨架化中心线、管径剖面、候选狭窄（研究算法） |
+| 参考图谱配准 | ✅ 已实现 | 四心腔 Umeyama 相似配准，映射 11 个参考靶点到患者帧 |
+| AI 辅助报告草稿 | ✅ 已实现 | Claude 结构化草稿 / 模板回退，证据引用、数字校验、医生批准 |
 | LLM 辅助报告（Claude） | 🚧 M2 | 只对结构化事实做语言化，不独立下诊断；接口与校验已设计 |
 | 冠脉管腔/狭窄/FFR-CT | 🚧 M3–M4 | 未接入经过验证的模型，UI 显示 `not_computed`，不编造数值 |
 | 纵向对比/预测 | 🚧 M3 | 先做配准与 delta；没有验证模型前不展示“未来事件概率” |
@@ -181,6 +184,33 @@ queued → validating → anonymizing → building_volume
 
 ---
 
+## 参考图谱配准（研究）
+
+对带四个心腔标签的分割结果运行 Umeyama 相似配准（尺度 + 旋转 + 平移）：
+
+- 用 LV/RV/LA/RA 质心把参考心腔对齐到患者预览帧；
+- 映射 11 个参考心脏靶点（心腔、瓣膜、冠脉参考点）到患者坐标；
+- 输出 `ATLAS_REGISTRATION_RMS`、`ATLAS_REGISTERED_TARGETS` 和 `atlas_registration.json`；
+- API：`GET /api/studies/{id}/registration`。
+
+> 研究性配准，未外部验证；映射靶点是参考解剖，不是患者病灶，不能用于导航。详见 [`docs/atlas-registration.md`](docs/atlas-registration.md)。
+
+---
+
+## AI 辅助报告草稿（研究）
+
+报告抽屉新增「AI 草稿」：
+
+- 只把去标识化的结构化测量和研究事实发送给 Claude，不发送原始影像或姓名；
+- 强制 `submit_report` 工具 schema，每条陈述引用 measurement ID；
+- 数字校验不通过时标记「待复核」；
+- 无 API key 或调用失败时回退模板报告，并在 provenance 记录原因；
+- 医生仍需逐条复核并批准，批准写入审计链。
+
+配置：`ANTHROPIC_API_KEY`（服务端）、`ANTHROPIC_MODEL`（默认 `claude-sonnet-5-5`）。详见 [`docs/ai-reporting.md`](docs/ai-reporting.md)。
+
+---
+
 ## API（M1）
 
 | Method | Path | 说明 |
@@ -201,6 +231,8 @@ queued → validating → anonymizing → building_volume
 | GET | `/api/organ-targets` | 参考靶点目录（教学/流程演练） |
 | GET | `/api/coronary-model` | 参考冠脉分段、AHA 映射与体位 |
 | POST | `/api/public/import` | 导入公开 NIfTI 影像 + 标签（研究路径） |
+| GET | `/api/studies/{id}/registration` | 参考图谱—患者配准产物 |
+| POST | `/api/studies/{id}/ai/report-draft` | 生成 AI/模板报告草稿 |
 | GET | `/api/models` | 模型注册表与授权状态 |
 | POST | `/api/studies/{id}/reports/{reportId}/approve` | 医生批准报告 |
 
@@ -240,6 +272,8 @@ src/                        React 前端
 shared/organ_library.json   前后端共享的标准器官目录
 shared/organ_targets.json   109 个参考靶点
 shared/coronary_model.json  冠脉分段、AHA 映射与参考分析
+server/app/registration.py  参考图谱—患者配准
+server/app/ai/              Claude 报告草稿与回退
 server/                     FastAPI 后端
   app/imaging/              DICOM 解析、体数据、分割、marching cubes
   app/routes/               studies / assets / reports
@@ -268,8 +302,8 @@ docs/                       架构、临床边界、路线图
 
 **当前状态：研究原型，不可用于临床。**
 
-- 已具备：DICOM 上传、去标识、体数据、MPR/VRT、解剖参考器官/子结构、参考靶点与教学模拟、公开 NIfTI 研究导入、冠脉分段与参考分析。
-- 尚未具备：患者级图谱配准、经过外部验证的分割/测量模型、狭窄/FFR-CT/单时相 EF/钙化积分/AHA 计算、纵向对比与预测、临床导航/手术规划。
+- 已具备：DICOM 上传、去标识、体数据、MPR/VRT、解剖参考器官/子结构、参考靶点与教学模拟、公开 NIfTI 研究导入、冠脉标签中心线分析、冠脉分段与参考分析、研究性图谱配准、AI 辅助报告草稿（医生批准）。
+- 尚未具备：经过外部验证的配准/分割/测量模型、狭窄/FFR-CT/单时相 EF/钙化积分/AHA 计算、纵向对比与预测、临床导航/手术规划。
 - 进入临床前必须完成：患者级配准与质控、模型外部验证、测量一致性验证、报告与权限体系、安全合规、临床评价与法规注册。
 
 > 继续增加器官模型或子结构不会自动让系统“临床可用”；参考解剖不能替代患者影像与验证。

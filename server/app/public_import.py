@@ -9,6 +9,7 @@ import numpy as np
 from . import audit
 from .config import settings
 from .db import SessionLocal
+from .imaging.coronary_analysis import analyze_coronary_mask
 from .imaging.mesh import build_structure_glb
 from .imaging.nifti import label_volumes_ml, load_nifti_case
 from .models import (
@@ -21,6 +22,7 @@ from .models import (
     VolumeRecord,
     utcnow,
 )
+from .registration import register_cardiac_atlas
 from .reporting import template_report
 from .storage import storage
 
@@ -183,6 +185,69 @@ def run_public_import(study_id: str, job_id: str) -> None:
                     provenance={"segmentation_id": segmentation.id, "label_value": value},
                 )
             )
+        coronary_labels = [
+            (value, item) for value, item in spec.items()
+            if "CORONARY" in item["code"].upper()
+        ]
+        for value, item in coronary_labels:
+            try:
+                analysis = analyze_coronary_mask(labels, preview.spacing, label_value=value)
+                analysis_path = storage.study_dir(study.id) / "derived" / f"coronary_analysis_{value}.json"
+                analysis_path.write_text(
+                    json.dumps(analysis.as_dict(), ensure_ascii=False, indent=2),
+                    encoding="utf-8",
+                )
+                analysis_relative = storage.relative(analysis_path)
+                analysis_metrics = [
+                    ("CORONARY_CENTERLINE_LENGTH", "冠脉中心线长度（研究）", analysis.centerline_length_mm, "mm"),
+                    ("CORONARY_TOTAL_LENGTH", "冠脉骨架总长度（研究）", analysis.skeleton_total_length_mm, "mm"),
+                    ("CORONARY_MEAN_DIAMETER", "冠脉平均管径（研究）", analysis.mean_diameter_mm, "mm"),
+                    ("CORONARY_MIN_DIAMETER", "冠脉最小管径（研究）", analysis.min_diameter_mm, "mm"),
+                    ("CORONARY_REFERENCE_DIAMETER", "冠脉参考管径（研究）", analysis.reference_diameter_mm, "mm"),
+                    ("CORONARY_STENOSIS_CANDIDATES", "冠脉狭窄候选（研究）", len(analysis.stenosis_candidates), "个"),
+                ]
+                for code, label, metric_value, unit in analysis_metrics:
+                    db.add(
+                        Measurement(
+                            study_id=study.id,
+                            code=code,
+                            label=label,
+                            value=round(float(metric_value), 2),
+                            unit=unit,
+                            method="skeleton_centerline_research_v1",
+                            source=meta.get("dataset") or "public_dataset",
+                            validation_status="research",
+                            status="computed",
+                            provenance={
+                                "segmentation_id": segmentation.id,
+                                "label_value": value,
+                                "analysis_path": analysis_relative,
+                                "branch_count": analysis.branch_count,
+                                "endpoints": analysis.endpoints,
+                                "candidates": analysis.stenosis_candidates,
+                                "note": analysis.as_dict()["note"],
+                            },
+                        )
+                    )
+            except Exception as exc:  # noqa: BLE001
+                db.add(
+                    Measurement(
+                        study_id=study.id,
+                        code=f"{item['code']}_CENTERLINE",
+                        label=f"{item['name']} 中心线分析",
+                        value=None,
+                        unit=None,
+                        method="skeleton_centerline_research_v1",
+                        source="public_dataset",
+                        validation_status="research",
+                        status="not_computed",
+                        reason=f"冠脉中心线分析失败：{exc}",
+                    )
+                )
+        db.commit()
+
+        register_cardiac_atlas(db, study, volume, segmentation, labels)
+
         for code, label, reason in (
             ("STENOSIS", "狭窄程度", "公开数据导入未运行经过验证的狭窄模型。"),
             ("FFR_CT", "FFR-CT", "未运行经过验证的血流动力学模型。"),

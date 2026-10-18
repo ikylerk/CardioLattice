@@ -64,6 +64,10 @@ existing workbench polling; when the job succeeds the study status is `ready`.
 - Extracts one surface per label with marching cubes and exports a GLB.
 - Computes label volume (voxel count × voxel volume) with
   `validationStatus=public_dataset`.
+- If a label is marked as coronary (for example `CORONARY_TREE`), runs a
+  deterministic research analysis: 3D skeletonization, centerline length,
+  diameter profile and radius-profile stenosis candidates. Results are stored as
+  `CORONARY_*` measurements with `validationStatus=research`.
 - Generates a template report with `not_computed` entries for stenosis, FFR-CT,
   EF, calcium score, AHA perfusion and other unsupported outputs.
 
@@ -71,8 +75,9 @@ existing workbench polling; when the job succeeds the study status is `ready`.
 
 - It does not run a clinical de-identification or consent workflow.
 - It does not validate the public labels against a model.
-- It does not compute stenosis, FFR-CT, EF, calcium score, perfusion or
-  viability.
+- Its coronary centerline analysis is a deterministic mask analysis, not a
+  validated QCA; candidate lesions are not clinical stenosis measurements.
+- It does not compute FFR-CT, EF, calcium score, perfusion or viability.
 - It does not claim that a label map is a clinical segmentation.
 
 ## Research next steps

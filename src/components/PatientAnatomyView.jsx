@@ -55,6 +55,8 @@ export default function PatientAnatomyView({ notify, onNavigate }) {
   const [opacity, setOpacity] = React.useState(1)
   const [structureNames, setStructureNames] = React.useState([])
   const [stats, setStats] = React.useState({ vertices: 0, triangles: 0 })
+  const registration = measurements.find((item) => item.code === 'ATLAS_REGISTRATION_RMS')
+  const registrationTargets = registration?.provenance?.targets || []
   const autoRotateRef = React.useRef(autoRotate)
   const materialsRef = React.useRef([])
 
@@ -130,6 +132,25 @@ export default function PatientAnatomyView({ notify, onNavigate }) {
         setStructureNames(names)
         setStats({ vertices, triangles: Math.round(triangles) })
         scene.add(root)
+        if (registrationTargets.length) {
+          const markerGroup = new THREE.Group()
+          const markerMaterial = new THREE.MeshBasicMaterial({
+            color: 0x67d8cc,
+            depthTest: false,
+            transparent: true,
+            opacity: 0.92,
+          })
+          const scale = study?.meshes?.[0]?.sceneTransform?.scale || 1
+          for (const target of registrationTargets) {
+            const [x, y, z] = target.patientMm || [0, 0, 0]
+            const marker = new THREE.Mesh(new THREE.SphereGeometry(0.024, 12, 8), markerMaterial)
+            marker.position.set(x * scale, y * scale, z * scale)
+            marker.renderOrder = 20
+            marker.userData.targetId = target.id
+            markerGroup.add(marker)
+          }
+          scene.add(markerGroup)
+        }
         const box = new THREE.Box3().setFromObject(root)
         const size = box.getSize(new THREE.Vector3())
         const center = box.getCenter(new THREE.Vector3())
@@ -311,6 +332,7 @@ export default function PatientAnatomyView({ notify, onNavigate }) {
               {synthetic
                 ? '当前网格由合成夹具的 ground-truth 掩膜生成，仅用于验证 DICOM → 掩膜 → GLB 链路。'
                 : '当前网格由研究分割模型生成，未经临床验证；冠脉管腔与狭窄未包含在此模型中。'}
+              {registrationTargets.length ? ` 已将 ${registrationTargets.length} 个参考靶点映射到患者坐标系（研究性配准，非患者病灶）。` : ''}
             </p>
             <div className="selection-stats">
               <Stat label="结构" value={structureNames.length} hint="GLB nodes" />

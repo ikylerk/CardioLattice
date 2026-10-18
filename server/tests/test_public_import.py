@@ -12,7 +12,7 @@ from app.main import app
 def _write_case(root: Path) -> tuple[Path, Path]:
     array = np.full((64, 64, 64), -500.0, dtype=np.float32)
     z, y, x = np.indices(array.shape)
-    mask = ((z - 32) ** 2 + (y - 32) ** 2 + (x - 32) ** 2) < 12**2
+    mask = (((z - 32) ** 2 + (y - 32) ** 2) < 8**2) & (x > 6) & (x < 58)
     array[mask] = 320.0
     image = sitk.GetImageFromArray(array)
     image.SetSpacing((1.5, 1.5, 1.5))
@@ -55,5 +55,9 @@ def test_public_nifti_import(tmp_path):
         assert measurements["CORONARY_TREE_VOLUME"]["status"] == "computed"
         assert measurements["CORONARY_TREE_VOLUME"]["value"] > 0
         assert measurements["CORONARY_TREE_VOLUME"]["validationStatus"] == "public_dataset"
+        assert measurements["CORONARY_CENTERLINE_LENGTH"]["status"] == "computed"
+        assert measurements["CORONARY_CENTERLINE_LENGTH"]["value"] > 0
+        assert measurements["CORONARY_MIN_DIAMETER"]["value"] > 0
+        assert measurements["CORONARY_STENOSIS_CANDIDATES"]["status"] == "computed"
         assert measurements["STENOSIS"]["status"] == "not_computed"
         assert len(bundle["reports"]) == 1

@@ -7922,3 +7922,21 @@ input:focus-visible {
   .angio-center-column .angio-monitor { width: 100%; flex: none; height: auto; }
   .angio-protocol-bar { width: 100%; }
 }
+
+.analysis-research-note {
+  margin: 9px 0 0;
+  padding: 7px 9px;
+  border-left: 2px solid rgba(239, 179, 107, 0.45);
+  background: rgba(239, 179, 107, 0.05);
+  font-size: 9px;
+  line-height: 1.55;
+  color: var(--sub);
+}
+.coronary-candidate-table { margin-top: 11px; border: 1px solid rgba(34, 52, 70, 0.75); border-radius: var(--radius); overflow: hidden; }
+.coronary-candidate-head { display: flex; justify-content: space-between; align-items: center; padding: 7px 9px; background: rgba(12, 19, 27, 0.7); border-bottom: 1px solid rgba(34, 52, 70, 0.75); }
+.coronary-candidate-head span { font-size: 9.5px; color: var(--text-2); }
+.coronary-candidate-head b { font-family: var(--font-mono); font-size: 9px; color: var(--amber); }
+.coronary-candidate-table table { width: 100%; border-collapse: collapse; }
+.coronary-candidate-table th { padding: 5px 8px; text-align: left; font-family: var(--font-mono); font-size: 7px; letter-spacing: 0.3px; color: var(--muted); border-bottom: 1px solid rgba(34, 52, 70, 0.6); }
+.coronary-candidate-table td { padding: 5px 8px; font-family: var(--font-mono); font-size: 8px; color: var(--sub); border-bottom: 1px solid rgba(34, 52, 70, 0.35); }
+.coronary-candidate-table tr:last-child td { border-bottom: 0; }

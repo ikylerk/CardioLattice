@@ -109,7 +109,8 @@ diagnostic confidence.
 
 ## What is not implemented
 
-- Centerline/lumen extraction from a patient's contrast-enhanced CCTA.
+- Automatic lumen segmentation from contrast-enhanced CCTA (the public-data
+  path analyzes an already-provided coronary label mask).
 - Patient-specific QCA, plaque characterization or FFR-CT.
 - Validation against QCA/IVUS or invasive FFR.
 - Any clinical recommendation.

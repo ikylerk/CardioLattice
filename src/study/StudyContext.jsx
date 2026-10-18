@@ -3,6 +3,7 @@ import {
   approveReport,
   createDemoStudy,
   getAudit,
+  generateAiReport,
   getStudy,
   importPublicCase,
   listStudies,
@@ -162,6 +163,13 @@ export function StudyProvider({ children }) {
     }
   }, [refreshStudies])
 
+  const generateAiDraft = React.useCallback(async () => {
+    if (!study?.study?.id) return null
+    const report = await generateAiReport(study.study.id)
+    await refreshCurrent()
+    return report
+  }, [study?.study?.id, refreshCurrent])
+
   const importPublic = React.useCallback(async (image, labels, dataset, labelMap = '') => {
     setError('')
     setUploading(true)
@@ -227,6 +235,7 @@ export function StudyProvider({ children }) {
     createServerDemoStudy,
     upload,
     importPublic,
+    generateAiDraft,
     chooseSeries,
     approve,
     loadAudit,
@@ -234,7 +243,7 @@ export function StudyProvider({ children }) {
   }), [
     mode, loading, error, studies, study, audit, uploading, uploadProgress,
     selectStudy, refreshStudies, refreshCurrent, createServerDemoStudy, upload,
-    importPublic, chooseSeries, approve, loadAudit,
+    importPublic, generateAiDraft, chooseSeries, approve, loadAudit,
   ])
 
   return <StudyContext.Provider value={value}>{children}</StudyContext.Provider>

@@ -31,6 +31,13 @@ export default function StudyAnalysisView({ onNavigate }) {
   const { study, measurements } = useStudy()
   const computed = measurements.filter((item) => item.status === 'computed' && item.value !== null)
   const notComputed = measurements.filter((item) => item.status !== 'computed')
+  const coronary = measurements.filter(
+    (item) => item.code.startsWith('CORONARY_') && item.status === 'computed' && item.value !== null,
+  )
+  const candidateMeasurement = measurements.find((item) => item.code === 'CORONARY_STENOSIS_CANDIDATES')
+  const stenosisCandidates = candidateMeasurement?.provenance?.candidates || []
+  const registration = measurements.find((item) => item.code === 'ATLAS_REGISTRATION_RMS')
+  const registrationTargets = registration?.provenance?.targets || []
   const segmentation = study?.segmentations?.[0]
   const synthetic = measurements.some((item) => item.validationStatus === 'synthetic')
   const current = study?.study
@@ -83,6 +90,113 @@ export default function StudyAnalysisView({ onNavigate }) {
                 <CircleAlert size={16} />
                 <b>尚无已计算测量</b>
                 <span>请先在检查工作台运行流水线。未计算项不会以数字形式出现。</span>
+              </div>
+            )}
+          </Section>
+
+          {coronary.length ? (
+            <Section title="冠脉中心线分析（研究）" code="CORONARY MASK ANALYSIS" right={<Activity size={13} />}>
+              <div className="analysis-metric-grid">
+                {coronary.map((item) => <MeasurementCard key={item.id} item={item} />)}
+              </div>
+              <p className="analysis-research-note">
+                基于冠脉标签掩膜的骨架化、距离变换和半径剖面计算；不是经过验证的 QCA，不能用于临床狭窄分级。
+              </p>
+              {stenosisCandidates.length ? (
+                <div className="coronary-candidate-table">
+                  <div className="coronary-candidate-head">
+                    <span>候选狭窄（研究）</span>
+                    <b>{stenosisCandidates.length} 个</b>
+                  </div>
+                  <table>
+                    <thead>
+                      <tr><th>位置 (mm)</th><th>管径</th><th>参考管径</th><th>管径减少</th><th>路径位置</th></tr>
+                    </thead>
+                    <tbody>
+                      {stenosisCandidates.map((candidate, index) => (
+                        <tr key={`${candidate.positionMm?.join('-') || index}`}>
+                          <td>{candidate.positionMm?.join(' / ') || '—'}</td>
+                          <td>{candidate.diameterMm} mm</td>
+                          <td>{candidate.referenceDiameterMm} mm</td>
+                          <td>{candidate.severityPct}%</td>
+                          <td>{candidate.pathLengthMm} mm</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="analysis-placeholder">
+                  <CircleAlert size={16} />
+                  <div>
+                    <b>未检出半径剖面候选</b>
+                    <span>没有局部管径明显减低的骨架段；该结果不代表不存在病变。</span>
+                  </div>
+                </div>
+              )}
+            </Section>
+          ) : null}
+
+          <Section title="参考图谱配准" code="ATLAS REGISTRATION" right={<ShieldCheck size={13} />}>
+            {registration?.status === 'computed' ? (
+              <>
+                <div className="analysis-metric-grid">
+                  <div className="analysis-metric">
+                    <span>配准残差</span>
+                    <strong>{registration.value}<small>mm</small></strong>
+                    <em>chamber_centroid_umeyama_similarity</em>
+                  </div>
+                  <div className="analysis-metric">
+                    <span>尺度</span>
+                    <strong>{registration.provenance?.scale ?? '—'}</strong>
+                    <em>reference → patient</em>
+                  </div>
+                  <div className="analysis-metric">
+                    <span>映射靶点</span>
+                    <strong>{registrationTargets.length}<small>个</small></strong>
+                    <em>参考解剖，不是病灶</em>
+                  </div>
+                </div>
+                <p className="analysis-research-note">
+                  基于四心腔质心的 Umeyama 相似配准（尺度 + 旋转 + 平移）；未做外部验证。映射靶点来自参考图谱，不是患者病灶，不能用于诊断或操作导航。
+                </p>
+                {registrationTargets.length ? (
+                  <div className="coronary-candidate-table">
+                    <div className="coronary-candidate-head">
+                      <span>患者级参考靶点</span>
+                      <b>{registrationTargets.length} 个</b>
+                    </div>
+                    <table>
+                      <thead>
+                        <tr><th>靶点</th><th>类别</th><th>参考坐标 (mm)</th><th>患者坐标 (mm)</th></tr>
+                      </thead>
+                      <tbody>
+                        {registrationTargets.map((target) => (
+                          <tr key={target.id}>
+                            <td>{target.name}</td>
+                            <td>{target.category}</td>
+                            <td>{target.referenceMm?.join(' / ')}</td>
+                            <td>{target.patientMm?.join(' / ')}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : null}
+              </>
+            ) : registration ? (
+              <div className="analysis-empty">
+                <CircleAlert size={16} />
+                <b>未完成配准</b>
+                <span>{registration.reason || '需要至少 3 个心腔分割标签。'}</span>
+              </div>
+            ) : (
+              <div className="analysis-placeholder">
+                <ShieldCheck size={16} />
+                <div>
+                  <b>尚未运行参考图谱配准</b>
+                  <span>运行带心腔标签的分割后，可将参考心腔与靶点映射到患者坐标系。</span>
+                </div>
               </div>
             )}
           </Section>

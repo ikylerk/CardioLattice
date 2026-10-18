@@ -20,11 +20,12 @@ pathway. This document records the current gap explicitly.
 | Calcium score | `not_computed` | Requires non-contrast calcium series | Correct acquisition + validated scoring |
 | AHA perfusion / viability | `not_computed` | CTA alone cannot provide perfusion/viability | Perfusion/metabolism data |
 | Reference organ atlas | Implemented (19 organs, detail parts) | BodyParts3D + HRA reference anatomy, CC BY 4.0 | Not a patient-specific atlas |
-| Atlas-to-patient registration | Not implemented | No registration/QC | Validated registration with error bounds |
+| Atlas-to-patient registration | Implemented (research) | Four-chamber Umeyama similarity; no external validation | Validated registration with error bounds |
 | Reference targets and simulation | Implemented (109 targets) | Straight-ray teaching demo, no tissue model | Patient-specific planning, safety margins, validated instruments |
 | Coronary reference model / QCA | Implemented | 17 reference segments, synthetic FFR, reference values | Patient-specific centerline/lumen model, QCA validation |
-| Public NIfTI import | Implemented (research) | NIfTI + labels, label volumes only | Validated public-data segmentation and comparison |
-| LLM report drafting | M2 design | Human approval, evidence refs required | Clinical validation of workflow and wording |
+| Coronary label analysis | Implemented (research) | Skeleton centerline, diameter profile, candidate lesions | Validated QCA agreement, external test set |
+| Public NIfTI import | Implemented (research) | NIfTI + labels, label volumes, coronary centerline metrics | Validated public-data segmentation and comparison |
+| LLM report drafting | Implemented (research draft) | Structured facts only, evidence refs, numeric guardrail, template fallback, clinician approval | Clinical validation of workflow and wording |
 | Longitudinal comparison | Not implemented | M3 roadmap | Registration, comparable acquisitions |
 | Prediction | Not implemented | No validated longitudinal model | Validated risk/progression model |
 | Regulatory status | None | Not NMPA/FDA/CE cleared | Clinical evaluation + registration |

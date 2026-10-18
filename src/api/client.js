@@ -71,6 +71,10 @@ export async function getStudy(studyId) {
   return apiGet(`/studies/${studyId}`)
 }
 
+export async function generateAiReport(studyId) {
+  return apiPost(`/studies/${studyId}/ai/report-draft`)
+}
+
 export async function createDemoStudy() {
   return apiPost('/studies/demo')
 }

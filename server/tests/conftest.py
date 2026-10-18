@@ -11,3 +11,4 @@ os.environ["RUN_PIPELINE_SYNC"] = "1"
 os.environ["SEGMENTATION_ADAPTER"] = "synthetic_ground_truth"
 os.environ["DEID_SALT"] = "test-salt"
 os.environ["MAX_VOXELS"] = "128"
+os.environ.pop("ANTHROPIC_API_KEY", None)

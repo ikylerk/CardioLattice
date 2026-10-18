@@ -32,11 +32,21 @@ def test_demo_pipeline_end_to_end():
         for code in ("LV_EF", "STENOSIS_LAD", "FFR_CT", "CALCIUM_SCORE", "AHA_SEGMENTS"):
             assert measurements[code]["status"] == "not_computed"
             assert measurements[code]["reason"]
+        assert measurements["ATLAS_REGISTRATION_RMS"]["status"] == "computed"
+        assert measurements["ATLAS_REGISTRATION_RMS"]["value"] >= 0
+        assert measurements["ATLAS_REGISTERED_TARGETS"]["value"] == 11
+        assert len(measurements["ATLAS_REGISTRATION_RMS"]["provenance"]["targets"]) == 11
 
         volume = bundle["volumes"][0]
         data = client.get(volume["dataUrl"])
         assert data.status_code == 200
         assert len(data.content) == int(np.prod(volume["dims"]))
+
+        registration = client.get(f"/api/studies/{study_id}/registration")
+        assert registration.status_code == 200
+        registration_data = registration.json()
+        assert registration_data["validationStatus"] == "research"
+        assert len(registration_data["targets"]) == 11
 
         mesh = client.get(bundle["meshes"][0]["url"])
         assert mesh.status_code == 200
