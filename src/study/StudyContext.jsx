@@ -10,6 +10,7 @@ import {
   selectSeries,
   uploadStudies,
 } from '../api/client.js'
+import { errorDetail, subscribeLang } from '../i18n.js'
 import { createDemoStudy as buildDemoStudy, DEMO_STUDY_ID } from './demoStudy.js'
 
 const StudyContext = React.createContext(null)
@@ -75,7 +76,7 @@ export function StudyProvider({ children }) {
           }
         }
       } catch (err) {
-        if (!cancelled) setError(err.message || String(err))
+        if (!cancelled) setError(errorDetail(err))
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -84,6 +85,23 @@ export function StudyProvider({ children }) {
       cancelled = true
     }
   }, [])
+
+  React.useEffect(() => {
+    return subscribeLang(() => {
+      if (mode === 'demo') {
+        const demo = buildDemoStudy()
+        setStudy(demo)
+        setStudies([demo.study])
+        return
+      }
+      if (mode !== 'api') return
+      refreshStudies().catch(() => {})
+      const studyId = study?.study?.id
+      if (studyId) {
+        getStudy(studyId).then((bundle) => setStudy(bundle)).catch(() => {})
+      }
+    })
+  }, [mode, study?.study?.id, refreshStudies])
 
   // Poll while the active study is being processed. SSE is available too, but
   // polling keeps the UI correct through background-tab and proxy edge cases.
@@ -120,7 +138,7 @@ export function StudyProvider({ children }) {
         await loadStudy(studyId)
       }
     } catch (err) {
-      setError(err.message || String(err))
+      setError(errorDetail(err))
     } finally {
       setLoading(false)
     }
@@ -137,7 +155,7 @@ export function StudyProvider({ children }) {
       await refreshStudies()
       return response
     } catch (err) {
-      setError(err.message || String(err))
+      setError(errorDetail(err))
       throw err
     } finally {
       setUploading(false)
@@ -155,7 +173,7 @@ export function StudyProvider({ children }) {
       await refreshStudies()
       return response
     } catch (err) {
-      setError(err.message || String(err))
+      setError(errorDetail(err))
       throw err
     } finally {
       setUploading(false)
@@ -187,7 +205,7 @@ export function StudyProvider({ children }) {
       setStudy(response.study)
       return response
     } catch (err) {
-      setError(err.message || String(err))
+      setError(errorDetail(err))
       throw err
     }
   }, [study?.study?.id])

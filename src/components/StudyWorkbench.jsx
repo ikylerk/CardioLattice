@@ -11,23 +11,11 @@ import {
   ScanLine,
   ShieldCheck,
   Sparkles,
-  Upload,
 } from 'lucide-react'
 import ViewHeader from './ViewHeader.jsx'
 import { Badge, Button, Divider, Section } from './ui.jsx'
 import { useStudy } from '../study/StudyContext.jsx'
-
-const STATUS_LABEL = {
-  uploaded: '已上传',
-  needs_series_selection: '待选择序列',
-  queued: '排队中',
-  processing: '处理中',
-  ready: '就绪',
-  failed: '失败',
-  running: '处理中',
-  succeeded: '完成',
-  canceled: '已取消',
-}
+import { dicomLabel, enumLabel, errorDetail, serverText, useI18n } from '../i18n.js'
 
 const STATUS_TONE = {
   ready: 'teal',
@@ -37,49 +25,53 @@ const STATUS_TONE = {
   needs_series_selection: 'amber',
 }
 
+const STAGES = [
+  ['validating', 'stage.validating'],
+  ['anonymizing', 'stage.anonymizing'],
+  ['building_volume', 'stage.building_volume'],
+  ['segmenting', 'stage.segmenting'],
+  ['meshing', 'stage.meshing'],
+  ['computing_metrics', 'stage.computing_metrics'],
+  ['drafting_report', 'stage.drafting_report'],
+]
+
 function ProgressTimeline({ job }) {
+  const { t } = useI18n()
   if (!job) {
     return (
       <div className="wb-empty-line">
-        <CircleAlert size={13} /> 尚未启动处理流水线
+        <CircleAlert size={13} /> {t('workbench.pipelineNotStarted')}
       </div>
     )
   }
-  const stages = [
-    ['validating', '校验'],
-    ['anonymizing', '去标识'],
-    ['building_volume', '体数据'],
-    ['segmenting', '分割'],
-    ['meshing', '3D 建模'],
-    ['computing_metrics', '测量'],
-    ['drafting_report', '报告草稿'],
-  ]
-  const currentIndex = stages.findIndex(([key]) => key === job.stage)
+  const currentIndex = STAGES.findIndex(([key]) => key === job.stage)
   return (
     <div className="wb-progress">
       <div className="wb-progress-head">
-        <span>{STATUS_LABEL[job.state] || job.state}</span>
+        <span>{enumLabel('status', job.state)}</span>
         <b>{job.progress}%</b>
       </div>
+      {job.message ? <p className="wb-stage-message">{serverText(job.message)}</p> : null}
       <div className="wb-progress-track"><i style={{ width: `${job.progress}%` }} /></div>
       <div className="wb-progress-stages">
-        {stages.map(([key, label], index) => (
+        {STAGES.map(([key, labelKey], index) => (
           <span
             key={key}
             className={
               job.stage === key ? 'active' : currentIndex > index || job.state === 'succeeded' ? 'done' : ''
             }
           >
-            {label}
+            {t(labelKey)}
           </span>
         ))}
       </div>
-      {job.error ? <p className="wb-error">{job.error}</p> : null}
+      {job.error ? <p className="wb-error">{serverText(job.error)}</p> : null}
     </div>
   )
 }
 
 export default function StudyWorkbench({ onNavigate, notify }) {
+  const { t } = useI18n()
   const {
     mode,
     loading,
@@ -126,17 +118,17 @@ export default function StudyWorkbench({ onNavigate, notify }) {
     const files = Array.from(fileList || [])
     if (!files.length) return
     if (!isApi) {
-      notify?.('离线演示模式不能上传；请先启动本地 API 服务')
+      notify?.(t('workbench.offlineUpload'))
       return
     }
     try {
       const response = await upload(files)
-      notify?.('上传完成，已进入处理流水线')
+      notify?.(t('workbench.uploadDone'))
       if (response?.study?.study?.status === 'needs_series_selection') {
-        notify?.('检测到多个候选序列，请人工选择')
+        notify?.(t('workbench.multiSeries'))
       }
     } catch (err) {
-      setError(err.message || String(err))
+      setError(errorDetail(err))
     }
   }
 
@@ -154,9 +146,9 @@ export default function StudyWorkbench({ onNavigate, notify }) {
     if (!selectedSeries) return
     try {
       await chooseSeries(selectedSeries)
-      notify?.('已选择序列，开始重建')
+      notify?.(t('workbench.seriesChosen'))
     } catch (err) {
-      setError(err.message || String(err))
+      setError(errorDetail(err))
     }
   }
 
@@ -165,28 +157,28 @@ export default function StudyWorkbench({ onNavigate, notify }) {
       <ViewHeader
         index="00"
         eyebrow="STUDY WORKBENCH"
-        title="检查工作台"
+        title={t('workbench.title')}
         titleSuffix="DICOM → 3D → AI → REPORT"
-        description="上传原始 CCTA DICOM，服务端完成去标识、体数据重建、分割建模与结构化报告草稿。"
+        description={t('workbench.description')}
         meta={
           <>
             <span>{isApi ? 'API ONLINE' : 'OFFLINE DEMO'}</span>
             <i />
-            <span>研究原型</span>
+            <span>{t('workbench.prototype')}</span>
             <i />
-            <span>非临床诊断依据</span>
+            <span>{t('workbench.notClinical')}</span>
           </>
         }
         actions={
           <>
-            <Badge tone={isApi ? 'teal' : 'neutral'} dot>{isApi ? '服务端已连接' : '离线演示'}</Badge>
+            <Badge tone={isApi ? 'teal' : 'neutral'} dot>{isApi ? t('workbench.apiOnline') : t('workbench.offlineDemo')}</Badge>
             <Button
               variant="outline"
               size="sm"
               icon={<RefreshCw size={14} />}
-              onClick={() => refreshCurrent().catch((err) => setError(err.message))}
+              onClick={() => refreshCurrent().catch((err) => setError(errorDetail(err)))}
             >
-              刷新
+              {t('workbench.refresh')}
             </Button>
           </>
         }
@@ -222,12 +214,8 @@ export default function StudyWorkbench({ onNavigate, notify }) {
               onChange={(event) => handleFiles(event.target.files)}
             />
             <CloudUpload size={26} strokeWidth={1.5} />
-            <b>{isApi ? '拖入 DICOM 压缩包或文件夹' : '离线模式：上传需要启动 API 服务'}</b>
-            <span>
-              {isApi
-                ? '支持 .zip 或多文件选择；单个 CCTA 序列通常 200–600 MB。原始 DICOM 不通过 API 暴露。'
-                : '运行 npm run server:dev 后刷新页面，即可启用上传与真实重建流水线。'}
-            </span>
+            <b>{isApi ? t('workbench.drop') : t('workbench.dropOffline')}</b>
+            <span>{isApi ? t('workbench.dropHint') : t('workbench.dropHintOffline')}</span>
             {uploading ? (
               <div className="upload-progress">
                 <i style={{ width: `${uploadProgress}%` }} />
@@ -241,15 +229,15 @@ export default function StudyWorkbench({ onNavigate, notify }) {
               <Button variant="primary" size="sm" icon={<Sparkles size={14} />} disabled={uploading} onClick={async () => {
                 try {
                   await createServerDemoStudy()
-                  notify?.('已生成合成 DICOM 检查并开始重建')
+                  notify?.(t('workbench.generated'))
                 } catch (err) {
-                  setError(err.message || String(err))
+                  setError(errorDetail(err))
                 }
               }}>
-                {uploading ? '正在生成…' : '生成合成 CCTA 检查'}
+                {uploading ? t('workbench.generating') : t('workbench.generate')}
               </Button>
               <span className="workbench-hint">
-                合成检查会走真实 DICOM → 体数据 → 分割 → 网格链路，但所有测量标注为 synthetic。
+                {t('workbench.generateHint')}
               </span>
             </div>
           ) : null}
@@ -294,15 +282,15 @@ export default function StudyWorkbench({ onNavigate, notify }) {
           </Section>
 
           {error ? (
-            <div className="workbench-error"><CircleAlert size={14} /> {error}</div>
+            <div className="workbench-error"><CircleAlert size={14} /> {serverText(error)}</div>
           ) : null}
 
-          <Section title="检查列表" code="STUDIES" right={<Database size={13} />}>
+          <Section title={t('workbench.studies')} code="STUDIES" right={<Database size={13} />}>
             {loading ? (
-              <div className="wb-empty-line">正在载入检查…</div>
+              <div className="wb-empty-line">{t('workbench.loadingStudies')}</div>
             ) : studies.length === 0 ? (
               <div className="wb-empty-line">
-                <FileStack size={14} /> 尚无检查。上传 DICOM 或生成一个合成检查。
+                <FileStack size={14} /> {t('workbench.emptyStudies')}
               </div>
             ) : (
               <div className="study-list">
@@ -317,15 +305,15 @@ export default function StudyWorkbench({ onNavigate, notify }) {
                       {(item.subject?.pseudonym || '?').slice(0, 1)}
                     </div>
                     <div className="study-card-copy">
-                      <b>{item.subject?.pseudonym || '未命名'}</b>
+                      <b>{item.subject?.pseudonym || t('common.unnamed')}</b>
                       <small>
-                        {item.studyDate || '—'} · {item.description || item.modality}
+                        {item.studyDate || '—'} · {item.description ? (isApi ? dicomLabel(item.description) : item.description) : item.modality}
                       </small>
                       <span>
                         <Badge tone={STATUS_TONE[item.status] || 'neutral'}>
-                          {STATUS_LABEL[item.status] || item.status}
+                          {enumLabel('status', item.status)}
                         </Badge>
-                        {item.source === 'demo' ? <Badge>DEMO · 合成</Badge> : null}
+                        {item.source === 'demo' ? <Badge>{t('workbench.demoBadge')}</Badge> : null}
                         {item.source === 'upload' ? <Badge>UPLOAD</Badge> : null}
                       </span>
                     </div>
@@ -337,11 +325,11 @@ export default function StudyWorkbench({ onNavigate, notify }) {
           </Section>
 
           {current ? (
-            <Section title="处理流水线" code="PIPELINE" right={<Activity size={13} />}>
+            <Section title={t('workbench.pipeline')} code="PIPELINE" right={<Activity size={13} />}>
               <ProgressTimeline job={latestJob} />
               {current.status === 'needs_series_selection' ? (
                 <div className="series-select">
-                  <Divider label="检测到多个候选序列，请选择 CCTA" />
+                  <Divider label={t('workbench.chooseSeries')} />
                   {study.series.map((item) => (
                     <label key={item.id} className={`series-option ${selectedSeries === item.id ? 'active' : ''}`}>
                       <input
@@ -352,15 +340,23 @@ export default function StudyWorkbench({ onNavigate, notify }) {
                         onChange={() => setSelectedSeries(item.id)}
                       />
                       <span>
-                        <b>{item.description || `Series ${item.number ?? ''}`}</b>
+                        <b>{item.description ? (isApi ? dicomLabel(item.description) : item.description) : `Series ${item.number ?? ''}`}</b>
+                        {Array.isArray(item.reasons) && item.reasons.length ? (
+                          <small>{item.reasons.map((reason) => serverText(reason)).join(' · ')}</small>
+                        ) : null}
                         <small>
-                          {item.modality} · {item.sliceCount} 层 · {item.sliceThickness ?? '—'} mm · 评分 {item.candidateScore}
+                          {t('workbench.seriesMeta', {
+                            modality: item.modality,
+                            slices: t('common.slices', { count: item.sliceCount }),
+                            thickness: item.sliceThickness ?? '—',
+                            score: item.candidateScore,
+                          })}
                         </small>
                       </span>
                     </label>
                   ))}
                   <Button variant="primary" size="sm" onClick={startSelectedSeries} disabled={!selectedSeries}>
-                    开始重建
+                    {t('workbench.startRebuild')}
                   </Button>
                 </div>
               ) : null}
@@ -377,28 +373,26 @@ export default function StudyWorkbench({ onNavigate, notify }) {
             <div className="selection-title">
               <span className="structure-swatch swatch-great" />
               <div>
-                <h2>{current?.subject?.pseudonym || '未选择检查'}</h2>
-                <small>{current?.description || 'Upload a CCTA series to begin'}</small>
+                <h2>{current?.subject?.pseudonym || t('topbar.noStudy')}</h2>
+                <small>{current?.description ? (isApi ? dicomLabel(current.description) : current.description) : t('workbench.heroEmpty')}</small>
               </div>
             </div>
             <p>
-              {isApi
-                ? '本原型只输出可追溯的确定性测量与结构化报告草稿；未计算的狭窄、FFR-CT、EF 不会以数字形式出现。'
-                : '当前为离线演示病例。所有数值均为合成数据，仅用于产品界面展示。'}
+              {isApi ? t('workbench.heroApi') : t('workbench.heroDemo')}
             </p>
             <div className="selection-stats">
               <div className="stat">
-                <span>检查状态</span>
-                <strong>{STATUS_LABEL[current?.status] || '—'}</strong>
-                <em>{current?.source === 'demo' ? '合成夹具' : 'DICOM'}</em>
+                <span>{t('workbench.studyStatus')}</span>
+                <strong>{enumLabel('status', current?.status) || '—'}</strong>
+                <em>{current?.source === 'demo' ? t('workbench.sourceFixture') : 'DICOM'}</em>
               </div>
               <div className="stat">
-                <span>测量项</span>
+                <span>{t('workbench.measurementCount')}</span>
                 <strong>{study?.measurements?.length || 0}</strong>
-                <em>含 not_computed</em>
+                <em>{t('workbench.includesNotComputed')}</em>
               </div>
               <div className="stat">
-                <span>3D 结构</span>
+                <span>{t('workbench.meshCount')}</span>
                 <strong>{study?.meshes?.length || 0}</strong>
                 <em>GLB nodes</em>
               </div>
@@ -406,44 +400,41 @@ export default function StudyWorkbench({ onNavigate, notify }) {
           </div>
 
           {current ? (
-            <Section title="检查信息" code="STUDY" right={<ShieldCheck size={13} />}>
+            <Section title={t('workbench.studyInfo')} code="STUDY" right={<ShieldCheck size={13} />}>
               <div className="scan-params">
-                <div><span>检查号</span><b>{current.studyUid?.slice(-12) || current.id}</b></div>
-                <div><span>日期</span><b>{current.studyDate || '—'}</b></div>
-                <div><span>模态</span><b>{current.modality}</b></div>
-                <div><span>来源</span><b>{current.source}</b></div>
-                <div><span>序列</span><b>{study.series?.length || 0}</b></div>
-                <div><span>模型</span><b>{study.segmentations?.[0]?.modelId || '未运行'}</b></div>
+                <div><span>{t('workbench.accession')}</span><b>{current.studyUid?.slice(-12) || current.id}</b></div>
+                <div><span>{t('workbench.date')}</span><b>{current.studyDate || '—'}</b></div>
+                <div><span>{t('workbench.modality')}</span><b>{current.modality}</b></div>
+                <div><span>{t('workbench.source')}</span><b>{current.source}</b></div>
+                <div><span>{t('workbench.series')}</span><b>{study.series?.length || 0}</b></div>
+                <div><span>{t('workbench.model')}</span><b>{study.segmentations?.[0]?.modelId || t('workbench.modelNotRun')}</b></div>
               </div>
               <div className="workbench-open-actions">
                 <Button size="sm" icon={<ScanLine size={14} />} onClick={() => onNavigate?.('cta')} disabled={uploading || !study?.volumes?.length}>
-                  查看 CT
+                  {t('workbench.viewCt')}
                 </Button>
                 <Button size="sm" icon={<FolderOpen size={14} />} onClick={() => onNavigate?.('anatomy')} disabled={uploading || !study?.meshes?.length}>
-                  查看 3D
+                  {t('workbench.view3d')}
                 </Button>
                 <Button size="sm" icon={<FileStack size={14} />} onClick={() => onNavigate?.('analysis')} disabled={uploading || !study?.measurements?.length}>
-                  定量分析
+                  {t('workbench.viewAnalysis')}
                 </Button>
               </div>
             </Section>
           ) : null}
 
-          <Section title="临床就绪度" code="READINESS" right={<CircleAlert size={13} />}>
-            <ul className="scope-list readiness-list">
-              <li className="ok"><CheckCircle2 size={13} /> DICOM、去标识、体数据、MPR/VRT</li>
-              <li className="ok"><CheckCircle2 size={13} /> 分割 → GLB、腔室容积（研究/合成）</li>
-              <li className="ok"><CheckCircle2 size={13} /> 19 个参考器官、109 个参考靶点</li>
-              <li className="warn"><CircleAlert size={13} /> 图谱与靶点未做患者级配准</li>
-              <li className="warn"><CircleAlert size={13} /> 分割与测量未通过外部临床验证</li>
-              <li className="stop"><CircleAlert size={13} /> 狭窄、FFR-CT、单时相 EF、钙化积分、AHA 未计算</li>
-              <li className="stop"><CircleAlert size={13} /> 靶点模拟仅教学，不是手术导航</li>
-              <li className="stop"><CircleAlert size={13} /> 非医疗器械，不可用于诊断或治疗</li>
+          <Section title={t('workbench.scope')} code="SCOPE" right={<CircleAlert size={13} />}>
+            <ul className="scope-list">
+              <li><CheckCircle2 size={13} /> {t('workbench.scope1')}</li>
+              <li><CheckCircle2 size={13} /> {t('workbench.scope2')}</li>
+              <li><CheckCircle2 size={13} /> {t('workbench.scope3')}</li>
+              <li><CircleAlert size={13} /> {t('workbench.scope4')}</li>
+              <li><CircleAlert size={13} /> {t('disclaimer.body')}</li>
             </ul>
           </Section>
 
           {audit?.items?.length ? (
-            <Section title="审计记录" code="AUDIT" right={<ShieldCheck size={13} />}>
+            <Section title={t('workbench.audit')} code="AUDIT" right={<ShieldCheck size={13} />}>
               <div className="audit-list">
                 {audit.items.slice(-6).reverse().map((item) => (
                   <div key={item.id}>

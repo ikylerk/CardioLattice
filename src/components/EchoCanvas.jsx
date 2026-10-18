@@ -1,4 +1,5 @@
 import React from 'react'
+import { useI18n } from '../i18n.js'
 
 function systoleAt(phase) {
   return Math.exp(-Math.pow(((phase % 1) - 0.28) / 0.09, 2))
@@ -67,6 +68,7 @@ function drawColorJet(ctx, path, x1, y1, x2, y2, phase, kind = 'diastolic') {
 }
 
 export default function EchoCanvas({ view, colorDoppler, calipers, playing, bpm, gain, depth }) {
+  const { t } = useI18n()
   const canvasRef = React.useRef(null)
   const propsRef = React.useRef({ view, colorDoppler, calipers, playing, bpm, gain, depth })
   propsRef.current = { view, colorDoppler, calipers, playing, bpm, gain, depth }
@@ -617,5 +619,5 @@ export default function EchoCanvas({ view, colorDoppler, calipers, playing, bpm,
     return () => cancelAnimationFrame(raf)
   }, [])
 
-  return <canvas ref={canvasRef} className="echo-canvas" aria-label="动态心脏超声图像" />
+  return <canvas ref={canvasRef} className="echo-canvas" aria-label={t('echo.canvasAria')} />
 }

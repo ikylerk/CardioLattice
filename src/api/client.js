@@ -1,4 +1,21 @@
+import { requestLang, serverText, t } from '../i18n.js'
+
 const API_BASE = '/api'
+
+// Report drafts are generated inside the pipeline. Those requests carry `lang`
+// (`en` or `zh`). Other requests do not send a language header or parameter.
+function withLang(path) {
+  const join = path.includes('?') ? '&' : '?'
+  return `${path}${join}lang=${encodeURIComponent(requestLang())}`
+}
+
+function failResponse(body, status) {
+  const detail = body?.detail ?? body?.message ?? null
+  const err = new Error(detail == null ? `HTTP ${status}` : serverText(detail))
+  err.detail = detail == null ? `HTTP ${status}` : detail
+  err.status = status
+  return err
+}
 
 async function parseResponse(response) {
   const text = await response.text()
@@ -8,10 +25,7 @@ async function parseResponse(response) {
   } catch {
     body = { detail: text }
   }
-  if (!response.ok) {
-    const detail = body?.detail || body?.message || `HTTP ${response.status}`
-    throw new Error(typeof detail === 'string' ? detail : JSON.stringify(detail))
-  }
+  if (!response.ok) throw failResponse(body, response.status)
   return body
 }
 
@@ -72,15 +86,15 @@ export async function getStudy(studyId) {
 }
 
 export async function createDemoStudy() {
-  return apiPost('/studies/demo')
+  return apiPost(withLang('/studies/demo'))
 }
 
 export async function selectSeries(studyId, seriesId) {
-  return apiPost(`/studies/${studyId}/select-series`, { seriesId })
+  return apiPost(withLang(`/studies/${studyId}/select-series`), { seriesId })
 }
 
 export async function rerunPipeline(studyId) {
-  return apiPost(`/studies/${studyId}/pipeline`)
+  return apiPost(withLang(`/studies/${studyId}/pipeline`))
 }
 
 export async function approveReport(studyId, reportId, approvedBy = 'local-researcher') {
@@ -114,7 +128,7 @@ export function uploadStudies(files, onProgress) {
     const form = new FormData()
     for (const file of files) form.append('files', file)
     const xhr = new XMLHttpRequest()
-    xhr.open('POST', `${API_BASE}/studies`)
+    xhr.open('POST', `${API_BASE}${withLang('/studies')}`)
     xhr.withCredentials = true
     xhr.upload.onprogress = (event) => {
       if (event.lengthComputable && onProgress) {
@@ -129,40 +143,63 @@ export function uploadStudies(files, onProgress) {
         body = { detail: xhr.responseText }
       }
       if (xhr.status >= 200 && xhr.status < 300) resolve(body)
-      else reject(new Error(body?.detail || `Upload failed (${xhr.status})`))
+      else if (body?.detail != null || body?.message != null) reject(failResponse(body, xhr.status))
+      else reject(new Error(t('api.uploadFailed', { status: xhr.status })))
     }
-    xhr.onerror = () => reject(new Error('Network error while uploading'))
+    xhr.onerror = () => reject(new Error(t('api.networkError')))
     xhr.send(form)
   })
 }
 
 export async function getVolumeData(volume) {
-  if (!volume?.dataUrl) throw new Error('volume has no data URL')
+  if (!volume?.dataUrl) throw new Error(t('api.noVolumeUrl'))
   const response = await fetch(volume.dataUrl, { credentials: 'same-origin' })
-  if (!response.ok) throw new Error(`Volume download failed (${response.status})`)
+  if (!response.ok) throw new Error(t('api.volumeDownloadFailed', { status: response.status }))
   return new Uint8Array(await response.arrayBuffer())
 }
 
 export function subscribeStudyEvents(studyId, { onProgress, onDone, onError } = {}) {
-  if (typeof EventSource === 'undefined') return () => {}
-  const source = new EventSource(`${API_BASE}/studies/${studyId}/events`)
-  source.addEventListener('progress', (event) => {
+  const controller = new AbortController()
+  ;(async () => {
     try {
-      onProgress?.(JSON.parse(event.data))
-    } catch {
-      // Ignore malformed event payloads.
+      const response = await fetch(`${API_BASE}/studies/${studyId}/events`, {
+        credentials: 'same-origin',
+        headers: { Accept: 'text/event-stream' },
+        signal: controller.signal,
+      })
+      if (!response.ok || !response.body) {
+        onError?.()
+        return
+      }
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+      while (true) {
+        const { value, done } = await reader.read()
+        if (done) break
+        buffer += decoder.decode(value, { stream: true })
+        const chunks = buffer.split('\n\n')
+        buffer = chunks.pop() || ''
+        for (const chunk of chunks) {
+          let eventName = 'message'
+          const dataLines = []
+          for (const line of chunk.split('\n')) {
+            if (line.startsWith('event:')) eventName = line.slice(6).trim()
+            else if (line.startsWith('data:')) dataLines.push(line.slice(5).trim())
+          }
+          let payload = null
+          try {
+            payload = dataLines.length ? JSON.parse(dataLines.join('\n')) : null
+          } catch {
+            payload = null
+          }
+          if (eventName === 'progress') onProgress?.(payload)
+          else if (eventName === 'done') onDone?.(payload)
+        }
+      }
+    } catch (err) {
+      if (err?.name !== 'AbortError') onError?.()
     }
-  })
-  source.addEventListener('done', (event) => {
-    source.close()
-    try {
-      onDone?.(JSON.parse(event.data))
-    } catch {
-      onDone?.(null)
-    }
-  })
-  source.addEventListener('error', () => {
-    onError?.()
-  })
-  return () => source.close()
+  })()
+  return () => controller.abort()
 }

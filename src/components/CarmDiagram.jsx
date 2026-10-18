@@ -1,10 +1,12 @@
 import React from 'react'
+import { useI18n } from '../i18n.js'
 
 export default function CarmDiagram({ rot, tilt }) {
+  const { t } = useI18n()
   const rotation = rot * 0.14 + tilt * 0.08
   const tiltOffset = tilt * 0.18
   return (
-    <svg className="carm-diagram" viewBox="0 0 292 172" role="img" aria-label="C 臂投照几何示意">
+    <svg className="carm-diagram" viewBox="0 0 292 172" role="img" aria-label={t('angio.carm')}>
       <defs>
         <linearGradient id="carmMetal" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stopColor="#66717b" />

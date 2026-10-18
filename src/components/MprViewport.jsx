@@ -1,10 +1,11 @@
 import React from 'react'
 import { renderMPR } from '../three/volume.js'
+import { useI18n } from '../i18n.js'
 
 const PLANE_META = {
-  axial: { title: '轴位', en: 'AXIAL', tone: 'amber', top: 'A', bottom: 'P', left: 'R', right: 'L' },
-  coronal: { title: '冠状位', en: 'CORONAL', tone: 'teal', top: 'H', bottom: 'F', left: 'R', right: 'L' },
-  sagittal: { title: '矢状位', en: 'SAGITTAL', tone: 'blue', top: 'H', bottom: 'F', left: 'P', right: 'A' },
+  axial: { titleKey: 'mpr.axial', en: 'AXIAL', tone: 'amber', top: 'A', bottom: 'P', left: 'R', right: 'L' },
+  coronal: { titleKey: 'mpr.coronal', en: 'CORONAL', tone: 'teal', top: 'H', bottom: 'F', left: 'R', right: 'L' },
+  sagittal: { titleKey: 'mpr.sagittal', en: 'SAGITTAL', tone: 'blue', top: 'H', bottom: 'F', left: 'P', right: 'A' },
 }
 
 export default function MprViewport({
@@ -21,7 +22,9 @@ export default function MprViewport({
   const canvasRef = React.useRef(null)
   const stageRef = React.useRef(null)
   const dragging = React.useRef(false)
+  const { t } = useI18n()
   const meta = PLANE_META[plane]
+  const title = t(meta.titleKey)
   const [nx, ny, nz] = volume.dims
   const [sx = 1, sy = 1, sz = 1] = volume.spacing || [1, 1, 1]
   const sliceIndex = plane === 'axial' ? slices.z : plane === 'coronal' ? slices.y : slices.x
@@ -113,7 +116,7 @@ export default function MprViewport({
       <header className="cta-panel-head">
         <div className="cta-panel-title">
           <i className={`plane-dot ${meta.tone}`} />
-          <span>{meta.title}</span>
+          <span>{title}</span>
           <em>{meta.en}</em>
         </div>
         <span className="cta-slice-count">{String(sliceIndex + 1).padStart(3, '0')} / {String(total).padStart(3, '0')}</span>
@@ -138,7 +141,7 @@ export default function MprViewport({
             dragging.current = false
           }}
         >
-          <canvas ref={canvasRef} className="mpr-canvas" aria-label={`${meta.title} CT 重建`} />
+          <canvas ref={canvasRef} className="mpr-canvas" aria-label={t('mpr.aria', { plane: title })} />
           <div className="mpr-crosshair-v" style={{ left: `${crosshair.left}%` }} />
           <div className="mpr-crosshair-h" style={{ top: `${crosshair.top}%` }} />
           <span className="mpr-orientation top">{meta.top}</span>
@@ -148,7 +151,7 @@ export default function MprViewport({
           {lesionMarker ? (
             <div className="mpr-lesion" style={{ left: `${lesionMarker.left}%`, top: `${lesionMarker.top}%` }}>
               <span />
-              <b>{lesionLabel || '标记'}</b>
+              <b>{lesionLabel || t('common.marker')}</b>
             </div>
           ) : null}
           <div className="mpr-render-tag">{renderTag}</div>
