@@ -7755,3 +7755,170 @@ input:focus-visible {
   font-size: 8.5px;
 }
 .public-import-row input:focus { border-color: rgba(103, 216, 204, 0.55); outline: none; }
+
+/* AngioView reference layout: 3D heart + protocol bar + C-arm */
+
+.angio-screen-area {
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: stretch;
+  gap: 10px;
+  padding: 60px 16px 12px;
+}
+
+.angio-anatomy-panel {
+  position: relative;
+  width: 260px;
+  flex-shrink: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(35, 52, 66, 0.9);
+  border-radius: 7px;
+  overflow: hidden;
+  background: linear-gradient(180deg, rgba(11, 18, 26, 0.94), rgba(5, 9, 14, 0.97));
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3);
+}
+
+.angio-anatomy-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  padding: 7px;
+  border-bottom: 1px solid rgba(35, 52, 66, 0.75);
+}
+.angio-anatomy-toolbar button {
+  padding: 3px 6px;
+  border: 1px solid rgba(42, 62, 78, 0.8);
+  border-radius: 3px;
+  color: var(--muted);
+  background: rgba(8, 14, 20, 0.6);
+  font-family: var(--font-mono);
+  font-size: 7px;
+  letter-spacing: 0.2px;
+}
+.angio-anatomy-toolbar button:hover { color: var(--text-2); border-color: var(--line-3); }
+.angio-anatomy-toolbar button.active { color: var(--teal); border-color: rgba(103, 216, 204, 0.45); background: rgba(103, 216, 204, 0.08); }
+
+.angio-anatomy-host {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.angio-anatomy-host canvas { display: block; width: 100% !important; height: 100% !important; }
+.angio-anatomy-foot {
+  padding: 5px 7px;
+  border-top: 1px solid rgba(35, 52, 66, 0.75);
+  font-family: var(--font-mono);
+  font-size: 6.5px;
+  letter-spacing: 0.5px;
+  color: var(--muted);
+}
+.angio-detector-plane {
+  position: absolute;
+  inset: 18% 10% 22% 10%;
+  border: 1px solid rgba(103, 216, 204, 0.35);
+  background:
+    linear-gradient(rgba(103, 216, 204, 0.08) 1px, transparent 1px) 0 0 / 18px 18px,
+    linear-gradient(90deg, rgba(103, 216, 204, 0.08) 1px, transparent 1px) 0 0 / 18px 18px,
+    rgba(103, 216, 204, 0.035);
+  transform: perspective(300px) rotateY(-18deg) rotateX(8deg);
+  pointer-events: none;
+}
+.angio-foreshorten {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 24px;
+  padding: 5px 6px;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 7px;
+  text-align: center;
+  pointer-events: none;
+}
+.angio-foreshorten.ok { color: var(--green); background: rgba(126, 214, 167, 0.08); border: 1px solid rgba(126, 214, 167, 0.25); }
+.angio-foreshorten.warn { color: var(--amber); background: rgba(239, 179, 107, 0.08); border: 1px solid rgba(239, 179, 107, 0.28); }
+
+.angio-center-column {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.angio-protocol-bar {
+  width: 100%;
+  min-height: 34px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 4px 8px;
+  border: 1px solid rgba(35, 52, 66, 0.9);
+  border-radius: 6px;
+  background: rgba(8, 14, 20, 0.82);
+}
+.protocol-label { font-family: var(--font-mono); font-size: 6.5px; letter-spacing: 0.8px; color: var(--muted); }
+.angio-protocol-bar .segmented button { min-width: 0; padding: 3px 7px; font-size: 8px; }
+.angio-protocol-bar .segmented button small { display: none; }
+.protocol-chip {
+  padding: 4px 7px;
+  border: 1px solid rgba(42, 62, 78, 0.8);
+  border-radius: 4px;
+  color: var(--muted);
+  background: rgba(8, 14, 20, 0.6);
+  font-size: 8px;
+}
+.protocol-chip.active { color: var(--teal); border-color: rgba(103, 216, 204, 0.45); background: rgba(103, 216, 204, 0.08); }
+.protocol-grafts { display: inline-flex; gap: 4px; }
+.protocol-grafts button {
+  padding: 4px 6px;
+  border: 1px solid rgba(42, 62, 78, 0.8);
+  border-radius: 4px;
+  color: var(--muted);
+  background: rgba(8, 14, 20, 0.6);
+  font-family: var(--font-mono);
+  font-size: 7px;
+}
+.protocol-grafts button.active { color: var(--amber); border-color: rgba(239, 179, 107, 0.4); background: rgba(239, 179, 107, 0.07); }
+
+.angio-center-column .angio-monitor {
+  height: auto;
+  flex: 1;
+  width: 100%;
+  max-width: none;
+  aspect-ratio: auto;
+}
+.angio-center-column .angio-console { width: 100%; max-width: none; }
+
+.carm3d { margin-bottom: 7px; }
+.carm3d-host {
+  height: 170px;
+  border: 1px solid rgba(35, 52, 66, 0.8);
+  border-radius: 5px;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 40%, rgba(20, 34, 45, 0.7), rgba(4, 8, 12, 0.96));
+}
+.carm3d-host canvas { display: block; width: 100% !important; height: 100% !important; }
+.carm3d-legend { display: flex; gap: 12px; margin-top: 4px; font-family: var(--font-mono); font-size: 6.5px; color: var(--muted); }
+.carm-dot { display: inline-block; width: 5px; height: 5px; border-radius: 50%; margin-right: 3px; }
+.carm-dot.detector { background: var(--teal); }
+.carm-dot.tube { background: var(--amber); }
+
+@media (max-width: 1180px) {
+  .angio-anatomy-panel { width: 190px; }
+  .angio-anatomy-toolbar button { font-size: 6.5px; padding: 3px 5px; }
+}
+
+@media (max-width: 900px) {
+  .angio-screen-area { flex-direction: column; padding-top: 90px; }
+  .angio-anatomy-panel { width: 100%; height: 220px; flex-shrink: 0; }
+  .angio-center-column { width: 100%; }
+  .angio-center-column .angio-monitor { width: 100%; flex: none; height: auto; }
+  .angio-protocol-bar { width: 100%; }
+}

@@ -1165,6 +1165,23 @@ export default class HeartEngine {
     this.controls.update()
   }
 
+  setViewAngle(rotDeg, tiltDeg, distanceScale = 1) {
+    if (!this.camera || !this.controls) return
+    const distance = Math.max(3.4, (this.anatomyRadius || 2.5) * 2.8) * distanceScale
+    const azimuth = THREE.MathUtils.degToRad(rotDeg)
+    const elevation = THREE.MathUtils.degToRad(tiltDeg)
+    const target = this.controls.target
+    this.camera.position.set(
+      target.x + Math.sin(azimuth) * Math.cos(elevation) * distance,
+      target.y + Math.cos(azimuth) * Math.cos(elevation) * distance,
+      target.z + Math.sin(elevation) * distance,
+    )
+    this.camera.up.set(0, 0, 1)
+    this.camera.lookAt(target)
+    this.controls.maxDistance = Math.max(this.controls.maxDistance, distance * 1.5)
+    this.controls.update()
+  }
+
   resize() {
     if (!this.renderer || this.isDisposed) return
     const rect = this.container.getBoundingClientRect()

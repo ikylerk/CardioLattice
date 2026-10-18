@@ -151,16 +151,20 @@ queued → validating → anonymizing → building_volume
 
 ## 冠脉模型与参考分析
 
-冠脉造影模块现在由 `shared/coronary_model.json` 驱动：
+冠脉造影模块按 **AngioView（angioview.com）** 的教育模拟标准补齐了交互层，模型由 `shared/coronary_model.json` 驱动：
 
-- 17 个冠脉分段：LM、LAD 近/中/远段、LCX 近/中/远段、RCA 近/中/远段、D1/D2、OM1/OM2、AM、PDA、PL；
+- **3D 心脏 + 骨架面板**：与 C 臂角度联动的探测器视图、缩短提示、骨骼、半透明、标签、平面开关；
+- **3D C 臂机房**：探测器、X 射线管、检查床和患者体模随 LAO/RAO · CRA/CAU 运动；
+- **17 个冠脉分段**：LM、LAD 近/中/远段、LCX 近/中/远段、RCA 近/中/远段、D1/D2、OM1/OM2、AM、PDA、PL；
 - 每段包含 AHA 1–17 心肌供血区映射、参考直径与长度；
-- 标准 C 臂体位（LAO/RAO · CRA/CAU）及分段推荐体位；
-- 点击分段高亮对应血管，自动匹配投照角度；
-- 「运行参考分析」生成参考狭窄指标和合成 FFR 提示；
+- **标准体位**：Spider、RAO caudal、AP caudal、AP cranial、LAO cranial、RAO cranial、Lateral、AP；右冠 LAO、RAO、AP、AP cranial、LAO cranial；
+- **优势型/桥血管/分支**：右优势、左优势、共优势；LIMA、SVG-OM、SVG-PDA；Ramus intermedius；
+- **Color** 彩色血管叠加、Labels 标签、CINE、DSA、骨骼模式；
+- 点击分段高亮对应血管并匹配推荐体位；「运行参考分析」生成参考狭窄指标和合成 FFR 提示；
+- 支持与 AngioView 相同的 hash 参数，例如 `#a=-30&b=-30&sys=left`（RAO 30 / CAU 30，左冠）；
 - 后端 `GET /api/coronary-model` 暴露同一模型。
 
-> 这是参考冠脉模型，不是患者造影；QCA/FFR 为参考/合成值，不能用于临床决策。详见 [`docs/coronary-model.md`](docs/coronary-model.md)。
+> 这是参考冠脉模型与教育模拟，不是患者造影，也不读取当前检查；QCA/FFR 为参考/合成值，不能用于临床决策。参考界面标准来自 [AngioView](https://angioview.com)，本项目与其无隶属关系。详见 [`docs/coronary-model.md`](docs/coronary-model.md)。
 
 ---
 

@@ -42,7 +42,14 @@ export default class AngioEngine {
     this.cycle = 1.1
     this.bpm = 72
     this.groups = {}
+    this.curves = {}
     this.derivedIds = { left: [], right: [] }
+    this.dominance = 'right'
+    this.graftsOn = false
+    this.graftVisibility = { LIMA: true, 'SVG-OM': true, 'SVG-PDA': true }
+    this.grafts = {}
+    this.ramusVisible = false
+    this.colorMode = false
     this.vesselMaterials = []
     this.boneMaterials = []
     this.disposed = false
@@ -115,6 +122,7 @@ export default class AngioEngine {
         }
       }
       const curve = new THREE.CatmullRomCurve3(smoothPoints, false, 'centripetal', 0.35)
+      this.curves[vessel.id] = curve
       const geometry = this.buildTube(curve, vessel, 150, 8)
       const material = new THREE.ShaderMaterial({
         transparent: true,
@@ -213,6 +221,97 @@ export default class AngioEngine {
         this.derivedIds[spec.side].push(id)
       })
     }
+    this.buildExtras()
+  }
+
+  makeExtraTube(points, radius, color) {
+    const curve = new THREE.CatmullRomCurve3(points.map((p) => new THREE.Vector3(...p)), false, 'centripetal')
+    const geometry = new THREE.TubeGeometry(curve, 56, radius, 8, false)
+    const material = new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity: 0.88,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      toneMapped: false,
+    })
+    const mesh = new THREE.Mesh(geometry, material)
+    mesh.renderOrder = 1.5
+    return mesh
+  }
+
+  buildExtras() {
+    this.extraGroup = new THREE.Group()
+    this.treeRoot.add(this.extraGroup)
+    const ladMid = this.curves.LAD?.getPointAt(0.52) || new THREE.Vector3(0.13, 0.82, -0.32)
+    const omMid = this.curves.OM1?.getPointAt(0.55) || new THREE.Vector3(0.86, 0.57, -0.16)
+    const pdaMid = this.curves.PDA?.getPointAt(0.5) || new THREE.Vector3(-0.12, -0.53, -1.07)
+    this.grafts = {
+      LIMA: this.makeExtraTube([
+        [-0.58, 0.78, 1.28], [-0.38, 0.86, 0.55], [ladMid.x, ladMid.y, ladMid.z],
+      ], 0.022, 0xe0b36b),
+      'SVG-OM': this.makeExtraTube([
+        [0.2, 0.3, 0.95], [0.55, 0.5, 0.45], [omMid.x, omMid.y, omMid.z],
+      ], 0.021, 0xe0a05a),
+      'SVG-PDA': this.makeExtraTube([
+        [0.02, 0.22, 0.98], [-0.3, -0.05, 0.1], [pdaMid.x, pdaMid.y, pdaMid.z],
+      ], 0.021, 0xd9a05a),
+    }
+    for (const [id, mesh] of Object.entries(this.grafts)) {
+      mesh.visible = false
+      mesh.userData.graftId = id
+      this.extraGroup.add(mesh)
+    }
+    this.ramusMesh = this.makeExtraTube([
+      [0.04, 0.68, 0.44], [0.2, 0.74, 0.12], [0.36, 0.76, -0.18],
+    ], 0.014, 0xd9a05a)
+    this.ramusMesh.visible = false
+    this.extraGroup.add(this.ramusMesh)
+    this.applyExtras()
+  }
+
+  applyExtras() {
+    for (const [id, mesh] of Object.entries(this.grafts || {})) {
+      mesh.visible = this.graftsOn && this.graftVisibility[id] !== false
+    }
+    if (this.ramusMesh) this.ramusMesh.visible = this.ramusVisible
+  }
+
+  setDominance(value) {
+    this.dominance = value
+    this.applySide()
+  }
+
+  setGrafts(on) {
+    this.graftsOn = on
+    this.applyExtras()
+  }
+
+  setGraft(id, visible) {
+    this.graftVisibility[id] = visible
+    this.applyExtras()
+  }
+
+  setRamusVisible(visible) {
+    this.ramusVisible = visible
+    this.applyExtras()
+  }
+
+  setColorMode(on) {
+    this.colorMode = on
+    if (this.postMaterial) this.postMaterial.uniforms.uColorMode.value = on ? 1 : 0
+    const colors = {
+      LM: 0xffe0a0,
+      LAD: 0xe0645a, D1: 0xe0645a, D2: 0xe0645a,
+      LCX: 0x7ed6a7, OM1: 0x7ed6a7, OM2: 0x7ed6a7, LPDA: 0x7ed6a7,
+      RCA: 0x7daedb, AM: 0x7daedb, PDA: 0x7daedb, PL: 0x7daedb,
+    }
+    for (const [id, entry] of Object.entries(this.groups)) {
+      if (!this.meshByVessel?.[id]) continue
+      const material = entry.material
+      if (!material?.uniforms?.uColor) continue
+      material.uniforms.uColor.value.set(on ? (colors[id] ?? 0xffffff) : 0xffffff)
+    }
   }
 
   buildTube(curve, vessel, segments = 130, radialSegments = 6) {
@@ -224,7 +323,7 @@ export default class AngioEngine {
     for (let i = 0; i <= segments; i += 1) {
       const t = i / segments
       const point = curve.getPointAt(t)
-      let radius = vessel.width * 0.68 * (1 - 0.12 * t)
+      let radius = vessel.width * 0.5 * (1 - 0.12 * t)
       if (vessel.id === LESION.vessel) {
         const distance = Math.abs(t - LESION.t)
         if (distance < 0.075) {
@@ -412,6 +511,7 @@ export default class AngioEngine {
         uTime: { value: 0 },
         uMode: { value: 0 },
         uGrain: { value: 1 },
+        uColorMode: { value: 0 },
         uResolution: { value: new THREE.Vector2(1, 1) },
       },
       vertexShader: `
@@ -426,6 +526,7 @@ export default class AngioEngine {
         uniform float uTime;
         uniform float uMode;
         uniform float uGrain;
+        uniform float uColorMode;
         uniform vec2 uResolution;
         varying vec2 vUv;
 
@@ -436,7 +537,8 @@ export default class AngioEngine {
         void main() {
           vec2 uv = vUv;
           vec2 px = 1.0 / uResolution;
-          float center = texture2D(tDiffuse, uv).r;
+          vec3 source = texture2D(tDiffuse, uv).rgb;
+          float center = source.r;
           float glow = 0.0;
           glow += texture2D(tDiffuse, uv + vec2(px.x, 0.0)).r;
           glow += texture2D(tDiffuse, uv - vec2(px.x, 0.0)).r;
@@ -446,19 +548,25 @@ export default class AngioEngine {
           glow += texture2D(tDiffuse, uv - px * 2.0).r;
           glow *= 0.16;
 
-          float vessel = smoothstep(0.045, 0.82, center + glow * 1.05);
-          float core = smoothstep(0.38, 0.98, center + glow * 0.5);
+          float vessel = smoothstep(0.12, 1.0, center + glow * 0.8);
+          float core = smoothstep(0.5, 1.0, center + glow * 0.3);
           float grain = (hash(uv * uResolution + uTime * 40.0) - 0.5) * 0.03 * uGrain;
           float scan = sin((uv.y + uTime * 0.012) * uResolution.y * 1.7) * 0.0022;
           float vignette = smoothstep(1.2, 0.35, length((uv - 0.5) * vec2(1.0, 1.12)));
           float shadow = smoothstep(0.62, 0.02, length((uv - vec2(0.49, 0.54)) * vec2(1.08, 1.3)));
 
           vec3 fluoro = vec3(0.715, 0.74, 0.69);
-          fluoro -= vessel * vec3(0.64, 0.64, 0.59);
-          fluoro -= core * vec3(0.22, 0.21, 0.18);
+          fluoro -= vessel * vec3(0.4, 0.4, 0.37);
+          fluoro -= core * vec3(0.12, 0.11, 0.1);
           fluoro -= shadow * 0.035;
           fluoro += grain + scan;
           fluoro *= 0.8 + 0.2 * vignette;
+
+          if (uColorMode > 0.5) {
+            float colorMask = smoothstep(0.18, 0.7, max(source.r, max(source.g, source.b)));
+            vec3 tinted = source * 1.15;
+            fluoro = mix(fluoro, tinted, colorMask * 0.88);
+          }
 
           vec3 dsa = vec3(vessel * 1.15) + glow * 0.85;
           dsa = pow(dsa, vec3(1.18));
@@ -482,9 +590,19 @@ export default class AngioEngine {
     if (this.side === 'both') visibleSet.delete('LPDA')
     const derived = this.side === 'both' ? [...this.derivedIds.left, ...this.derivedIds.right] : this.derivedIds[this.side] || []
     derived.forEach((id) => visibleSet.add(id))
+    if (this.dominance === 'left') {
+      visibleSet.delete('PDA')
+      visibleSet.delete('PL')
+      if (this.side !== 'right') visibleSet.add('LPDA')
+    } else if (this.dominance === 'co') {
+      visibleSet.add('LPDA')
+    } else {
+      visibleSet.delete('LPDA')
+    }
     for (const [id, entry] of Object.entries(this.groups)) {
       entry.mesh.visible = visibleSet.has(id)
     }
+    this.applyExtras()
     for (const label of this.angioLabels) {
       label.object.visible = this.labelsVisible && visibleSet.has(label.vessel)
     }

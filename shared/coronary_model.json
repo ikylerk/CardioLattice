@@ -7,59 +7,524 @@
   },
   "disclaimer": "Reference coronary model for teaching, projection demonstration and workflow analysis. It is not derived from the patient. QCA values are reference/synthetic; FFR values are synthetic and must not be used for clinical decisions.",
   "segments": [
-    { "id": "LM", "vessel": "LM", "side": "left", "name": "左主干", "coronarySegment": "LM", "territory": "LAD/LCX", "ahaMyocardialSegments": [1, 2, 5, 6, 7, 8, 11, 12, 13, 14, 16, 17], "referenceDiameterMm": 4.5, "lengthMm": 12, "tStart": 0, "tEnd": 1 },
-    { "id": "LAD_PROX", "vessel": "LAD", "side": "left", "name": "LAD 近段", "coronarySegment": "pLAD", "territory": "LAD", "ahaMyocardialSegments": [1, 2, 7, 8], "referenceDiameterMm": 3.5, "lengthMm": 25, "tStart": 0, "tEnd": 0.33 },
-    { "id": "LAD_MID", "vessel": "LAD", "side": "left", "name": "LAD 中段", "coronarySegment": "mLAD", "territory": "LAD", "ahaMyocardialSegments": [7, 8, 13, 14, 17], "referenceDiameterMm": 3.2, "lengthMm": 30, "tStart": 0.33, "tEnd": 0.66, "referenceLesion": true },
-    { "id": "LAD_DIST", "vessel": "LAD", "side": "left", "name": "LAD 远段", "coronarySegment": "dLAD", "territory": "LAD", "ahaMyocardialSegments": [13, 14, 17], "referenceDiameterMm": 2.7, "lengthMm": 30, "tStart": 0.66, "tEnd": 1 },
-    { "id": "D1", "vessel": "D1", "side": "left", "name": "第一对角支", "coronarySegment": "D1", "territory": "LAD", "ahaMyocardialSegments": [7, 12], "referenceDiameterMm": 2.2, "lengthMm": 25, "tStart": 0, "tEnd": 1 },
-    { "id": "D2", "vessel": "D2", "side": "left", "name": "第二对角支", "coronarySegment": "D2", "territory": "LAD", "ahaMyocardialSegments": [12], "referenceDiameterMm": 1.8, "lengthMm": 20, "tStart": 0, "tEnd": 1 },
-    { "id": "LCX_PROX", "vessel": "LCX", "side": "left", "name": "LCX 近段", "coronarySegment": "pLCX", "territory": "LCX", "ahaMyocardialSegments": [5, 6, 11, 12], "referenceDiameterMm": 3.4, "lengthMm": 20, "tStart": 0, "tEnd": 0.33 },
-    { "id": "LCX_MID", "vessel": "LCX", "side": "left", "name": "LCX 中段", "coronarySegment": "mLCX", "territory": "LCX", "ahaMyocardialSegments": [11, 12, 16], "referenceDiameterMm": 3.0, "lengthMm": 25, "tStart": 0.33, "tEnd": 0.66 },
-    { "id": "LCX_DIST", "vessel": "LCX", "side": "left", "name": "LCX 远段", "coronarySegment": "dLCX", "territory": "LCX", "ahaMyocardialSegments": [16], "referenceDiameterMm": 2.6, "lengthMm": 30, "tStart": 0.66, "tEnd": 1 },
-    { "id": "OM1", "vessel": "OM1", "side": "left", "name": "第一钝缘支", "coronarySegment": "OM1", "territory": "LCX", "ahaMyocardialSegments": [12, 16], "referenceDiameterMm": 2.2, "lengthMm": 25, "tStart": 0, "tEnd": 1 },
-    { "id": "OM2", "vessel": "OM2", "side": "left", "name": "第二钝缘支", "coronarySegment": "OM2", "territory": "LCX", "ahaMyocardialSegments": [16], "referenceDiameterMm": 1.8, "lengthMm": 20, "tStart": 0, "tEnd": 1 },
-    { "id": "RCA_PROX", "vessel": "RCA", "side": "right", "name": "RCA 近段", "coronarySegment": "pRCA", "territory": "RCA", "ahaMyocardialSegments": [3, 4, 9, 10, 15], "referenceDiameterMm": 4.0, "lengthMm": 30, "tStart": 0, "tEnd": 0.33, "referenceLesion": true },
-    { "id": "RCA_MID", "vessel": "RCA", "side": "right", "name": "RCA 中段", "coronarySegment": "mRCA", "territory": "RCA", "ahaMyocardialSegments": [3, 4, 9, 10], "referenceDiameterMm": 3.6, "lengthMm": 35, "tStart": 0.33, "tEnd": 0.66 },
-    { "id": "RCA_DIST", "vessel": "RCA", "side": "right", "name": "RCA 远段", "coronarySegment": "dRCA", "territory": "RCA", "ahaMyocardialSegments": [4, 15], "referenceDiameterMm": 3.0, "lengthMm": 30, "tStart": 0.66, "tEnd": 1 },
-    { "id": "AM", "vessel": "AM", "side": "right", "name": "锐缘支", "coronarySegment": "AM", "territory": "RCA", "ahaMyocardialSegments": [3, 4], "referenceDiameterMm": 2.0, "lengthMm": 20, "tStart": 0, "tEnd": 1 },
-    { "id": "PDA", "vessel": "PDA", "side": "right", "name": "后降支", "coronarySegment": "PDA", "territory": "RCA", "ahaMyocardialSegments": [15], "referenceDiameterMm": 2.0, "lengthMm": 25, "tStart": 0, "tEnd": 1 },
-    { "id": "PL", "vessel": "PL", "side": "right", "name": "左室后支", "coronarySegment": "PL", "territory": "RCA", "ahaMyocardialSegments": [16], "referenceDiameterMm": 1.8, "lengthMm": 20, "tStart": 0, "tEnd": 1 }
+    {
+      "id": "LM",
+      "vessel": "LM",
+      "side": "left",
+      "name": "左主干",
+      "coronarySegment": "LM",
+      "territory": "LAD/LCX",
+      "ahaMyocardialSegments": [
+        1,
+        2,
+        5,
+        6,
+        7,
+        8,
+        11,
+        12,
+        13,
+        14,
+        16,
+        17
+      ],
+      "referenceDiameterMm": 4.5,
+      "lengthMm": 12,
+      "tStart": 0,
+      "tEnd": 1
+    },
+    {
+      "id": "LAD_PROX",
+      "vessel": "LAD",
+      "side": "left",
+      "name": "LAD 近段",
+      "coronarySegment": "pLAD",
+      "territory": "LAD",
+      "ahaMyocardialSegments": [
+        1,
+        2,
+        7,
+        8
+      ],
+      "referenceDiameterMm": 3.5,
+      "lengthMm": 25,
+      "tStart": 0,
+      "tEnd": 0.33
+    },
+    {
+      "id": "LAD_MID",
+      "vessel": "LAD",
+      "side": "left",
+      "name": "LAD 中段",
+      "coronarySegment": "mLAD",
+      "territory": "LAD",
+      "ahaMyocardialSegments": [
+        7,
+        8,
+        13,
+        14,
+        17
+      ],
+      "referenceDiameterMm": 3.2,
+      "lengthMm": 30,
+      "tStart": 0.33,
+      "tEnd": 0.66,
+      "referenceLesion": true
+    },
+    {
+      "id": "LAD_DIST",
+      "vessel": "LAD",
+      "side": "left",
+      "name": "LAD 远段",
+      "coronarySegment": "dLAD",
+      "territory": "LAD",
+      "ahaMyocardialSegments": [
+        13,
+        14,
+        17
+      ],
+      "referenceDiameterMm": 2.7,
+      "lengthMm": 30,
+      "tStart": 0.66,
+      "tEnd": 1
+    },
+    {
+      "id": "D1",
+      "vessel": "D1",
+      "side": "left",
+      "name": "第一对角支",
+      "coronarySegment": "D1",
+      "territory": "LAD",
+      "ahaMyocardialSegments": [
+        7,
+        12
+      ],
+      "referenceDiameterMm": 2.2,
+      "lengthMm": 25,
+      "tStart": 0,
+      "tEnd": 1
+    },
+    {
+      "id": "D2",
+      "vessel": "D2",
+      "side": "left",
+      "name": "第二对角支",
+      "coronarySegment": "D2",
+      "territory": "LAD",
+      "ahaMyocardialSegments": [
+        12
+      ],
+      "referenceDiameterMm": 1.8,
+      "lengthMm": 20,
+      "tStart": 0,
+      "tEnd": 1
+    },
+    {
+      "id": "LCX_PROX",
+      "vessel": "LCX",
+      "side": "left",
+      "name": "LCX 近段",
+      "coronarySegment": "pLCX",
+      "territory": "LCX",
+      "ahaMyocardialSegments": [
+        5,
+        6,
+        11,
+        12
+      ],
+      "referenceDiameterMm": 3.4,
+      "lengthMm": 20,
+      "tStart": 0,
+      "tEnd": 0.33
+    },
+    {
+      "id": "LCX_MID",
+      "vessel": "LCX",
+      "side": "left",
+      "name": "LCX 中段",
+      "coronarySegment": "mLCX",
+      "territory": "LCX",
+      "ahaMyocardialSegments": [
+        11,
+        12,
+        16
+      ],
+      "referenceDiameterMm": 3.0,
+      "lengthMm": 25,
+      "tStart": 0.33,
+      "tEnd": 0.66
+    },
+    {
+      "id": "LCX_DIST",
+      "vessel": "LCX",
+      "side": "left",
+      "name": "LCX 远段",
+      "coronarySegment": "dLCX",
+      "territory": "LCX",
+      "ahaMyocardialSegments": [
+        16
+      ],
+      "referenceDiameterMm": 2.6,
+      "lengthMm": 30,
+      "tStart": 0.66,
+      "tEnd": 1
+    },
+    {
+      "id": "OM1",
+      "vessel": "OM1",
+      "side": "left",
+      "name": "第一钝缘支",
+      "coronarySegment": "OM1",
+      "territory": "LCX",
+      "ahaMyocardialSegments": [
+        12,
+        16
+      ],
+      "referenceDiameterMm": 2.2,
+      "lengthMm": 25,
+      "tStart": 0,
+      "tEnd": 1
+    },
+    {
+      "id": "OM2",
+      "vessel": "OM2",
+      "side": "left",
+      "name": "第二钝缘支",
+      "coronarySegment": "OM2",
+      "territory": "LCX",
+      "ahaMyocardialSegments": [
+        16
+      ],
+      "referenceDiameterMm": 1.8,
+      "lengthMm": 20,
+      "tStart": 0,
+      "tEnd": 1
+    },
+    {
+      "id": "RCA_PROX",
+      "vessel": "RCA",
+      "side": "right",
+      "name": "RCA 近段",
+      "coronarySegment": "pRCA",
+      "territory": "RCA",
+      "ahaMyocardialSegments": [
+        3,
+        4,
+        9,
+        10,
+        15
+      ],
+      "referenceDiameterMm": 4.0,
+      "lengthMm": 30,
+      "tStart": 0,
+      "tEnd": 0.33,
+      "referenceLesion": true
+    },
+    {
+      "id": "RCA_MID",
+      "vessel": "RCA",
+      "side": "right",
+      "name": "RCA 中段",
+      "coronarySegment": "mRCA",
+      "territory": "RCA",
+      "ahaMyocardialSegments": [
+        3,
+        4,
+        9,
+        10
+      ],
+      "referenceDiameterMm": 3.6,
+      "lengthMm": 35,
+      "tStart": 0.33,
+      "tEnd": 0.66
+    },
+    {
+      "id": "RCA_DIST",
+      "vessel": "RCA",
+      "side": "right",
+      "name": "RCA 远段",
+      "coronarySegment": "dRCA",
+      "territory": "RCA",
+      "ahaMyocardialSegments": [
+        4,
+        15
+      ],
+      "referenceDiameterMm": 3.0,
+      "lengthMm": 30,
+      "tStart": 0.66,
+      "tEnd": 1
+    },
+    {
+      "id": "AM",
+      "vessel": "AM",
+      "side": "right",
+      "name": "锐缘支",
+      "coronarySegment": "AM",
+      "territory": "RCA",
+      "ahaMyocardialSegments": [
+        3,
+        4
+      ],
+      "referenceDiameterMm": 2.0,
+      "lengthMm": 20,
+      "tStart": 0,
+      "tEnd": 1
+    },
+    {
+      "id": "PDA",
+      "vessel": "PDA",
+      "side": "right",
+      "name": "后降支",
+      "coronarySegment": "PDA",
+      "territory": "RCA",
+      "ahaMyocardialSegments": [
+        15
+      ],
+      "referenceDiameterMm": 2.0,
+      "lengthMm": 25,
+      "tStart": 0,
+      "tEnd": 1
+    },
+    {
+      "id": "PL",
+      "vessel": "PL",
+      "side": "right",
+      "name": "左室后支",
+      "coronarySegment": "PL",
+      "territory": "RCA",
+      "ahaMyocardialSegments": [
+        16
+      ],
+      "referenceDiameterMm": 1.8,
+      "lengthMm": 20,
+      "tStart": 0,
+      "tEnd": 1
+    }
   ],
   "myocardialSegments": [
-    { "id": 1, "name": "基底前壁", "territory": "LAD" },
-    { "id": 2, "name": "基底前间隔", "territory": "LAD" },
-    { "id": 3, "name": "基底下间隔", "territory": "RCA" },
-    { "id": 4, "name": "基底下壁", "territory": "RCA" },
-    { "id": 5, "name": "基底下侧壁", "territory": "LCX" },
-    { "id": 6, "name": "基底前侧壁", "territory": "LCX" },
-    { "id": 7, "name": "中间前壁", "territory": "LAD" },
-    { "id": 8, "name": "中间前间隔", "territory": "LAD" },
-    { "id": 9, "name": "中间下间隔", "territory": "RCA" },
-    { "id": 10, "name": "中间下壁", "territory": "RCA" },
-    { "id": 11, "name": "中间下侧壁", "territory": "LCX" },
-    { "id": 12, "name": "中间前侧壁", "territory": "LCX" },
-    { "id": 13, "name": "心尖前壁", "territory": "LAD" },
-    { "id": 14, "name": "心尖间隔", "territory": "LAD" },
-    { "id": 15, "name": "心尖下壁", "territory": "RCA" },
-    { "id": 16, "name": "心尖侧壁", "territory": "LCX" },
-    { "id": 17, "name": "心尖", "territory": "LAD" }
+    {
+      "id": 1,
+      "name": "基底前壁",
+      "territory": "LAD"
+    },
+    {
+      "id": 2,
+      "name": "基底前间隔",
+      "territory": "LAD"
+    },
+    {
+      "id": 3,
+      "name": "基底下间隔",
+      "territory": "RCA"
+    },
+    {
+      "id": 4,
+      "name": "基底下壁",
+      "territory": "RCA"
+    },
+    {
+      "id": 5,
+      "name": "基底下侧壁",
+      "territory": "LCX"
+    },
+    {
+      "id": 6,
+      "name": "基底前侧壁",
+      "territory": "LCX"
+    },
+    {
+      "id": 7,
+      "name": "中间前壁",
+      "territory": "LAD"
+    },
+    {
+      "id": 8,
+      "name": "中间前间隔",
+      "territory": "LAD"
+    },
+    {
+      "id": 9,
+      "name": "中间下间隔",
+      "territory": "RCA"
+    },
+    {
+      "id": 10,
+      "name": "中间下壁",
+      "territory": "RCA"
+    },
+    {
+      "id": 11,
+      "name": "中间下侧壁",
+      "territory": "LCX"
+    },
+    {
+      "id": 12,
+      "name": "中间前侧壁",
+      "territory": "LCX"
+    },
+    {
+      "id": 13,
+      "name": "心尖前壁",
+      "territory": "LAD"
+    },
+    {
+      "id": 14,
+      "name": "心尖间隔",
+      "territory": "LAD"
+    },
+    {
+      "id": 15,
+      "name": "心尖下壁",
+      "territory": "RCA"
+    },
+    {
+      "id": 16,
+      "name": "心尖侧壁",
+      "territory": "LCX"
+    },
+    {
+      "id": 17,
+      "name": "心尖",
+      "territory": "LAD"
+    }
   ],
   "projections": {
     "left": [
-      { "label": "LAO Cranial", "sub": "LAD / 分叉", "rot": 30, "tilt": 30, "optimalFor": ["LAD_PROX", "LAD_MID", "LM"] },
-      { "label": "RAO Cranial", "sub": "LAD / 间隔", "rot": -30, "tilt": 30, "optimalFor": ["LAD_MID", "LAD_DIST"] },
-      { "label": "LAO Caudal", "sub": "LCX / 主干", "rot": 45, "tilt": -30, "optimalFor": ["LM", "LCX_PROX"] },
-      { "label": "RAO Caudal", "sub": "LCX / 远端", "rot": -30, "tilt": -30, "optimalFor": ["LCX_MID", "LCX_DIST"] },
-      { "label": "Spider", "sub": "左主干分叉", "rot": 45, "tilt": -35, "optimalFor": ["LM"] },
-      { "label": "AP Cranial", "sub": "LAD 中远段", "rot": 0, "tilt": 30, "optimalFor": ["LAD_MID", "LAD_DIST"] }
+      {
+        "label": "Spider",
+        "sub": "左主干分叉",
+        "rot": 45,
+        "tilt": -35,
+        "optimalFor": [
+          "LM",
+          "LCX_PROX"
+        ]
+      },
+      {
+        "label": "RAO Caudal",
+        "sub": "LCX / 远端",
+        "rot": -30,
+        "tilt": -30,
+        "optimalFor": [
+          "LCX_MID",
+          "LCX_DIST",
+          "OM1"
+        ]
+      },
+      {
+        "label": "AP Caudal",
+        "sub": "LCX / OM",
+        "rot": -10,
+        "tilt": -30,
+        "optimalFor": [
+          "LCX_PROX",
+          "LCX_MID",
+          "OM1"
+        ]
+      },
+      {
+        "label": "AP Cranial",
+        "sub": "LAD 中远段",
+        "rot": -10,
+        "tilt": 40,
+        "optimalFor": [
+          "LAD_MID",
+          "LAD_DIST"
+        ]
+      },
+      {
+        "label": "LAO Cranial",
+        "sub": "LAD / 分叉",
+        "rot": 40,
+        "tilt": 35,
+        "optimalFor": [
+          "LAD_PROX",
+          "LAD_MID",
+          "D1"
+        ]
+      },
+      {
+        "label": "RAO Cranial",
+        "sub": "LAD / 间隔",
+        "rot": -30,
+        "tilt": 30,
+        "optimalFor": [
+          "LAD_MID",
+          "LAD_DIST",
+          "D2"
+        ]
+      },
+      {
+        "label": "Lateral",
+        "sub": "左冠侧位",
+        "rot": 90,
+        "tilt": 0,
+        "optimalFor": [
+          "LM",
+          "LAD_MID"
+        ]
+      },
+      {
+        "label": "AP",
+        "sub": "左冠正位",
+        "rot": 0,
+        "tilt": 0,
+        "optimalFor": [
+          "LM",
+          "LAD_PROX"
+        ]
+      }
     ],
     "right": [
-      { "label": "LAO", "sub": "RCA 近中段", "rot": 30, "tilt": 0, "optimalFor": ["RCA_PROX", "RCA_MID"] },
-      { "label": "RAO", "sub": "RCA 中段", "rot": -30, "tilt": 0, "optimalFor": ["RCA_MID"] },
-      { "label": "AP", "sub": "RCA 开口", "rot": 0, "tilt": 0, "optimalFor": ["RCA_PROX"] },
-      { "label": "AP Cranial", "sub": "RCA 远端", "rot": 0, "tilt": 30, "optimalFor": ["RCA_DIST"] },
-      { "label": "LAO Cranial", "sub": "RCA / PDA", "rot": 30, "tilt": 30, "optimalFor": ["PDA", "RCA_DIST"] },
-      { "label": "RAO Caudal", "sub": "RCA / PL", "rot": -30, "tilt": -30, "optimalFor": ["PL", "RCA_DIST"] }
+      {
+        "label": "LAO",
+        "sub": "RCA 近中段",
+        "rot": 50,
+        "tilt": 0,
+        "optimalFor": [
+          "RCA_PROX",
+          "RCA_MID"
+        ]
+      },
+      {
+        "label": "RAO",
+        "sub": "RCA 中段",
+        "rot": -30,
+        "tilt": 0,
+        "optimalFor": [
+          "RCA_MID"
+        ]
+      },
+      {
+        "label": "AP",
+        "sub": "RCA 开口",
+        "rot": 0,
+        "tilt": 0,
+        "optimalFor": [
+          "RCA_PROX"
+        ]
+      },
+      {
+        "label": "AP Cranial",
+        "sub": "RCA 远端",
+        "rot": 0,
+        "tilt": 30,
+        "optimalFor": [
+          "RCA_DIST",
+          "PDA"
+        ]
+      },
+      {
+        "label": "LAO Cranial",
+        "sub": "RCA / PDA / PL",
+        "rot": 40,
+        "tilt": 30,
+        "optimalFor": [
+          "RCA_DIST",
+          "PDA",
+          "PL"
+        ]
+      }
     ]
   },
   "analysisSteps": [

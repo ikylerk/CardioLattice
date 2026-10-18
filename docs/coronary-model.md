@@ -42,9 +42,47 @@ Each segment also lists the AHA 17-segment myocardial territories it supplies.
 
 ## Standard projections
 
-The model provides LAO/RAO and CRA/CAU presets for the left and right coronary
-systems, with `optimalFor` segment lists. Selecting a segment in the UI can
-automatically move the C-arm to a recommended projection.
+The projection set follows the AngioView educational simulator standard:
+
+| Left coronary | Angles |
+| --- | --- |
+| Spider | LAO 45 / CAU 35 |
+| RAO caudal | RAO 30 / CAU 30 |
+| AP caudal | RAO 10 / CAU 30 |
+| AP cranial | RAO 10 / CRA 40 |
+| LAO cranial | LAO 40 / CRA 35 |
+| RAO cranial | RAO 30 / CRA 30 |
+| Lateral | LAO 90 / 0 |
+| AP | 0 / 0 |
+
+| Right coronary | Angles |
+| --- | --- |
+| LAO | LAO 50 / 0 |
+| RAO | RAO 30 / 0 |
+| AP | 0 / 0 |
+| AP cranial | 0 / CRA 30 |
+| LAO cranial | LAO 40 / CRA 30 |
+
+Each projection has an `optimalFor` segment list. Selecting a segment in the UI
+automatically moves the C-arm to a recommended projection.
+
+### Interaction layer
+
+The AngioView module provides:
+
+- a 3D heart + skeleton panel with Detector view, Foreshortening, Skeleton,
+  See-through, Labels and Planes toggles;
+- a 3D C-arm room with detector, X-ray tube, table and patient phantom that
+  follows LAO/RAO and CRA/CAU;
+- dominance (right / left / co), grafts (LIMA, SVG-OM, SVG-PDA) and Ramus
+  intermedius controls;
+- a Color overlay for the angiogram, cine/fluoro/DSA/bone modes;
+- a segment explorer with reference diameter/length and AHA territories;
+- support for the AngioView-style hash parameters
+  `#a=-30&b=-30&sys=left`.
+
+The reference interface standard is [AngioView](https://angioview.com); this
+project is not affiliated with it.
 
 ## Reference analysis
 
