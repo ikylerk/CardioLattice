@@ -20,6 +20,7 @@ import AngleMap from './AngleMap.jsx'
 import CarmDiagram from './CarmDiagram.jsx'
 import { Badge, Button, IconButton, Section, Segmented, Slider, Stat, Toggle } from './ui.jsx'
 import AngioEngine from '../three/AngioEngine.js'
+import CORONARY_MODEL from '../../shared/coronary_model.json'
 
 const SIDE_OPTIONS = [
   { value: 'left', label: '左冠 LCA' },
@@ -33,64 +34,13 @@ const MODE_OPTIONS = [
   { value: 'bone', label: '骨骼' },
 ]
 
-const PRESETS = {
-  left: [
-    { label: 'LAO Cranial', sub: 'LAD / 分叉', rot: 30, tilt: 30 },
-    { label: 'RAO Cranial', sub: 'LAD / 间隔', rot: -30, tilt: 30 },
-    { label: 'LAO Caudal', sub: 'LCx / 主干', rot: 45, tilt: -30 },
-    { label: 'RAO Caudal', sub: 'LCx / 远端', rot: -30, tilt: -30 },
-    { label: 'Spider', sub: '左主干分叉', rot: 45, tilt: -35 },
-    { label: 'AP Cranial', sub: 'LAD 中远段', rot: 0, tilt: 30 },
-  ],
-  right: [
-    { label: 'LAO', sub: 'RCA 近中段', rot: 30, tilt: 0 },
-    { label: 'RAO', sub: 'RCA 中段', rot: -30, tilt: 0 },
-    { label: 'AP', sub: 'RCA 开口', rot: 0, tilt: 0 },
-    { label: 'AP Cranial', sub: 'RCA 远端', rot: 0, tilt: 30 },
-    { label: 'LAO Cranial', sub: 'RCA / PDA', rot: 30, tilt: 30 },
-    { label: 'RAO Caudal', sub: 'RCA / PL', rot: -30, tilt: -30 },
-  ],
-}
-
-const ANALYSIS_STEPS = [
-  '提取血管中心线',
-  '拟合参考直径',
-  '测量最小管腔直径',
-  '估算血流动力学',
-]
-
-const QCA_RESULTS = {
-  left: {
-    vessel: 'LAD 中段',
-    segment: 'AHA 7',
-    ds: 70,
-    mld: 0.96,
-    rvd: 3.2,
-    area: 84,
-    length: 18,
-    ffr: 0.78,
-    syntax: 12,
-    severity: 'critical',
-    confidence: 96.4,
-    stent: '3.0 × 18 mm',
-    residual: 6,
-  },
-  right: {
-    vessel: 'RCA 近段',
-    segment: 'AHA 1',
-    ds: 30,
-    mld: 2.8,
-    rvd: 4.0,
-    area: 42,
-    length: 10,
-    ffr: 0.91,
-    syntax: 0,
-    severity: 'mild',
-    confidence: 94.1,
-    stent: null,
-    residual: null,
-  },
-}
+const PRESETS = CORONARY_MODEL.projections
+const QCA_RESULTS = CORONARY_MODEL.referenceAnalysis
+const ANALYSIS_STEPS = CORONARY_MODEL.analysisSteps
+const SEGMENTS = CORONARY_MODEL.segments
+const MYOCARDIAL_SEGMENTS = Object.fromEntries(
+  CORONARY_MODEL.myocardialSegments.map((segment) => [segment.id, segment]),
+)
 
 function angleLabel(rot, tilt) {
   const h = `${rot >= 0 ? 'LAO' : 'RAO'} ${Math.abs(rot)}°`
@@ -114,6 +64,7 @@ export default function AngioView({ playing, setPlaying, notify }) {
   const [frame, setFrame] = React.useState(128)
   const [qca, setQca] = React.useState('idle')
   const [qcaStep, setQcaStep] = React.useState(0)
+  const [selectedSegmentId, setSelectedSegmentId] = React.useState(null)
   const [error, setError] = React.useState('')
   const hostRef = React.useRef(null)
   const engineRef = React.useRef(null)
@@ -151,7 +102,9 @@ export default function AngioView({ playing, setPlaying, notify }) {
     })
     timers.current = []
     engineRef.current?.setSide(side)
+    engineRef.current?.setSelectedVessel(null)
     setQca('idle')
+    setSelectedSegmentId(null)
     engineRef.current?.setQcaVisible(false)
   }, [side])
 
@@ -195,6 +148,19 @@ export default function AngioView({ playing, setPlaying, notify }) {
 
   const runQca = () => {
     if (qca === 'analyzing') return
+    const reference = QCA_RESULTS[side === 'right' ? 'right' : 'left']
+    const lesion = SEGMENTS.find((segment) => segment.id === reference.segmentId)
+    if (lesion) {
+      setSelectedSegmentId(lesion.id)
+      engineRef.current?.setSelectedVessel(lesion.vessel)
+      const projection = (PRESETS[side === 'right' ? 'right' : 'left'] || []).find(
+        (item) => item.optimalFor?.includes(lesion.id),
+      )
+      if (projection) {
+        setRot(projection.rot)
+        setTilt(projection.tilt)
+      }
+    }
     clearTimers()
     setQca('analyzing')
     setQcaStep(0)
@@ -208,7 +174,19 @@ export default function AngioView({ playing, setPlaying, notify }) {
 
   const currentPresets = PRESETS[side === 'right' ? 'right' : 'left']
   const result = QCA_RESULTS[side === 'right' ? 'right' : 'left']
+  const currentSegments = SEGMENTS.filter((segment) => side === 'both' || segment.side === side)
+  const selectedSegment = currentSegments.find((segment) => segment.id === selectedSegmentId) || null
   const presetActive = (preset) => preset.rot === rot && preset.tilt === tilt
+
+  const selectSegment = (segment) => {
+    setSelectedSegmentId(segment.id)
+    engineRef.current?.setSelectedVessel(segment.vessel)
+    const projection = (currentPresets || []).find((item) => item.optimalFor?.includes(segment.id))
+    if (projection) {
+      setRot(projection.rot)
+      setTilt(projection.tilt)
+    }
+  }
 
   const capture = () => {
     const url = engineRef.current?.capture()
@@ -225,7 +203,7 @@ export default function AngioView({ playing, setPlaying, notify }) {
         eyebrow="CORONARY ANGIOGRAPHY"
         title="冠脉造影"
         titleSuffix="FLUOROSCOPY"
-        description="三维冠脉树实时投照 · C 臂角度模拟 · QCA 定量狭窄分析"
+        description="三维冠脉树实时投照 · C 臂角度模拟 · 冠脉分段与参考定量分析"
         meta={
           <>
             <span>LCA / RCA</span>
@@ -237,7 +215,7 @@ export default function AngioView({ playing, setPlaying, notify }) {
         }
         actions={
           <>
-            <Badge tone="amber" dot>模拟透视</Badge>
+            <Badge tone="amber" dot>参考模型 · 非患者</Badge>
             <Button variant="outline" size="sm" icon={<Camera size={14} />} onClick={capture}>
               导出影像
             </Button>
@@ -288,7 +266,7 @@ export default function AngioView({ playing, setPlaying, notify }) {
                       <span>CINE 15 FPS</span>
                       <span>ARTERIAL PHASE</span>
                     </div>
-                    <span className="film-disclaimer">NON-DIAGNOSTIC SIMULATION</span>
+                    <span className="film-disclaimer">REFERENCE MODEL · NON-DIAGNOSTIC</span>
                   </div>
                   <div className="film-reticle" aria-hidden="true">
                     <span />
@@ -415,9 +393,43 @@ export default function AngioView({ playing, setPlaying, notify }) {
             />
           </Section>
 
+          <Section title="冠脉分段" code="CORONARY SEGMENTS" right={<span className="section-hint">{currentSegments.length} 段</span>} className="segment-section">
+            <div className="angio-segment-list">
+              {currentSegments.map((segment) => (
+                <button
+                  key={segment.id}
+                  type="button"
+                  className={`angio-segment-row ${selectedSegmentId === segment.id ? 'active' : ''}`}
+                  onClick={() => selectSegment(segment)}
+                >
+                  <span className="segment-name">
+                    <b>{segment.name}</b>
+                    <small>{segment.coronarySegment} · {segment.territory} · AHA {segment.ahaMyocardialSegments.join('/')}</small>
+                  </span>
+                  <span className="segment-metrics">
+                    <em>{segment.referenceDiameterMm.toFixed(1)} mm</em>
+                    <small>{segment.lengthMm} mm</small>
+                  </span>
+                  {segment.referenceLesion ? <i className="segment-lesion">参考病变</i> : null}
+                </button>
+              ))}
+            </div>
+            {selectedSegment ? (
+              <div className="angio-segment-detail">
+                <div><span>分段</span><b>{selectedSegment.name} · {selectedSegment.coronarySegment}</b></div>
+                <div><span>供血区</span><b>{selectedSegment.territory}</b></div>
+                <div><span>参考直径 / 长度</span><b>{selectedSegment.referenceDiameterMm} mm / {selectedSegment.lengthMm} mm</b></div>
+                <div><span>AHA 心肌段</span><b>{selectedSegment.ahaMyocardialSegments.map((id) => `${id} ${MYOCARDIAL_SEGMENTS[id]?.name || ''}`).join(' · ')}</b></div>
+                <p>参考冠脉模型分段，用于投照体位与教学分析；不是患者病变。</p>
+              </div>
+            ) : (
+              <div className="angio-model-note">选择分段以高亮血管并匹配推荐投照体位；数据来自参考冠脉模型，不是患者影像。</div>
+            )}
+          </Section>
+
           <Section
-            title="QCA 定量分析"
-            code="AUTOMATED QCA"
+            title="参考定量分析"
+            code="REFERENCE QCA"
             className="qca-section"
             right={<Badge tone={qca === 'done' ? (result.severity === 'critical' ? 'red' : 'teal') : 'neutral'}>{qca === 'done' ? '完成' : qca === 'analyzing' ? '分析中' : '待分析'}</Badge>}
           >
@@ -427,12 +439,12 @@ export default function AngioView({ playing, setPlaying, notify }) {
                   <span className="qca-target"><Target size={18} /></span>
                   <div>
                     <b>{result.vessel} · {result.segment}</b>
-                    <small>自动中心线与参考直径拟合</small>
+                    <small>基于参考冠脉模型的分段几何分析</small>
                   </div>
                 </div>
-                <p>在舒张末期帧上检测病变段、最小管腔直径与参考血管直径，并估算 FFR-CT。</p>
+                <p>读取参考冠脉模型的分段直径/长度与参考病变，生成参考狭窄指标和合成 FFR 提示；不基于患者影像。</p>
                 <Button variant="primary" size="sm" onClick={runQca} icon={<ScanLine size={14} />}>
-                  运行 QCA 分析
+                  运行参考分析
                 </Button>
               </div>
             ) : null}
@@ -479,25 +491,26 @@ export default function AngioView({ playing, setPlaying, notify }) {
                   <Stat label="面积狭窄" value={result.area} unit="%" />
                   <Stat label="病变长度" value={result.length} unit="mm" />
                   <Stat label="FFR-CT" value={result.ffr.toFixed(2)} accent={result.ffr < 0.8 ? 'amber' : undefined} />
-                  <Stat label="置信度" value={result.confidence} unit="%" />
+                  <Stat label="模型置信度" value={result.confidence ?? '—'} unit={result.confidence != null ? '%' : ''} />
                 </div>
                 <div className="qca-meta">
-                  <span>LVEF 54%</span>
-                  <span>SYNTAX {result.syntax}</span>
+                  <span>参考 LVEF 54%</span>
+                  <span>参考 SYNTAX {result.syntax}</span>
                   <span>参考帧 ED</span>
                 </div>
+                <p className="angio-model-note">{result.note}</p>
                 <div className="qca-conclusion">
                   <CircleAlert size={14} />
                   <p>
                     {result.severity === 'critical'
-                      ? 'LAD 中段重度狭窄，FFR-CT < 0.80，建议有创 FFR 复核并评估血运重建。'
-                      : 'RCA 近段轻度狭窄，血流动力学意义不显著，建议药物治疗与随访。'}
+                      ? '参考模型：LAD 中段几何狭窄；FFR 为合成参考值。真实患者需结合有创 FFR 与临床评估，本结果不构成治疗建议。'
+                      : '参考模型：RCA 近段轻度几何狭窄；无患者级血流动力学结论。'}
                   </p>
                 </div>
                 {result.stent ? (
                   <div className="stent-plan">
                     <div>
-                      <span>虚拟 PCI 规划</span>
+                      <span>参考 PCI 尺寸（教学）</span>
                       <b>{result.stent}</b>
                     </div>
                     <ChevronRight size={14} />
@@ -509,7 +522,7 @@ export default function AngioView({ playing, setPlaying, notify }) {
                 ) : null}
                 <div className="qca-actions">
                   <Button variant="outline" size="sm" onClick={runQca}>重新分析</Button>
-                  <Button variant="ghost" size="sm" onClick={() => notify('QCA 结果已加入结构化报告')}>加入报告</Button>
+                  <Button variant="ghost" size="sm" onClick={() => notify('参考分析已加入演示报告')}>加入报告（演示）</Button>
                 </div>
               </div>
             ) : null}

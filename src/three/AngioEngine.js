@@ -535,6 +535,22 @@ export default class AngioEngine {
     this.labelRenderer.domElement.style.display = visible ? '' : 'none'
   }
 
+  setSelectedVessel(id) {
+    this.selectedVessel = id
+    const selectedMaterial = id ? this.groups[id]?.material : null
+    for (const [vesselId, entry] of Object.entries(this.groups)) {
+      if (!this.meshByVessel?.[vesselId]) continue
+      const material = entry.material
+      if (!material?.uniforms?.uOpacity) continue
+      const branch = !['LM', 'LAD', 'LCX', 'RCA'].includes(vesselId)
+      if (selectedMaterial) {
+        material.uniforms.uOpacity.value = material === selectedMaterial ? 1.3 : 0.16
+      } else {
+        material.uniforms.uOpacity.value = branch ? 0.9 : 1.15
+      }
+    }
+  }
+
   setQcaVisible(visible) {
     this.qcaVisible = visible
     this.qcaObject.visible = visible && this.qcaVisibleTarget

@@ -16,6 +16,7 @@ import { Badge, Button, Section, Slider, Stat, Toggle } from './ui.jsx'
 import { useStudy } from '../study/StudyContext.jsx'
 
 const STRUCTURE_NAMES = {
+  CORONARY_TREE: '冠脉树（公开数据）',
   LV: '左心室',
   RV: '右心室',
   LA: '左心房',
@@ -26,6 +27,7 @@ const STRUCTURE_NAMES = {
 }
 
 const STRUCTURE_COLORS = {
+  CORONARY_TREE: 0xc45258,
   LV: 0xc45258,
   RV: 0x5684be,
   LA: 0xd69a52,
@@ -217,6 +219,12 @@ export default function PatientAnatomyView({ notify, onNavigate }) {
 
   const computed = measurements.filter((item) => item.status === 'computed')
   const synthetic = measurements.some((item) => item.validationStatus === 'synthetic')
+  const isPublic = study?.study?.source === 'public_dataset'
+  const sourceText = isPublic
+    ? '来自公开数据集的 NIfTI 标签与 GLB 表面；不是患者级临床分割。'
+    : '来自上传 DICOM 的分割掩膜与 GLB 表面；非演示心脏模型。'
+  const title = isPublic ? '研究三维重建' : '患者三维重建'
+  const surfaceTitle = isPublic ? '研究三维表面' : '患者级三维表面' 
 
   if (!modelUrl) {
     return (
@@ -249,9 +257,9 @@ export default function PatientAnatomyView({ notify, onNavigate }) {
       <ViewHeader
         index="01"
         eyebrow="PATIENT ANATOMY"
-        title="患者三维重建"
+        title={title}
         titleSuffix="SEGMENTATION → MESH"
-        description="来自上传 DICOM 的分割掩膜与 GLB 表面；非演示心脏模型。"
+        description={sourceText}
         meta={
           <>
             <span>{structureNames.length} 结构</span>
@@ -295,7 +303,7 @@ export default function PatientAnatomyView({ notify, onNavigate }) {
             <div className="selection-title">
               <span className="structure-swatch swatch-great" />
               <div>
-                <h2>患者级三维表面</h2>
+                <h2>{surfaceTitle}</h2>
                 <small>{study?.study?.subject?.pseudonym || '匿名受试者'}</small>
               </div>
             </div>

@@ -137,3 +137,71 @@ def cavity_volumes(label_array: np.ndarray, preview: PreviewVolume) -> dict[str,
             continue
         volumes[code] = float(np.count_nonzero(label_array == value)) * voxel_ml
     return volumes
+
+def build_structure_glb(
+    label_array: np.ndarray,
+    preview: PreviewVolume,
+    out_path: Path,
+    structures: dict[int, dict],
+    *,
+    max_triangles_per_structure: int = 80_000,
+) -> tuple[list[MeshInfo], dict]:
+    """Generic label-map to GLB export for public/research datasets.
+
+    structures: {label_value: {"code": str, "name": str, "color": (r,g,b)}}
+    """
+    nx, ny, nz = preview.dims
+    sx, sy, sz = preview.spacing
+    size_mm = np.array([nx * sx, ny * sy, nz * sz], dtype=float)
+    scale = 3.0 / float(max(size_mm))
+    center = size_mm / 2.0
+
+    scene = trimesh.Scene()
+    infos: list[MeshInfo] = []
+    for value, spec in sorted(structures.items()):
+        mask = label_array == value
+        if not np.any(mask):
+            continue
+        mask = _largest_component(mask)
+        verts, faces, normals, _ = measure.marching_cubes(
+            mask.astype(np.uint8), level=0.5, spacing=(sz, sy, sx)
+        )
+        if faces.size == 0:
+            continue
+        xyz = np.stack([verts[:, 2], verts[:, 1], verts[:, 0]], axis=1)
+        xyz = (xyz - center) * scale
+        mesh = trimesh.Trimesh(vertices=xyz, faces=faces, process=True)
+        try:
+            trimesh.smoothing.filter_taubin(mesh, lamb=0.45, nu=0.53, iterations=6)
+        except Exception:
+            pass
+        if len(mesh.faces) > max_triangles_per_structure:
+            try:
+                mesh = mesh.simplify_quadric_decimation(face_count=max_triangles_per_structure)
+            except Exception:
+                pass
+        color = spec.get("color", (160, 160, 160))
+        mesh.visual.face_colors = [*color, 255]
+        code = spec.get("code") or f"LABEL_{value}"
+        scene.add_geometry(mesh, node_name=code, geom_name=code)
+        infos.append(
+            MeshInfo(
+                structure_code=code,
+                vertex_count=int(len(mesh.vertices)),
+                triangle_count=int(len(mesh.faces)),
+                bbox=np.asarray(mesh.bounds, dtype=float).round(4).tolist(),
+            )
+        )
+    if len(scene.geometry) == 0:
+        raise ValueError("no labelled structures found; mesh not created")
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    scene.export(str(out_path), file_type="glb")
+    transform = {
+        "scale": scale,
+        "center_mm": center.tolist(),
+        "source": "RAS_mm",
+        "target": "scene_units",
+        "note": "GLB coordinates are already in scene units.",
+    }
+    return infos, transform
+

@@ -7666,3 +7666,92 @@ input:focus-visible {
 .readiness-list li.warn svg { color: var(--amber); }
 .readiness-list li.stop { color: #d98a90; }
 .readiness-list li.stop svg { color: var(--red); }
+
+/* Coronary segment model and reference analysis */
+
+.angio-segment-list {
+  max-height: 260px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.angio-segment-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid rgba(34, 52, 70, 0.75);
+  border-radius: 4px;
+  background: rgba(12, 19, 27, 0.55);
+  text-align: left;
+}
+.angio-segment-row:hover { border-color: var(--line-3); background: rgba(20, 31, 42, 0.7); }
+.angio-segment-row.active { border-color: rgba(103, 216, 204, 0.45); background: rgba(18, 56, 59, 0.22); }
+.segment-name { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+.segment-name b { font-size: 9.5px; color: var(--text-2); font-weight: 550; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.segment-name small { font-family: var(--font-mono); font-size: 6.6px; color: var(--muted); }
+.segment-metrics { display: flex; flex-direction: column; align-items: flex-end; gap: 0; flex-shrink: 0; }
+.segment-metrics em { font-style: normal; font-family: var(--font-mono); font-size: 8px; color: var(--teal); }
+.segment-metrics small { font-family: var(--font-mono); font-size: 6.5px; color: var(--muted); }
+.segment-lesion {
+  flex-shrink: 0;
+  font-style: normal;
+  font-size: 6.5px;
+  color: var(--amber);
+  border: 1px solid rgba(239, 179, 107, 0.4);
+  border-radius: 3px;
+  padding: 1px 4px;
+}
+.angio-segment-detail {
+  margin-top: 9px;
+  padding: 8px 9px;
+  border: 1px solid rgba(34, 52, 70, 0.7);
+  background: rgba(10, 17, 24, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.angio-segment-detail > div { display: flex; justify-content: space-between; gap: 10px; }
+.angio-segment-detail span { font-size: 8.5px; color: var(--muted); flex-shrink: 0; }
+.angio-segment-detail b { font-size: 8.5px; color: var(--text-2); text-align: right; }
+.angio-segment-detail p { margin: 4px 0 0; font-size: 8px; line-height: 1.5; color: var(--muted); }
+.angio-model-note {
+  margin: 8px 0 0;
+  padding: 6px 8px;
+  border-left: 2px solid rgba(239, 179, 107, 0.45);
+  background: rgba(239, 179, 107, 0.05);
+  font-size: 8px;
+  line-height: 1.5;
+  color: var(--sub);
+}
+
+.public-import-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 10px; }
+.public-file {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 9px 10px;
+  border: 1px dashed rgba(103, 216, 204, 0.28);
+  border-radius: var(--radius);
+  background: rgba(9, 16, 24, 0.6);
+  cursor: pointer;
+}
+.public-file span { font-size: 9.5px; color: var(--sub); }
+.public-file input { display: none; }
+.public-file b { font-family: var(--font-mono); font-size: 8px; color: var(--teal); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.public-import-row { display: grid; grid-template-columns: 150px 1fr; gap: 8px; margin-bottom: 10px; }
+.public-import-row label { display: flex; flex-direction: column; gap: 3px; font-size: 9px; color: var(--muted); }
+.public-import-row input {
+  height: 26px;
+  padding: 0 8px;
+  border: 1px solid rgba(34, 52, 70, 0.9);
+  border-radius: 4px;
+  background: rgba(8, 13, 20, 0.8);
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+}
+.public-import-row input:focus { border-color: rgba(103, 216, 204, 0.55); outline: none; }

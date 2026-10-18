@@ -137,6 +137,9 @@ codes, systems, colours, canonical placement and cardiac label mappings.
 - Each organ also has a `<CODE>_detail.glb` with named sub-structures. The
   engine loads it on demand, exposes per-part visibility/focus, and supports
   axial/coronal/sagittal clipping through a selected target.
+- `shared/coronary_model.json` defines 17 coronary segments, AHA 1–17
+  myocardial territories, C-arm projections and reference QCA values. The
+  AngioView reads it directly; `GET /api/coronary-model` exposes it.
 - `shared/organ_targets.json` defines 109 reference targets in the same frame.
   The engine builds a target marker, a straight approach path, a virtual needle,
   and reports path length, depth and approximate structure intersections.
@@ -151,7 +154,19 @@ codes, systems, colours, canonical placement and cardiac label mappings.
 - The organ GLBs are CC BY 4.0 and are not covered by the repository MIT licence.
   See `src/assets/organs/ATTRIBUTION.md`.
 
-## 10. Deployment path
+## 10. Public NIfTI research path
+
+`POST /api/public/import` accepts a NIfTI image and label map, resamples both,
+builds a preview volume, extracts label surfaces and writes a draft report.
+
+- It is marked `source=public_dataset` and does not run the clinical DICOM
+  de-identification path.
+- It uses `server/app/imaging/nifti.py` and `server/app/public_import.py`.
+- It produces label volumes only; stenosis/FFR/EF/calcium/AHA remain
+  `not_computed`.
+- Public and clinical paths must remain separate in the UI, storage and audit.
+
+## 11. Deployment path
 
 1. **Local-lite** (current): `uv run uvicorn` + `npm run dev:api`.
 2. **Container**: `docker compose up --build` (API + web, SQLite volume).

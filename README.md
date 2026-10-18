@@ -25,6 +25,8 @@ M1 把「演示」换成了可验证的数据链路：
 | 结构化报告草稿 | ✅ 已实现 | 模板生成；每个结论引用 measurement；医生批准后写入审计链 |
 | 审计哈希链 | ✅ 已实现 | 去标识、体数据、流水线、报告批准等事件 |
 | 标准器官模型库 | ✅ 已实现 | 19 个解剖参考器官、详细子结构、109 个参考靶点、靶点模拟 |
+| 冠脉分段与参考分析 | ✅ 已实现 | 17 个冠脉分段、AHA 1–17 心肌段映射、C 臂体位、参考 QCA |
+| 公开 NIfTI 导入 | ✅ 已实现 | ImageCAS/ASOCA 等公开影像 + 标签导入、预览体数据、GLB、报告草稿 |
 | LLM 辅助报告（Claude） | 🚧 M2 | 只对结构化事实做语言化，不独立下诊断；接口与校验已设计 |
 | 冠脉管腔/狭窄/FFR-CT | 🚧 M3–M4 | 未接入经过验证的模型，UI 显示 `not_computed`，不编造数值 |
 | 纵向对比/预测 | 🚧 M3 | 先做配准与 delta；没有验证模型前不展示“未来事件概率” |
@@ -147,6 +149,34 @@ queued → validating → anonymizing → building_volume
 
 ---
 
+## 冠脉模型与参考分析
+
+冠脉造影模块现在由 `shared/coronary_model.json` 驱动：
+
+- 17 个冠脉分段：LM、LAD 近/中/远段、LCX 近/中/远段、RCA 近/中/远段、D1/D2、OM1/OM2、AM、PDA、PL；
+- 每段包含 AHA 1–17 心肌供血区映射、参考直径与长度；
+- 标准 C 臂体位（LAO/RAO · CRA/CAU）及分段推荐体位；
+- 点击分段高亮对应血管，自动匹配投照角度；
+- 「运行参考分析」生成参考狭窄指标和合成 FFR 提示；
+- 后端 `GET /api/coronary-model` 暴露同一模型。
+
+> 这是参考冠脉模型，不是患者造影；QCA/FFR 为参考/合成值，不能用于临床决策。详见 [`docs/coronary-model.md`](docs/coronary-model.md)。
+
+---
+
+## 公开数据导入（NIfTI）
+
+「检查工作台」新增 **公开数据导入（NIfTI）**，用于 ImageCAS / ASOCA 等公开 CCTA 数据：
+
+- 上传影像 `.nii.gz` + 标签 `.nii.gz`，可提供标签映射 JSON；
+- 服务端重采样、对齐标签、生成预览体数据、marching cubes 网格、标签体积和报告草稿；
+- 研究路径标记为 `source=public_dataset`，与临床 DICOM 上传路径分开；
+- 不运行临床去标识、不计算狭窄/FFR/EF 等未验证指标。
+
+详见 [`docs/public-data.md`](docs/public-data.md)。
+
+---
+
 ## API（M1）
 
 | Method | Path | 说明 |
@@ -165,6 +195,8 @@ queued → validating → anonymizing → building_volume
 | GET | `/api/meshes/{id}/glb` | 患者 GLB |
 | GET | `/api/organs` | 标准器官目录（与前端共享同一 JSON） |
 | GET | `/api/organ-targets` | 参考靶点目录（教学/流程演练） |
+| GET | `/api/coronary-model` | 参考冠脉分段、AHA 映射与体位 |
+| POST | `/api/public/import` | 导入公开 NIfTI 影像 + 标签（研究路径） |
 | GET | `/api/models` | 模型注册表与授权状态 |
 | POST | `/api/studies/{id}/reports/{reportId}/approve` | 医生批准报告 |
 
@@ -202,6 +234,8 @@ src/                        React 前端
   three/                    HeartEngine / VolumeRenderer / OrganLibraryEngine
   data/heart-data.json      演示用教学解剖数据
 shared/organ_library.json   前后端共享的标准器官目录
+shared/organ_targets.json   109 个参考靶点
+shared/coronary_model.json  冠脉分段、AHA 映射与参考分析
 server/                     FastAPI 后端
   app/imaging/              DICOM 解析、体数据、分割、marching cubes
   app/routes/               studies / assets / reports
@@ -230,7 +264,7 @@ docs/                       架构、临床边界、路线图
 
 **当前状态：研究原型，不可用于临床。**
 
-- 已具备：DICOM 上传、去标识、体数据、MPR/VRT、解剖参考器官/子结构、参考靶点与教学模拟。
+- 已具备：DICOM 上传、去标识、体数据、MPR/VRT、解剖参考器官/子结构、参考靶点与教学模拟、公开 NIfTI 研究导入、冠脉分段与参考分析。
 - 尚未具备：患者级图谱配准、经过外部验证的分割/测量模型、狭窄/FFR-CT/单时相 EF/钙化积分/AHA 计算、纵向对比与预测、临床导航/手术规划。
 - 进入临床前必须完成：患者级配准与质控、模型外部验证、测量一致性验证、报告与权限体系、安全合规、临床评价与法规注册。
 

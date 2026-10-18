@@ -22,6 +22,8 @@ pathway. This document records the current gap explicitly.
 | Reference organ atlas | Implemented (19 organs, detail parts) | BodyParts3D + HRA reference anatomy, CC BY 4.0 | Not a patient-specific atlas |
 | Atlas-to-patient registration | Not implemented | No registration/QC | Validated registration with error bounds |
 | Reference targets and simulation | Implemented (109 targets) | Straight-ray teaching demo, no tissue model | Patient-specific planning, safety margins, validated instruments |
+| Coronary reference model / QCA | Implemented | 17 reference segments, synthetic FFR, reference values | Patient-specific centerline/lumen model, QCA validation |
+| Public NIfTI import | Implemented (research) | NIfTI + labels, label volumes only | Validated public-data segmentation and comparison |
 | LLM report drafting | M2 design | Human approval, evidence refs required | Clinical validation of workflow and wording |
 | Longitudinal comparison | Not implemented | M3 roadmap | Registration, comparable acquisitions |
 | Prediction | Not implemented | No validated longitudinal model | Validated risk/progression model |
