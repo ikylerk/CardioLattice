@@ -30,10 +30,39 @@ implemented code and demonstrated clinical/model capability.
 - Use locked dependencies in CI and keep local datasets, databases, secrets,
   dependency folders and build outputs outside version control.
 
-## Validation status
+## Validation results
 
-Integration validation is in progress. Final results will be recorded after
-backend/frontend regression checks, builds and browser checks complete.
+Local code tree: integration merge `84b4205` (subsequent documentation-only
+commits do not change the code validated below).
+
+| Check | Result |
+| --- | --- |
+| Backend regression suite | 260 passed, Python 3.14 local environment |
+| Frontend tests | 14 passed, including physical MPR, report version/hash requests and language handling |
+| Single-file production build | Passed |
+| Cloud/static production build | Passed |
+| Source parsing and identifier scan | No unresolved identifiers |
+| Documentation | Local links and conflict-marker/diff checks passed |
+| Fresh browser navigation | 7 API views × 2 languages, zero new page/console errors |
+| Report workflow | Language switch preserved text/version/hash; approval bound to current version; regeneration retained Chinese history and produced an English template draft with approval cleared |
+| Reference anatomy | Brain detail toggle, isolated display and reference target/simulation controls exercised |
+| Layout | Desktop screenshot inspected; 390px viewport had no horizontal overflow and language controls remained available |
+
+The seven views were workbench, anatomy, CTA, analysis, comparison, organ atlas
+and the angle-encoded coronary reference view. CTA rendered three MPR canvases
+and VRT; API mode displayed a single acquired phase, without invented ECG/4D
+availability. The reference angiography hash remained intact.
+
+Old-database tests cover adding `jobs.payload`, preserving records and report
+content, idempotence, concurrent SQLite startup and rollback. Existing null
+payloads remain readable. The migration is additive; it does not rewrite
+historical reports or hashes.
+
+Known non-blocking diagnostics: 191 NumPy/scikit-image deprecation warnings in
+the local backend suite; the cloud build warns about a JavaScript chunk of about
+2.2 MB before gzip. Those are maintenance/performance follow-ups, not passed
+clinical checks. GitHub PR checks provide the separate Linux/Python 3.11/Node 22
+validation record and are required before merging this integration to main.
 
 ## Evidence limitations
 

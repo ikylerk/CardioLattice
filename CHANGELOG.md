@@ -10,6 +10,8 @@
   amendment review and safe AI fallback with evidence/numeric checks.
 - Integrate English/Simplified Chinese UI and generation-time report language
   without discarding newer anatomy, geometry, comparison or review features.
+- Add an additive old-database upgrade for task language payloads, preserving
+  existing records and report content.
 - Update setup, API contracts, architecture, attribution and clinical boundaries;
   add a documentation index and reproducible contribution workflow.
 

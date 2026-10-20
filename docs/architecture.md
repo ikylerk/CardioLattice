@@ -165,3 +165,12 @@ describes the local API/web container stack. The current prototype lacks
 production authentication/RBAC. Actor/reviewer names are supplied labels, not
 authenticated signatures. Clinical deployment, production security, data
 governance and validated model performance require separate acceptance.
+
+
+## Existing SQLite databases
+
+Startup runs a small additive schema upgrade before creating missing tables.
+Older databases receive the nullable `jobs.payload` column; old rows remain null
+and existing reports are not rewritten. Startup upgrades are idempotent and
+serialized for SQLite. Back up local data before an upgrade; deployment to other
+database engines still requires a dedicated migration/deployment review.
