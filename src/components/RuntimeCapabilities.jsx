@@ -1,27 +1,32 @@
+import { t, useI18n, serverText } from '../i18n.js'
+import { tImaging, imagingLegacyText } from '../i18n-imaging.js'
 import React from 'react'
 import { health } from '../api/client.js'
 import { Badge, Button, Section } from './ui.jsx'
 
-const REPORT_STATUSES = {
-  template_only: '仅模板草稿',
-  configured_unverified: '已配置 · 未验证',
-}
-const SEGMENTATION_STATUSES = {
-  synthetic_only: '仅合成数据',
-  dependency_missing: '依赖未安装',
-  configured_unverified: '已配置 · 未验证',
-  unsupported: '不受支持',
-}
+const reportStatuses = () => ({
+  template_only: tImaging('capability.templateOnly'),
+  configured_unverified: tImaging('capability.unverified'),
+})
+const segmentationStatuses = () => ({
+  synthetic_only: tImaging('capability.syntheticOnly'),
+  dependency_missing: tImaging('capability.dependencyMissing'),
+  configured_unverified: tImaging('capability.unverified'),
+  unsupported: tImaging('capability.unsupported'),
+})
 
 function CapabilityRow({ title, value, statuses, phase }) {
-  const known = value
+  const suppliedReason = value?.reason
+  const reasonPresent = typeof suppliedReason === 'string' ? Boolean(suppliedReason.trim())
+    : suppliedReason && typeof suppliedReason.code === 'string' && Boolean(suppliedReason.code.trim())
+  const decodedReason = serverText(suppliedReason)
+  const known = phase === 'ready' && value
     && Object.prototype.hasOwnProperty.call(statuses, value.status)
-    && typeof value.reason === 'string'
-    && value.reason.trim()
-  const label = phase === 'loading' ? '读取中' : known ? statuses[value.status] : '状态未知'
-  const reason = phase === 'loading' ? '正在读取运行能力声明…'
-    : phase === 'error' ? '读取失败，当前能力状态未知。请重试。'
-      : known ? value.reason : '健康接口未返回可识别的能力状态，当前状态未知。'
+    && reasonPresent && Boolean(decodedReason.trim())
+  const label = phase === 'loading' ? tImaging('capability.loading') : known ? statuses[value.status] : tImaging('capability.unknown')
+  const reason = phase === 'loading' ? tImaging('capability.loadingReason')
+    : phase === 'error' ? tImaging('capability.errorReason')
+      : known ? imagingLegacyText(decodedReason) : tImaging('capability.unknownReason')
   return (
     <div className="wb-empty-line">
       <div>
@@ -34,6 +39,7 @@ function CapabilityRow({ title, value, statuses, phase }) {
 }
 
 export default function RuntimeCapabilities() {
+  useI18n()
   const [attempt, setAttempt] = React.useState(0)
   const [state, setState] = React.useState({ phase: 'loading', capabilities: null })
 
@@ -64,22 +70,16 @@ export default function RuntimeCapabilities() {
 
   return (
     <Section
-      title="当前运行能力"
+      title={tImaging('capability.title')}
       right={(
-        <Button size="sm" disabled={state.phase === 'loading'} onClick={() => setAttempt((value) => value + 1)}>
-          刷新能力状态
-        </Button>
+        <Button size="sm" disabled={state.phase === 'loading'} onClick={() => setAttempt((value) => value + 1)}>{tImaging('capability.refresh')}</Button>
       )}
     >
       <div aria-live="polite" aria-busy={state.phase === 'loading'}>
-        <CapabilityRow title="报告草稿" value={state.capabilities?.reportDraft} statuses={REPORT_STATUSES} phase={state.phase} />
-        <CapabilityRow title="原始影像自动分割" value={state.capabilities?.imageSegmentation} statuses={SEGMENTATION_STATUSES} phase={state.phase} />
-        <div className="wb-empty-line">
-          原始影像自动分割未启用时，可导入已有分割标签进行三维重建。
-        </div>
-        <div className="wb-empty-line">
-          此处仅显示配置与安装声明，“已配置”不代表已验证可用。
-        </div>
+        <CapabilityRow title={t('stage.drafting_report')} value={state.capabilities?.reportDraft} statuses={reportStatuses()} phase={state.phase} />
+        <CapabilityRow title={tImaging('capability.segmentation')} value={state.capabilities?.imageSegmentation} statuses={segmentationStatuses()} phase={state.phase} />
+        <div className="wb-empty-line">{tImaging('capability.importHint')}</div>
+        <div className="wb-empty-line">{tImaging('capability.scope')}</div>
       </div>
     </Section>
   )

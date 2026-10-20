@@ -17,12 +17,13 @@ import {
 import ViewHeader from './ViewHeader.jsx'
 import EchoCanvas from './EchoCanvas.jsx'
 import { Badge, Button, Section, Segmented, Slider, Stat, Toggle } from './ui.jsx'
+import { useI18n } from '../i18n.js'
 
 const VIEWS = [
-  { id: 'a4c', label: '心尖四腔', en: 'A4C', sub: 'APICAL 4-CHAMBER' },
-  { id: 'a2c', label: '心尖两腔', en: 'A2C', sub: 'APICAL 2-CHAMBER' },
-  { id: 'plax', label: '胸骨旁长轴', en: 'PLAX', sub: 'PARASTERNAL LONG' },
-  { id: 'psax', label: '胸骨旁短轴', en: 'PSAX', sub: 'PARASTERNAL SHORT' },
+  { id: 'a4c', labelKey: 'echo.a4c', en: 'A4C', sub: 'APICAL 4-CHAMBER' },
+  { id: 'a2c', labelKey: 'echo.a2c', en: 'A2C', sub: 'APICAL 2-CHAMBER' },
+  { id: 'plax', labelKey: 'echo.plax', en: 'PLAX', sub: 'PARASTERNAL LONG' },
+  { id: 'psax', labelKey: 'echo.psax', en: 'PSAX', sub: 'PARASTERNAL SHORT' },
 ]
 
 const VIEW_NAMES = {
@@ -33,8 +34,9 @@ const VIEW_NAMES = {
 }
 
 function DopplerTrace() {
+  const { t } = useI18n()
   return (
-    <svg className="doppler-trace" viewBox="0 0 260 92" role="img" aria-label="二尖瓣血流多普勒频谱">
+    <svg className="doppler-trace" viewBox="0 0 260 92" role="img" aria-label={t('echo.dopplerAria')}>
       <defs>
         <linearGradient id="dopplerFill" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="rgba(110, 218, 194, .42)" />
@@ -70,6 +72,7 @@ function DopplerTrace() {
 }
 
 export default function EchoView({ bpm, playing, setPlaying, notify }) {
+  const { t } = useI18n()
   const [view, setView] = React.useState('a4c')
   const [colorDoppler, setColorDoppler] = React.useState(true)
   const [calipers, setCalipers] = React.useState(true)
@@ -90,9 +93,9 @@ export default function EchoView({ bpm, playing, setPlaying, notify }) {
       <ViewHeader
         index="04"
         eyebrow="ECHOCARDIOGRAPHY"
-        title="心脏超声"
+        title={t('echo.title')}
         titleSuffix="DOPPLER · M-MODE"
-        description="心尖四腔 · 彩色多普勒 · M 型室壁运动 · 左心功能定量"
+        description={t('echo.description')}
         meta={
           <>
             <span>A4C</span>
@@ -104,9 +107,9 @@ export default function EchoView({ bpm, playing, setPlaying, notify }) {
         }
         actions={
           <>
-            <Badge tone="teal" dot>实时扫查</Badge>
+            <Badge tone="teal" dot>{t('echo.live')}</Badge>
             <Button variant="outline" size="sm" icon={playing ? <Pause size={14} /> : <Play size={14} />} onClick={() => setPlaying(!playing)}>
-              {playing ? '冻结图像' : '继续回放'}
+              {playing ? t('echo.freeze') : t('echo.resume')}
             </Button>
           </>
         }
@@ -118,7 +121,7 @@ export default function EchoView({ bpm, playing, setPlaying, notify }) {
             <div className="echo-view-tabs">
               {VIEWS.map((item) => (
                 <button key={item.id} type="button" className={view === item.id ? 'active' : ''} onClick={() => setView(item.id)}>
-                  <span>{item.label}</span>
+                  <span>{t(item.labelKey)}</span>
                   <small>{item.en}</small>
                 </button>
               ))}
@@ -126,11 +129,11 @@ export default function EchoView({ bpm, playing, setPlaying, notify }) {
             <div className="echo-toolbar-right">
               <button type="button" className={`echo-tool ${colorDoppler ? 'active' : ''}`} onClick={() => setColorDoppler((value) => !value)}>
                 <span className="color-chip" />
-                彩色多普勒
+                {t('echo.color')}
               </button>
               <button type="button" className={`echo-tool ${calipers ? 'active' : ''}`} onClick={() => setCalipers((value) => !value)}>
                 <Ruler size={12} />
-                测量
+                {t('echo.measure')}
               </button>
             </div>
           </div>
@@ -155,7 +158,7 @@ export default function EchoView({ bpm, playing, setPlaying, notify }) {
                       <span className="echo-acq">MI 0.9 · TIS 0.4</span>
                     </div>
                     <div className="echo-screen-left">
-                      <span>陈立群</span>
+                      <span>{t('demo.pseudonym')}</span>
                       <span>ID CV-2026-0417</span>
                       <span>2026-10-17 09:52</span>
                     </div>
@@ -203,8 +206,8 @@ export default function EchoView({ bpm, playing, setPlaying, notify }) {
                 <span>GLS <b>-16.8%</b></span>
                 <span>EF <b>54%</b></span>
               </div>
-              <button type="button" className="echo-capture" onClick={() => notify('当前超声帧已加入报告附件')}>
-                <Camera size={11} /> 采集帧
+              <button type="button" className="echo-capture" onClick={() => notify(t('echo.captureToast'))}>
+                <Camera size={11} /> {t('echo.capture')}
               </button>
             </div>
           </div>
@@ -225,76 +228,76 @@ export default function EchoView({ bpm, playing, setPlaying, notify }) {
               <div className="echo-hero-side">
                 <span>GLS</span>
                 <b>-16.8%</b>
-                <em>轻度减低</em>
+                <em>{t('echo.glsMild')}</em>
               </div>
             </div>
-            <p>左室收缩功能保存，心尖段轻度运动减弱；二尖瓣微量反流，右心收缩压正常。</p>
+            <p>{t('echo.hero')}</p>
           </div>
 
-          <Section title="检查切面" code="ACOUSTIC WINDOWS" right={<Waves size={13} />}>
+          <Section title={t('echo.windows')} code="ACOUSTIC WINDOWS" right={<Waves size={13} />}>
             <div className="echo-view-grid">
               {VIEWS.map((item) => (
                 <button key={item.id} type="button" className={view === item.id ? 'active' : ''} onClick={() => setView(item.id)}>
                   <b>{item.en}</b>
-                  <span>{item.label}</span>
+                  <span>{t(item.labelKey)}</span>
                   <small>{item.sub}</small>
                 </button>
               ))}
             </div>
           </Section>
 
-          <Section title="成像设置" code="IMAGE PARAMETERS" right={<SlidersHorizontal size={13} />}>
+          <Section title={t('echo.imaging')} code="IMAGE PARAMETERS" right={<SlidersHorizontal size={13} />}>
             <div className="echo-param-sliders">
-              <Slider label="增益 GAIN" value={gain} min={20} max={80} onChange={setGain} unit=" dB" />
-              <Slider label="深度 DEPTH" value={depth} min={8} max={24} onChange={setDepth} unit=" cm" />
+              <Slider label={t('echo.gain')} value={gain} min={20} max={80} onChange={setGain} unit=" dB" />
+              <Slider label={t('echo.depth')} value={depth} min={8} max={24} onChange={setDepth} unit=" cm" />
             </div>
             <div className="echo-toggles">
-              <Toggle label="彩色多普勒" hint="Nyquist 60 cm/s" checked={colorDoppler} onChange={setColorDoppler} />
-              <Toggle label="测量游标" hint="LVEDD / LVEF" checked={calipers} onChange={setCalipers} />
+              <Toggle label={t('echo.color')} hint="Nyquist 60 cm/s" checked={colorDoppler} onChange={setColorDoppler} />
+              <Toggle label={t('echo.calipers')} hint="LVEDD / LVEF" checked={calipers} onChange={setCalipers} />
             </div>
           </Section>
 
-          <Section title="左心功能" code="LEFT VENTRICULAR" right={<HeartPulse size={13} />}>
+          <Section title={t('echo.lv')} code="LEFT VENTRICULAR" right={<HeartPulse size={13} />}>
             <div className="echo-metric-grid">
               <Stat label="LVEDV" value="142" unit="mL" />
               <Stat label="LVESV" value="65" unit="mL" />
               <Stat label="LVEF" value="54" unit="%" accent="amber" />
               <Stat label="GLS" value="-16.8" unit="%" accent="amber" />
-              <Stat label="E/e'" value="9.4" hint="舒张功能" />
+              <Stat label="E/e'" value="9.4" hint={t('echo.diastolic')} />
               <Stat label="TAPSE" value="22" unit="mm" />
             </div>
             <div className="echo-findings-inline">
-              <span><Check size={10} /> 左室壁运动：下壁基底段轻度减弱</span>
-              <span><Check size={10} /> 右室收缩功能正常</span>
+              <span><Check size={10} /> {t('echo.wall')}</span>
+              <span><Check size={10} /> {t('echo.rvOk')}</span>
             </div>
           </Section>
 
-          <Section title="二尖瓣血流" code="MITRAL DOPPLER" right={<Activity size={13} />}>
+          <Section title={t('echo.mitral')} code="MITRAL DOPPLER" right={<Activity size={13} />}>
             <DopplerTrace />
             <div className="doppler-metrics">
-              <div><span>E 峰</span><b>0.82 m/s</b></div>
-              <div><span>A 峰</span><b>0.55 m/s</b></div>
+              <div><span>{t('echo.e')}</span><b>0.82 m/s</b></div>
+              <div><span>{t('echo.a')}</span><b>0.55 m/s</b></div>
               <div><span>E/A</span><b>1.49</b></div>
               <div><span>TR Vmax</span><b>2.4 m/s</b></div>
             </div>
           </Section>
 
-          <Section title="瓣膜评估" code="VALVULAR" right={<Gauge size={13} />}>
+          <Section title={t('echo.valves')} code="VALVULAR" right={<Gauge size={13} />}>
             <div className="valve-list">
-              <div><span>二尖瓣反流</span><b>微量 · Stage 1</b></div>
-              <div><span>主动脉瓣</span><b>三叶 · 轻度钙化</b></div>
-              <div><span>三尖瓣反流</span><b>轻度 · TR 2.4 m/s</b></div>
+              <div><span>{t('echo.mr')}</span><b>{t('echo.mrValue')}</b></div>
+              <div><span>{t('echo.av')}</span><b>{t('echo.avValue')}</b></div>
+              <div><span>{t('echo.tr')}</span><b>{t('echo.trValue')}</b></div>
               <div><span>RVSP</span><b>28 mmHg</b></div>
             </div>
           </Section>
 
           <div className="echo-note">
             <Sparkles size={12} />
-            <p>超声测量结果为模拟值；结合 CCTA 显示 LAD 中段 70% 狭窄，建议以有创 FFR 复核缺血意义。</p>
+            <p>{t('echo.note')}</p>
             <ChevronRight size={13} />
           </div>
           <div className="echo-disclaimer">
-            <CircleAlert size={11} /> 非临床诊断用途 · 教学与产品演示
+            <CircleAlert size={11} /> {t('disclaimer.body')}
           </div>
         </aside>
       </div>

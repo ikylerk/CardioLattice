@@ -1,3 +1,5 @@
+import { t, useI18n, serverText, measurementLabel, errorDetail } from '../i18n.js'
+import { tImaging } from '../i18n-imaging.js'
 import React from 'react'
 import {
   Activity,
@@ -21,11 +23,15 @@ import { getMprGeometry, getMprSliceIndex } from '../three/mprGeometry.js'
 import { getVolumeData } from '../api/client.js'
 import { useStudy } from '../study/StudyContext.jsx'
 
-const WINDOW_PRESETS = {
-  cta: { label: '冠脉 CTA', sub: 'CCTA', width: 800, level: 300 },
-  mediastinum: { label: '纵隔', sub: 'MEDIASTINUM', width: 400, level: 40 },
-  lung: { label: '肺窗', sub: 'LUNG', width: 1500, level: -600 },
-  bone: { label: '骨窗', sub: 'BONE', width: 2000, level: 400 },
+const windowPresets = () => ({
+  cta: { label: t('cta.windowCta'), sub: 'CCTA', width: 800, level: 300 },
+  mediastinum: { label: t('cta.windowMediastinum'), sub: 'MEDIASTINUM', width: 400, level: 40 },
+  lung: { label: t('cta.windowLung'), sub: 'LUNG', width: 1500, level: -600 },
+  bone: { label: t('cta.windowBone'), sub: 'BONE', width: 2000, level: 400 },
+})
+
+function isComputedNumber(item) {
+  return item?.status === 'computed' && typeof item.value === 'number' && Number.isFinite(item.value)
 }
 
 const SCENE_EXTENT = 3.0
@@ -64,6 +70,7 @@ function downloadDataUrl(dataUrl, name) {
 }
 
 export default function CtaView({ notify, bpm, playing }) {
+  useI18n()
   const {
     study,
     selectedVolume: volumeMeta,
@@ -121,7 +128,7 @@ export default function CtaView({ notify, bpm, playing }) {
         setSlices(markerOrDefault(volumeMeta, next))
       } catch (err) {
         console.error(err)
-        if (!cancelled) setError(`体数据加载失败：${err.message || err}`)
+        if (!cancelled) setError({ key: 'cta.loadFailed', detail: errorDetail(err) })
       } finally {
         if (!cancelled) setVolumeLoading(false)
       }
@@ -140,12 +147,12 @@ export default function CtaView({ notify, bpm, playing }) {
   )
   const measurementValue = (code, digits = 0) => {
     const item = measurementMap[code]
-    if (!item || item.status !== 'computed' || item.value === null || item.value === undefined) return null
+    if (!isComputedNumber(item)) return null
     return `${Number(item.value).toFixed(digits)}${item.unit ? ` ${item.unit}` : ''}`
   }
   const measurementItem = (code) => measurementMap[code] || null
   const selectedSeriesMeta = selectedSeries || {}
-  const seriesLabel = selectedSeriesMeta.description || 'CARDIAC CTA'
+  const seriesLabel = serverText(selectedSeriesMeta.description) || 'CARDIAC CTA'
   const matrixLabel = selectedSeriesMeta.rows && selectedSeriesMeta.cols
     ? `${selectedSeriesMeta.rows} × ${selectedSeriesMeta.cols} MATRIX`
     : 'MATRIX —'
@@ -165,7 +172,7 @@ export default function CtaView({ notify, bpm, playing }) {
       })
     } catch (err) {
       console.error(err)
-      setError('当前环境无法初始化 3D 容积渲染。')
+      setError({ key: 'cta.webgl' })
     }
     return () => {
       volumeEngineRef.current?.dispose()
@@ -188,7 +195,7 @@ export default function CtaView({ notify, bpm, playing }) {
   }, [mip])
 
   const pickPreset = (key) => {
-    const preset = WINDOW_PRESETS[key]
+    const preset = windowPresets()[key]
     setActivePreset(key)
     setWindowWidth(preset.width)
     setWindowLevel(preset.level)
@@ -202,14 +209,14 @@ export default function CtaView({ notify, bpm, playing }) {
   const resetSlices = () => {
     if (volume) setSlices(markerOrDefault(volumeMeta, volume))
     volumeEngineRef.current?.resetCamera()
-    notify('多平面定位与 3D 视角已重置')
+    notify(t('cta.resetToast'))
   }
 
   const captureVolume = () => {
     const url = volumeEngineRef.current?.capture()
     if (url) {
       downloadDataUrl(url, 'CardioScope_CCTA_3D_VRT.png')
-      notify('3D 容积渲染已导出为 PNG')
+      notify(t('cta.exportToast'))
     }
   }
 
@@ -218,9 +225,9 @@ export default function CtaView({ notify, bpm, playing }) {
       <ViewHeader
         index="03"
         eyebrow="CARDIAC CT"
-        title="CT 影像"
+        title={t('nav.cta')}
         titleSuffix="MULTI-PLANAR · VRT"
-        description={`${isDemo ? '演示体数据' : '服务端重建体数据'} · ${thicknessLabel} · 同步多平面重建与容积渲染`}
+        description={t('cta.descriptionTail', { source: isDemo ? t('cta.descriptionDemo') : t('cta.descriptionServer'), thickness: thicknessLabel })}
         meta={
           <>
             <span>{thicknessLabel}</span>
@@ -233,21 +240,17 @@ export default function CtaView({ notify, bpm, playing }) {
         actions={
           <>
             <Badge tone={volume ? 'teal' : isProcessing ? 'amber' : 'neutral'} dot>
-              {volume ? '体数据就绪' : isProcessing ? '重建中' : '无体数据'}
+              {volume ? t('cta.ready') : isProcessing ? t('cta.rebuilding') : t('cta.noVolume')}
             </Badge>
-            <Button variant="outline" size="sm" icon={<RotateCcw size={14} />} onClick={resetSlices}>
-              重置定位
-            </Button>
-            <Button variant="outline" size="sm" icon={<Camera size={14} />} onClick={captureVolume}>
-              导出 VRT
-            </Button>
+            <Button variant="outline" size="sm" icon={<RotateCcw size={14} />} onClick={resetSlices}>{t('cta.reset')}</Button>
+            <Button variant="outline" size="sm" icon={<Camera size={14} />} onClick={captureVolume}>{t('cta.export')}</Button>
           </>
         }
       />
 
       <div className="module-body">
         <div className="viewer cta-viewer">
-          {error ? <div className="webgl-error">{error}</div> : null}
+          {error ? <div className="webgl-error">{t(error.key, { message: serverText(error.detail) })}</div> : null}
           <div className="cta-top-strip">
             <div>
               <span className="cta-series-label"><Layers size={12} /> SERIES {selectedSeriesMeta.number ?? '—'} · {seriesLabel}</span>
@@ -257,7 +260,9 @@ export default function CtaView({ notify, bpm, playing }) {
               <span className="cta-phase-dot" />
               <span>ECG GATE · {isDemo ? `${bpm} BPM` : '—'}</span>
               <span className="cta-phase-progress"><i style={{ animationPlayState: playing ? 'running' : 'paused' }} /></span>
-              <span>{playing ? 'CINE 4D READY' : 'PAUSED'}</span>
+              <span>{isDemo
+                ? tImaging(playing ? 'cta.syntheticCine' : 'cta.syntheticCinePaused')
+                : tImaging('cta.singlePhase')}</span>
             </div>
           </div>
 
@@ -272,7 +277,7 @@ export default function CtaView({ notify, bpm, playing }) {
                   windowWidth={windowWidth}
                   windowLevel={windowLevel}
                   lesionVoxel={lesionVoxel}
-                  lesionLabel={marker?.label || ''}
+                  lesionLabel={serverText(marker?.label) || ''}
                   renderTag={isDemo ? 'DEMO · SYNTHETIC' : 'DICOM · RESEARCH'}
                 />
                 <MprViewport
@@ -283,7 +288,7 @@ export default function CtaView({ notify, bpm, playing }) {
                   windowWidth={windowWidth}
                   windowLevel={windowLevel}
                   lesionVoxel={lesionVoxel}
-                  lesionLabel={marker?.label || ''}
+                  lesionLabel={serverText(marker?.label) || ''}
                   renderTag={isDemo ? 'DEMO · SYNTHETIC' : 'DICOM · RESEARCH'}
                 />
                 <MprViewport
@@ -294,7 +299,7 @@ export default function CtaView({ notify, bpm, playing }) {
                   windowWidth={windowWidth}
                   windowLevel={windowLevel}
                   lesionVoxel={lesionVoxel}
-                  lesionLabel={marker?.label || ''}
+                  lesionLabel={serverText(marker?.label) || ''}
                   renderTag={isDemo ? 'DEMO · SYNTHETIC' : 'DICOM · RESEARCH'}
                 />
               </>
@@ -310,7 +315,7 @@ export default function CtaView({ notify, bpm, playing }) {
               <header className="cta-panel-head">
                 <div className="cta-panel-title">
                   <i className="plane-dot violet" />
-                  <span>三维容积</span>
+                  <span>{t('cta.volume')}</span>
                   <em>VOLUME RENDERING</em>
                 </div>
                 <span className="cta-vrt-badge">CINEMATIC VRT</span>
@@ -323,13 +328,12 @@ export default function CtaView({ notify, bpm, playing }) {
                   <span>{mip ? 'MIP' : 'COMPOSITE'}</span>
                 </div>
                 <div className="volume-legend">
-                  <span><i className="legend-bone" />骨 / 钙化</span>
-                  <span><i className="legend-contrast" />对比剂血池</span>
-                  <span><i className="legend-muscle" />心肌</span>
+                  <span><i className="legend-bone" />{t('cta.legendBone')}</span>
+                  <span><i className="legend-contrast" />{t('cta.legendContrast')}</span>
+                  <span><i className="legend-muscle" />{t('cta.legendMuscle')}</span>
                 </div>
                 <div className="volume-tip">
-                  <Rotate3d size={11} /> 拖动旋转 · 滚轮缩放
-                </div>
+                  <Rotate3d size={11} />{' '}{t('cta.drag')}</div>
               </div>
               <footer className="cta-panel-foot">
                 <span>OPACITY {Math.round(volumeOpacity * 100)}% · {autoRotate ? 'AUTO ROTATE' : 'STATIC'}</span>
@@ -343,10 +347,10 @@ export default function CtaView({ notify, bpm, playing }) {
               <CircleAlert size={12} />
               <span>
                 {measurementValue('STENOSIS_LAD', 0)
-                  ? `LAD ${measurementValue('STENOSIS_LAD', 0)} 狭窄`
-                  : '狭窄分析未计算'}
+                  ? t('cta.stenosisValue', { value: measurementValue('STENOSIS_LAD', 0) })
+                  : t('cta.stenosisMissing')}
               </span>
-              <b>{measurementValue('FFR_CT', 2) || 'FFR-CT 未计算'}</b>
+              <b>{measurementValue('FFR_CT', 2) || t('cta.ffrMissing')}</b>
             </div>
             <div className="cta-scan-facts">
               {volumeMeta?.scanner ? (
@@ -364,8 +368,7 @@ export default function CtaView({ notify, bpm, playing }) {
               )}
             </div>
             <div className="cta-hint">
-              <Crosshair size={11} /> 拖动图像联动 MPR 十字线
-            </div>
+              <Crosshair size={11} />{' '}{t('cta.crosshair')}</div>
           </div>
 
           {!volume && !error ? (
@@ -375,23 +378,23 @@ export default function CtaView({ notify, bpm, playing }) {
               </div>
               {isApi && !studyInfo ? (
                 <>
-                  <b>尚未选择检查</b>
-                  <small>请先在「检查工作台」上传 DICOM 或选择已有检查</small>
+                  <b>{t('cta.emptyTitle')}</b>
+                  <small>{t('cta.emptyHint')}</small>
                 </>
               ) : isProcessing ? (
                 <>
-                  <b>正在处理检查</b>
+                  <b>{t('cta.processingTitle')}</b>
                   <small>{latestJob?.stage || 'queued'} · {latestJob?.progress ?? 0}%</small>
                 </>
               ) : volumeLoading ? (
                 <>
-                  <b>正在载入体数据</b>
-                  <small>服务端重建结果加载中</small>
+                  <b>{t('cta.loadingTitle')}</b>
+                  <small>{t('cta.loadingHint')}</small>
                 </>
               ) : (
                 <>
-                  <b>该检查尚无体数据</b>
-                  <small>请确认流水线已完成，或到检查工作台查看错误信息</small>
+                  <b>{t('cta.missingTitle')}</b>
+                  <small>{t('cta.missingHint')}</small>
                 </>
               )}
             </div>
@@ -407,45 +410,44 @@ export default function CtaView({ notify, bpm, playing }) {
             <div className="selection-title">
               <span className="structure-swatch swatch-great" />
               <div>
-                <h2>冠状动脉 CTA</h2>
+                <h2>{t('cta.heroTitle')}</h2>
                 <small>Coronary computed tomography angiography</small>
               </div>
             </div>
             <p>
               {isDemo
-                ? '0.5 mm 演示重建，心率 72 BPM，LAD 中段可见模拟钙化斑块与管腔狭窄。所有数值均为合成数据，仅用于界面演示。'
-                : '体数据由服务端从上传的 DICOM 重建。这里只展示已计算且带来源的测量；未接入验证模型的项目显示为未计算，不使用演示数值。'}
+                ? t('cta.heroDemo')
+                : t('cta.heroApi')}
             </p>
             <div className="selection-stats">
               <Stat
-                label="钙化积分"
-                value={measurementItem('CALCIUM_SCORE')?.value ?? '—'}
+                label={t('cta.calcium')}
+                value={isComputedNumber(measurementItem('CALCIUM_SCORE')) ? measurementItem('CALCIUM_SCORE').value : '—'}
                 accent="amber"
-                hint={measurementItem('CALCIUM_SCORE')?.status === 'computed' ? 'Agatston' : '未计算'}
+                hint={isComputedNumber(measurementItem('CALCIUM_SCORE')) ? 'Agatston' : t('common.notComputed')}
               />
               <Stat
-                label="狭窄"
-                value={measurementItem('STENOSIS_LAD')?.value ?? '—'}
+                label={t('cta.stenosis')}
+                value={isComputedNumber(measurementItem('STENOSIS_LAD')) ? measurementItem('STENOSIS_LAD').value : '—'}
                 unit={measurementItem('STENOSIS_LAD')?.unit || '%'}
                 accent="amber"
-                hint={measurementItem('STENOSIS_LAD')?.status === 'computed' ? 'LAD' : '未计算'}
+                hint={isComputedNumber(measurementItem('STENOSIS_LAD')) ? 'LAD' : t('common.notComputed')}
               />
               <Stat
                 label="FFR-CT"
-                value={measurementItem('FFR_CT')?.value ?? '—'}
-                hint={measurementItem('FFR_CT')?.status === 'computed' ? '血流动力学' : '未计算'}
+                value={isComputedNumber(measurementItem('FFR_CT')) ? measurementItem('FFR_CT').value : '—'}
+                hint={isComputedNumber(measurementItem('FFR_CT')) ? t('cta.hemodynamics') : t('common.notComputed')}
               />
             </div>
             {study?.measurements?.some((item) => item.validationStatus === 'synthetic') ? (
               <div className="provenance-note">
-                <CircleAlert size={11} /> 含合成 / 研究测量，不可用于临床决策
-              </div>
+                <CircleAlert size={11} />{' '}{t('cta.syntheticNote')}</div>
             ) : null}
           </div>
 
-          <Section title="窗宽窗位" code="WINDOW / LEVEL" right={<Eye size={13} />}>
+          <Section title={t('cta.window')} code="WINDOW / LEVEL" right={<Eye size={13} />}>
             <div className="cta-window-presets">
-              {Object.entries(WINDOW_PRESETS).map(([key, preset]) => (
+              {Object.entries(windowPresets()).map(([key, preset]) => (
                 <button
                   key={key}
                   type="button"
@@ -458,8 +460,8 @@ export default function CtaView({ notify, bpm, playing }) {
               ))}
             </div>
             <div className="cta-window-sliders">
-              <Slider label="窗宽 WW" value={windowWidth} min={100} max={2400} step={10} onChange={adjustWindow(setWindowWidth)} />
-              <Slider label="窗位 WL" value={windowLevel} min={-800} max={800} step={5} onChange={adjustWindow(setWindowLevel)} />
+              <Slider label={t('cta.ww')} value={windowWidth} min={100} max={2400} step={10} onChange={adjustWindow(setWindowWidth)} />
+              <Slider label={t('cta.wl')} value={windowLevel} min={-800} max={800} step={5} onChange={adjustWindow(setWindowLevel)} />
             </div>
             <div className="cta-window-readout">
               <span>RANGE</span>
@@ -467,16 +469,16 @@ export default function CtaView({ notify, bpm, playing }) {
             </div>
           </Section>
 
-          <Section title="多平面定位" code="MPR LOCALIZER" right={<Crosshair size={13} />}>
+          <Section title={t('cta.mpr')} code="MPR LOCALIZER" right={<Crosshair size={13} />}>
             <div className="cta-slice-sliders">
               {[
-                { plane: 'axial', label: '轴位 AXIAL' },
-                { plane: 'coronal', label: '冠状 CORONAL' },
-                { plane: 'sagittal', label: '矢状 SAGITTAL' },
+                { plane: 'axial', label: tImaging('mpr.axialLabel') },
+                { plane: 'coronal', label: tImaging('mpr.coronalLabel') },
+                { plane: 'sagittal', label: tImaging('mpr.sagittalLabel') },
               ].map(({ plane, label }) => {
                 const geometry = getMprGeometry(volume || { dims: VOLUME_DIMS }, plane)
                 const { sliceKey, total, oblique, orientation } = geometry
-                const title = orientation === 'unknown' ? '原生切面 NATIVE' : `${oblique ? '斜' : ''}${label}`
+                const title = orientation === 'unknown' ? tImaging('mpr.nativeLabel') : `${oblique ? tImaging('mpr.obliquePrefix') : ''}${label}`
                 return (
                   <Slider
                     key={plane}
@@ -492,13 +494,13 @@ export default function CtaView({ notify, bpm, playing }) {
             </div>
             <div className="cta-slice-note">
               <span className="cta-lesion-pin" />
-              {marker ? `十字线默认位于 ${marker.label}` : '十字线默认位于体数据中心'}
+              {marker ? t('cta.crosshairAt', { label: serverText(marker.label) }) : t('cta.crosshairCenter')}
             </div>
           </Section>
 
-          <Section title="容积渲染" code="3D VRT" right={<Sparkles size={13} />}>
+          <Section title={t('cta.vrt')} code="3D VRT" right={<Sparkles size={13} />}>
             <Slider
-              label="透明度 OPACITY"
+              label={t('cta.opacity')}
               value={volumeOpacity}
               min={0.25}
               max={1.5}
@@ -507,81 +509,81 @@ export default function CtaView({ notify, bpm, playing }) {
               format={(value) => `${Math.round(value * 100)}%`}
             />
             <div className="cta-vrt-toggles">
-              <Toggle label="自动旋转" hint="展示模式" checked={autoRotate} onChange={setAutoRotate} />
-              <Toggle label="MIP 投影" hint="最大密度投影" checked={mip} onChange={setMip} />
+              <Toggle label={t('cta.autoRotate')} hint={t('cta.showMode')} checked={autoRotate} onChange={setAutoRotate} />
+              <Toggle label={t('cta.mip')} hint={t('cta.mipHint')} checked={mip} onChange={setMip} />
             </div>
           </Section>
 
-          <Section title="量化发现" code="MEASUREMENTS" right={<Activity size={13} />}>
+          <Section title={t('cta.findings')} code="MEASUREMENTS" right={<Activity size={13} />}>
             {isDemo ? (
               <div className="cta-finding-list">
                 <div className="cta-finding-row critical">
                   <span className="finding-index">01</span>
                   <div>
-                    <b>LAD 中段重度狭窄</b>
-                    <small>混合斑块 · 18 mm · 70% DS · 合成</small>
+                    <b>{t('cta.finding1')}</b>
+                    <small>{t('cta.finding1sub')}</small>
                   </div>
-                  <Badge tone="red">演示</Badge>
+                  <Badge tone="red">{t('common.demo')}</Badge>
                 </div>
                 <div className="cta-finding-row mild">
                   <span className="finding-index">02</span>
                   <div>
-                    <b>RCA 近段钙化斑块</b>
-                    <small>非阻塞性 · 30% DS · 合成</small>
+                    <b>{t('cta.finding2')}</b>
+                    <small>{t('cta.finding2sub')}</small>
                   </div>
-                  <Badge tone="teal">演示</Badge>
+                  <Badge tone="teal">{t('common.demo')}</Badge>
                 </div>
                 <div className="cta-finding-row">
                   <span className="finding-index">03</span>
                   <div>
-                    <b>左心室心肌质量</b>
-                    <small>112 g · 演示数值</small>
+                    <b>{t('cta.finding3')}</b>
+                    <small>{t('cta.finding3sub')}</small>
                   </div>
-                  <Badge>演示</Badge>
+                  <Badge>{t('common.demo')}</Badge>
                 </div>
               </div>
             ) : study?.measurements?.length ? (
               <div className="cta-finding-list">
                 {study.measurements.map((item, index) => (
-                  <div key={item.id} className={`cta-finding-row ${item.status === 'computed' ? '' : 'muted'}`}>
+                  <div key={item.id} className={`cta-finding-row ${isComputedNumber(item) ? '' : 'muted'}`}>
                     <span className="finding-index">{String(index + 1).padStart(2, '0')}</span>
                     <div>
-                      <b>{item.label}</b>
+                      <b>{measurementLabel(item)}</b>
                       <small>
-                        {item.status === 'computed'
+                        {isComputedNumber(item)
                           ? `${item.value ?? '—'}${item.unit ? ` ${item.unit}` : ''} · ${item.method} · ${item.validationStatus}`
-                          : item.reason || '未计算'}
+                          : serverText(item.reason) || t('common.notComputed')}
                       </small>
                     </div>
-                    <Badge tone={item.status === 'computed' ? 'teal' : 'neutral'}>
-                      {item.status === 'computed'
-                        ? item.validationStatus === 'synthetic' ? '合成' : '已计算'
-                        : '未计算'}
+                    <Badge tone={isComputedNumber(item) ? 'teal' : 'neutral'}>
+                      {isComputedNumber(item)
+                        ? item.validationStatus === 'synthetic' ? t('common.synthetic') : t('common.computed')
+                        : t('common.notComputed')}
                     </Badge>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="wb-empty-line">尚无测量结果</div>
+              <div className="wb-empty-line">{t('common.noMeasurements')}</div>
             )}
           </Section>
 
-          <Section title="扫描参数" code="ACQUISITION" right={<ScanLine size={13} />}>
+          <Section title={t('cta.scan')} code="ACQUISITION" right={<ScanLine size={13} />}>
             <div className="scan-params">
-              <div><span>扫描模式</span><b>{isDemo ? 'ECG-gated CCTA' : (selectedSeriesMeta.description || 'CCTA')}</b></div>
-              <div><span>重建算法</span><b>{kernelLabel} · {thicknessLabel}</b></div>
-              <div><span>管电压</span><b>{selectedSeriesMeta.kvp ? `${selectedSeriesMeta.kvp} kV` : '—'}</b></div>
-              <div><span>对比剂</span><b>{selectedSeriesMeta.contrastAgent || '—'}</b></div>
-              <div><span>心率</span><b>{isDemo ? `${bpm} BPM` : '—'}</b></div>
-              <div><span>层数 / 矩阵</span><b>{selectedSeriesMeta.sliceCount ?? '—'} · {matrixLabel}</b></div>
+              <div><span>{t('cta.scanMode')}</span><b>{isDemo ? 'ECG-gated CCTA' : (serverText(selectedSeriesMeta.description) || 'CCTA')}</b></div>
+              <div><span>{t('cta.kernel')}</span><b>{kernelLabel} · {thicknessLabel}</b></div>
+              <div><span>{t('cta.kvp')}</span><b>{selectedSeriesMeta.kvp ? `${selectedSeriesMeta.kvp} kV` : '—'}</b></div>
+              <div><span>{t('cta.contrast')}</span><b>{selectedSeriesMeta.contrastAgent || '—'}</b></div>
+              <div><span>{t('cta.hr')}</span><b>{isDemo ? `${bpm} BPM` : '—'}</b></div>
+              <div><span>{t('cta.matrix')}</span><b>{selectedSeriesMeta.sliceCount ?? '—'} · {matrixLabel}</b></div>
             </div>
           </Section>
 
           <div className="cta-disclaimer">
             <CircleAlert size={12} />
             {isDemo
-              ? '程序化合成体数据与模拟测量，仅用于产品演示与教学，不用于临床诊断。'
-              : '研究原型。分割与测量结果需医生复核；未计算项不显示数值。不用于临床诊断或治疗决策。'}
+              ? t('cta.disclaimerDemo')
+              : tImaging('cta.disclaimer')}
           </div>
         </aside>
       </div>

@@ -1,3 +1,5 @@
+import { t, useI18n, serverText } from '../i18n.js'
+import { tImaging } from '../i18n-imaging.js'
 import React from 'react'
 import { renderMPR } from '../three/volume.js'
 import {
@@ -8,11 +10,11 @@ import {
   mprVoxelToScreen,
 } from '../three/mprGeometry.js'
 
-const PLANE_META = {
-  axial: { title: '轴位', en: 'AXIAL', tone: 'amber' },
-  coronal: { title: '冠状位', en: 'CORONAL', tone: 'teal' },
-  sagittal: { title: '矢状位', en: 'SAGITTAL', tone: 'blue' },
-}
+const planeMeta = () => ({
+  axial: { title: t('mpr.axial'), en: 'AXIAL', tone: 'amber' },
+  coronal: { title: t('mpr.coronal'), en: 'CORONAL', tone: 'teal' },
+  sagittal: { title: t('mpr.sagittal'), en: 'SAGITTAL', tone: 'blue' },
+})
 
 export default function MprViewport({
   volume,
@@ -25,19 +27,20 @@ export default function MprViewport({
   lesionLabel = '',
   renderTag = 'CCTA',
 }) {
+  useI18n()
   const canvasRef = React.useRef(null)
   const stageRef = React.useRef(null)
   const dragging = React.useRef(false)
-  const meta = PLANE_META[plane]
+  const meta = planeMeta()[plane]
   const geometry = React.useMemo(() => getMprGeometry(volume, plane), [volume, plane])
   const { total, aspect, labels } = geometry
   const sliceIndex = getMprSliceIndex(geometry, slices)
-  const title = geometry.oblique ? `斜${meta.title}` : geometry.orientation === 'unknown' ? '原生切面' : meta.title
+  const title = geometry.oblique ? tImaging('mpr.obliqueTitle', { v0: meta.title }) : geometry.orientation === 'unknown' ? tImaging('mpr.native') : meta.title
   const orientationNote = geometry.oblique
-    ? '原生斜切面，未重采样为患者正交面；边缘复合字母按 LPS 方向分量从大到小排列'
-    : geometry.orientation === 'unknown' ? '方向元数据缺失或无效，患者方向未知'
-      : geometry.orientation === 'legacy' ? '演示索引方向'
-        : '放射学方向：R 右、L 左、A 前、P 后、S 上、I 下'
+    ? tImaging('mpr.obliqueNote')
+    : geometry.orientation === 'unknown' ? tImaging('mpr.unknownNote')
+      : geometry.orientation === 'legacy' ? tImaging('mpr.legacyNote')
+        : tImaging('mpr.radiologyNote')
 
   React.useEffect(() => {
     if (canvasRef.current && volume) {
@@ -87,7 +90,7 @@ export default function MprViewport({
             dragging.current = false
           }}
         >
-          <canvas ref={canvasRef} className="mpr-canvas" aria-label={`${title} CT 重建；${orientationNote}`} />
+          <canvas ref={canvasRef} className="mpr-canvas" aria-label={tImaging('mpr.aria', { v0: title, v1: orientationNote })} />
           <div className="mpr-crosshair-v" style={{ left: `${crosshair.left}%` }} />
           <div className="mpr-crosshair-h" style={{ top: `${crosshair.top}%` }} />
           <span className="mpr-orientation top">{labels.top}</span>
@@ -97,11 +100,11 @@ export default function MprViewport({
           {lesionMarker ? (
             <div className="mpr-lesion" style={{ left: `${lesionMarker.left}%`, top: `${lesionMarker.top}%` }}>
               <span />
-              <b>{lesionLabel || '标记'}</b>
+              <b>{serverText(lesionLabel) || t('common.marker')}</b>
             </div>
           ) : null}
           <div className="mpr-render-tag">
-            {renderTag}{geometry.oblique ? ' · 原生斜切' : geometry.orientation === 'unknown' ? ' · 方向未知' : ''}
+            {renderTag}{geometry.oblique ? tImaging('mpr.obliqueTag') : geometry.orientation === 'unknown' ? tImaging('mpr.unknownTag') : ''}
           </div>
         </div>
       </div>

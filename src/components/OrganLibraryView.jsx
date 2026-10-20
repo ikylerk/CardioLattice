@@ -18,6 +18,7 @@ import { Badge, Button, Section, Slider, Stat, Toggle } from './ui.jsx'
 import OrganLibraryEngine from '../three/OrganLibraryEngine.js'
 import ORGAN_LIBRARY from '../../shared/organ_library.json'
 import ORGAN_TARGETS from '../../shared/organ_targets.json'
+import { useI18n } from '../i18n.js'
 
 const SYSTEM_MAP = Object.fromEntries(ORGAN_LIBRARY.systems.map((system) => [system.id, system]))
 const RENDERABLE = ORGAN_LIBRARY.organs.filter((organ) => organ.renderable)
@@ -50,6 +51,20 @@ function downloadCatalog() {
 }
 
 export default function OrganLibraryView({ notify }) {
+  const { lang, t } = useI18n()
+  // Missing translations retain the catalog's original wording and identifiers.
+  const tr = (key, fallback, vars) => {
+    const translated = t(key, vars)
+    return translated === key
+      ? fallback.replace(/\{(\w+)\}/g, (match, name) => String(vars?.[name] ?? match))
+      : translated
+  }
+  const catalogName = (item) => item
+    ? tr(`codes.${item.code || item.id}`, lang === 'en' ? (item.en || item.name) : item.name)
+    : '—'
+  const partName = (part) => tr(`organ.partNames.${part.code}`, lang === 'en' ? (part.en || part.name) : part.name)
+  const approachName = (value) => tr(`organ.approaches.${value}`, APPROACH_LABELS[value] || value)
+  const kindName = (kind) => tr(`organ.partKinds.${kind}`, KIND_LABELS[kind] || kind)
   const hostRef = React.useRef(null)
   const engineRef = React.useRef(null)
   const [selected, setSelected] = React.useState('HEART')
@@ -99,7 +114,7 @@ export default function OrganLibraryView({ notify }) {
       engineRef.current = engine
     } catch (err) {
       console.error(err)
-      setError('当前环境无法初始化器官模型库。请启用 WebGL 后重试。')
+      setError('organ.webgl')
       setLoading(false)
     }
     return () => {
@@ -190,7 +205,7 @@ export default function OrganLibraryView({ notify }) {
       link.href = url
       link.download = 'CardioScope_organ_atlas.png'
       link.click()
-      notify?.('器官模型库视图已导出为 PNG')
+      notify?.(t('organ.exportedPng'))
     }
   }
 
@@ -204,7 +219,10 @@ export default function OrganLibraryView({ notify }) {
   const depthMax = Math.max(1, pathInfo?.pathLength || 200)
   const remaining = pathInfo ? Math.max(0, pathInfo.pathLength - depth) : null
   const collisionNames = (pathInfo?.collisions || []).map(
-    (code) => ORGAN_LIBRARY.organs.find((organ) => organ.code === code)?.name || code,
+    (code) => {
+      const organ = ORGAN_LIBRARY.organs.find((item) => item.code === code)
+      return organ ? catalogName(organ) : code
+    },
   )
   const partGroups = React.useMemo(() => {
     const parts = selectedOrgan.parts || []
@@ -296,35 +314,35 @@ export default function OrganLibraryView({ notify }) {
     <div className="module-view organ-view">
       <ViewHeader
         index="06"
-        eyebrow="ORGAN ATLAS"
-        title="器官模型库"
-        titleSuffix="STANDARD REFERENCE"
-        description="内置解剖参考模型、详细子结构与标准靶点，用于方位、教学、配准占位与流程演练。"
+        eyebrow={t('organ.eyebrow')}
+        title={t('organ.title')}
+        titleSuffix={t('organ.titleSuffix')}
+        description={tr('organ.detailDescription', '内置解剖参考模型、详细子结构与标准靶点，用于方位、教学、配准占位与流程演练。')}
         meta={
           <>
             <span>{ORGAN_LIBRARY.version}</span>
             <i />
-            <span>{RENDERABLE.length} 个器官</span>
+            <span>{t('organ.count', { count: RENDERABLE.length })}</span>
             <i />
             <span>{ORGAN_LIBRARY.frame.name} · mm</span>
             <i />
-            <span>{TARGETS.length} 个参考靶点</span>
+            <span>{tr('organ.targetCount', '{count} 个参考靶点', { count: TARGETS.length })}</span>
           </>
         }
         actions={
           <>
-            <Badge tone="amber" dot>标准参考 · 非患者解剖</Badge>
+            <Badge tone="amber" dot>{t('organ.badge')}</Badge>
             <Button variant="outline" size="sm" icon={<RotateCcw size={14} />} onClick={() => engineRef.current?.resetView()}>
-              重置视角
+              {t('organ.reset')}
             </Button>
             <Button variant="outline" size="sm" icon={<Camera size={14} />} onClick={capture}>
-              截取视图
+              {t('organ.capture')}
             </Button>
             <Button variant="outline" size="sm" icon={<Download size={14} />} onClick={() => {
               downloadCatalog()
-              notify?.('标准器官目录已导出为 JSON')
+              notify?.(t('organ.exportedJson'))
             }}>
-              导出目录
+              {t('organ.export')}
             </Button>
           </>
         }
@@ -333,11 +351,11 @@ export default function OrganLibraryView({ notify }) {
       <div className="module-body">
         <div className="viewer organ-viewer">
           <div className="three-host" ref={hostRef} />
-          {loading ? <div className="webgl-error">正在加载标准器官模型…</div> : null}
-          {error ? <div className="webgl-error">{error}</div> : null}
+          {loading ? <div className="webgl-error">{t('organ.loading')}</div> : null}
+          {error ? <div className="webgl-error">{t(error)}</div> : null}
           <div className="volume-overlay-top">
-            <span>{ORGAN_LIBRARY.frame.name} · MILLIMETRES</span>
-            <span>{visibleCount} / {RENDERABLE.length} VISIBLE</span>
+            <span>{ORGAN_LIBRARY.frame.name} · mm</span>
+            <span>{t('organ.visible', { visible: visibleCount, total: RENDERABLE.length })}</span>
           </div>
           <div className="organ-axis-legend">
             <span className="axis-r">R</span>
@@ -346,7 +364,7 @@ export default function OrganLibraryView({ notify }) {
             <em>+x R / +y A / +z S</em>
           </div>
           <div className="volume-tip">
-            <Focus size={11} /> 单击器官选择 · 拖动旋转 · 滚轮缩放
+            <Focus size={11} /> {t('organ.tip')}
           </div>
           <div className="organ-scalebar">
             <i />
@@ -357,7 +375,7 @@ export default function OrganLibraryView({ notify }) {
         <aside className="inspector organ-inspector">
           <div className="selection-hero organ-hero">
             <div className="selection-eyebrow">
-              <span>STANDARD ORGAN</span>
+              <span>{t('organ.standardOrgan')}</span>
               <span className="selection-id">{selectedOrgan.code}</span>
             </div>
             <div className="selection-title">
@@ -366,39 +384,39 @@ export default function OrganLibraryView({ notify }) {
                 style={{ background: selectedOrgan.color }}
               />
               <div>
-                <h2>{selectedOrgan.name}</h2>
+                <h2>{catalogName(selectedOrgan)}</h2>
                 <small>{selectedOrgan.en} · {selectedSystem?.en}</small>
               </div>
             </div>
-            <p>{selectedOrgan.note}</p>
+            <p>{t('codes.NOTE_ANATOMICAL_REFERENCE')}</p>
             <div className="selection-stats">
-              <Stat label="系统" value={selectedSystem?.name || '—'} />
+              <Stat label={t('organ.system')} value={catalogName(selectedSystem)} />
               <div className="organ-size-stat">
-                <Stat label="尺寸" value={selectedOrgan.sizeMm.join(' × ')} unit="mm" />
+                <Stat label={t('organ.size')} value={selectedOrgan.sizeMm.join(' × ')} unit="mm" />
               </div>
-              <Stat label="编码" value={selectedOrgan.code} />
+              <Stat label={t('organ.code')} value={selectedOrgan.code} />
             </div>
             <div className="organ-actions">
               <Button size="sm" icon={<Focus size={13} />} onClick={() => focusOrgan(selectedOrgan.code)}>
-                聚焦
+                {t('organ.focus')}
               </Button>
               <Button size="sm" icon={<Boxes size={13} />} onClick={showOnlySelected}>
-                只看选中
+                {t('organ.only')}
               </Button>
               <Button size="sm" icon={<Layers size={13} />} onClick={showAll}>
-                全部显示
+                {t('organ.showAll')}
               </Button>
             </div>
           </div>
 
-          <Section title="系统筛选" code="SYSTEMS" right={<Layers size={13} />}>
+          <Section title={t('organ.filter')} code="SYSTEMS" right={<Layers size={13} />}>
             <div className="organ-filter">
               <button
                 type="button"
                 className={activeSystem === 'all' ? 'active' : ''}
                 onClick={() => setActiveSystem('all')}
               >
-                全部
+                {t('organ.all')}
               </button>
               {ORGAN_LIBRARY.systems.map((system) => (
                 <button
@@ -408,19 +426,19 @@ export default function OrganLibraryView({ notify }) {
                   onClick={() => setActiveSystem(system.id)}
                 >
                   <i style={{ background: system.color }} />
-                  {system.name}
+                  {catalogName(system)}
                 </button>
               ))}
             </div>
           </Section>
 
-          <Section title="器官清单" code="ORGANS" right={<Boxes size={13} />}>
+          <Section title={t('organ.list')} code="ORGANS" right={<Boxes size={13} />}>
             <div className="organ-list">
               {grouped.map((group) => (
                 <div className="organ-group" key={group.id}>
                   <div className="organ-group-title">
                     <i style={{ background: group.color }} />
-                    <span>{group.name}</span>
+                    <span>{catalogName(group)}</span>
                     <em>{group.en}</em>
                   </div>
                   {group.organs.map((organ) => (
@@ -436,13 +454,13 @@ export default function OrganLibraryView({ notify }) {
                     >
                       <i className="organ-dot" style={{ background: organ.color }} />
                       <span>
-                        <b>{organ.name}</b>
+                        <b>{catalogName(organ)}</b>
                         <small>{organ.code}</small>
                       </span>
                       <button
                         type="button"
                         className={`organ-visibility ${visible[organ.code] ? 'on' : ''}`}
-                        aria-label={`${visible[organ.code] ? '隐藏' : '显示'}${organ.name}`}
+                        aria-label={t(visible[organ.code] ? 'organ.hide' : 'organ.show', { name: catalogName(organ) })}
                         onClick={(event) => {
                           event.stopPropagation()
                           toggleOrgan(organ.code)
@@ -457,12 +475,12 @@ export default function OrganLibraryView({ notify }) {
             </div>
           </Section>
 
-          <Section title="详细结构" code="SUB-STRUCTURES" right={<Boxes size={13} />}>
+          <Section title={tr('organ.detailTitle', '详细结构')} code="SUB-STRUCTURES" right={<Boxes size={13} />}>
             {selectedOrgan.parts?.length ? (
               <>
                 <Toggle
-                  label="显示详细结构"
-                  hint={`${selectedOrgan.parts.length} 个子结构 · 点击行聚焦`}
+                  label={tr('organ.detailShow', '显示详细结构')}
+                  hint={tr('organ.detailCount', '{count} 个子结构 · 点击行聚焦', { count: selectedOrgan.parts.length })}
                   checked={detailMode}
                   onChange={(value) => {
                     setDetailMode(value)
@@ -474,7 +492,7 @@ export default function OrganLibraryView({ notify }) {
                     {partGroups.map((group) => (
                       <div className="organ-part-group" key={group.kind}>
                         <div className="organ-part-kind">
-                          <span>{group.label}</span>
+                          <span>{kindName(group.kind)}</span>
                           <em>{group.parts.length}</em>
                         </div>
                         {group.parts.map((part) => (
@@ -490,7 +508,7 @@ export default function OrganLibraryView({ notify }) {
                           >
                             <i style={{ background: PART_KIND_COLORS[group.kind] || selectedOrgan.color }} />
                             <span>
-                              <b>{part.name}</b>
+                              <b>{partName(part)}</b>
                               <small>{part.code}</small>
                             </span>
                             <button
@@ -500,7 +518,7 @@ export default function OrganLibraryView({ notify }) {
                                 event.stopPropagation()
                                 togglePart(part.code)
                               }}
-                              aria-label={`${partVisible(part.code) ? '隐藏' : '显示'}${part.name}`}
+                              aria-label={t(partVisible(part.code) ? 'organ.hide' : 'organ.show', { name: partName(part) })}
                             >
                               {partVisible(part.code) ? <Eye size={13} /> : <EyeOff size={13} />}
                             </button>
@@ -510,18 +528,18 @@ export default function OrganLibraryView({ notify }) {
                     ))}
                   </div>
                 ) : (
-                  <div className="wb-empty-line">开启后显示器官内部结构、分段和可独立选择的子结构。</div>
+                  <div className="wb-empty-line">{tr('organ.detailHint', '开启后显示器官内部结构、分段和可独立选择的子结构。')}</div>
                 )}
               </>
             ) : (
-              <div className="wb-empty-line">该器官当前仅提供整体表面；详细结构将在后续版本补充。</div>
+              <div className="wb-empty-line">{tr('organ.detailUnavailable', '该器官当前仅提供整体表面；详细结构将在后续版本补充。')}</div>
             )}
           </Section>
 
-          <Section title="靶点与模拟" code="TARGET / SIMULATION" right={<Crosshair size={13} />}>
+          <Section title={tr('organ.targetTitle', '靶点与模拟')} code="TARGET / SIMULATION" right={<Crosshair size={13} />}>
             <div className="organ-mode-row">
-              <button type="button" className={!targetMode ? 'active' : ''} onClick={() => { if (targetMode) toggleTargetMode(false) }}>浏览</button>
-              <button type="button" className={targetMode ? 'active' : ''} onClick={() => { if (!targetMode) toggleTargetMode(true) }}>靶点模拟</button>
+              <button type="button" className={!targetMode ? 'active' : ''} onClick={() => { if (targetMode) toggleTargetMode(false) }}>{tr('organ.targetBrowse', '浏览')}</button>
+              <button type="button" className={targetMode ? 'active' : ''} onClick={() => { if (!targetMode) toggleTargetMode(true) }}>{tr('organ.targetSimulation', '靶点模拟')}</button>
             </div>
             {targetMode ? (
               <>
@@ -534,22 +552,22 @@ export default function OrganLibraryView({ notify }) {
                       onClick={() => selectTarget(target)}
                     >
                       <span>
-                        <b>{target.name}</b>
-                        <small>{target.id} · {target.category}</small>
+                        <b>{tr(`organ.targetNames.${target.id}`, target.name)}</b>
+                        <small>{target.id} · {kindName(target.category)}</small>
                       </span>
-                      <em>{APPROACH_LABELS[target.approach] || target.approach}</em>
+                      <em>{approachName(target.approach)}</em>
                     </button>
-                  )) : <div className="wb-empty-line">该器官暂无标准靶点</div>}
+                  )) : <div className="wb-empty-line">{tr('organ.targetUnavailable', '该器官暂无标准靶点')}</div>}
                 </div>
                 {selectedTarget ? (
                   <>
                     <div className="scan-params organ-target-info">
-                      <div><span>靶点坐标</span><b>{selectedTarget.coordinateMm.join(' / ')} mm</b></div>
-                      <div><span>参考来源</span><b>{selectedTarget.reference}</b></div>
-                      <div><span>路径长度</span><b>{pathInfo ? `${pathInfo.pathLength.toFixed(1)} mm` : '—'}</b></div>
-                      <div><span>进针深度</span><b>{depth.toFixed(1)} mm</b></div>
-                      <div><span>距靶点</span><b>{remaining !== null ? `${remaining.toFixed(1)} mm` : '—'}</b></div>
-                      <div><span>入路</span><b>{APPROACH_LABELS[approach] || approach}</b></div>
+                      <div><span>{tr('organ.targetCoordinates', '靶点坐标')}</span><b>{selectedTarget.coordinateMm.join(' / ')} mm</b></div>
+                      <div><span>{tr('organ.targetReference', '参考来源')}</span><b>{selectedTarget.reference}</b></div>
+                      <div><span>{tr('organ.targetPathLength', '路径长度')}</span><b>{pathInfo ? `${pathInfo.pathLength.toFixed(1)} mm` : '—'}</b></div>
+                      <div><span>{tr('organ.targetDepth', '进针深度')}</span><b>{depth.toFixed(1)} mm</b></div>
+                      <div><span>{tr('organ.targetRemaining', '距靶点')}</span><b>{remaining !== null ? `${remaining.toFixed(1)} mm` : '—'}</b></div>
+                      <div><span>{tr('organ.targetApproach', '入路')}</span><b>{approachName(approach)}</b></div>
                     </div>
                     <div className="organ-view-grid">
                       {['anterior', 'posterior', 'left', 'right'].map((item) => (
@@ -559,12 +577,12 @@ export default function OrganLibraryView({ notify }) {
                           className={approach === item ? 'active' : ''}
                           onClick={() => changeApproach(item)}
                         >
-                          {APPROACH_LABELS[item]}
+                          {approachName(item)}
                         </button>
                       ))}
                     </div>
                     <Slider
-                      label="进针深度 DEPTH"
+                      label={tr('organ.targetDepth', '进针深度 DEPTH')}
                       value={depth}
                       min={0}
                       max={depthMax}
@@ -573,56 +591,60 @@ export default function OrganLibraryView({ notify }) {
                       format={(value) => `${value.toFixed(1)} mm`}
                     />
                     <div className="organ-view-grid">
-                      <button type="button" className={clipMode === 'off' ? 'active' : ''} onClick={() => setClipMode('off')}>关闭切面</button>
-                      <button type="button" className={clipMode === 'axial' ? 'active' : ''} onClick={() => setClipMode('axial')}>轴位切面</button>
-                      <button type="button" className={clipMode === 'coronal' ? 'active' : ''} onClick={() => setClipMode('coronal')}>冠状切面</button>
-                      <button type="button" className={clipMode === 'sagittal' ? 'active' : ''} onClick={() => setClipMode('sagittal')}>矢状切面</button>
+                      <button type="button" className={clipMode === 'off' ? 'active' : ''} onClick={() => setClipMode('off')}>{tr('organ.targetClipOff', '关闭切面')}</button>
+                      <button type="button" className={clipMode === 'axial' ? 'active' : ''} onClick={() => setClipMode('axial')}>{tr('organ.targetClipAxial', '轴位切面')}</button>
+                      <button type="button" className={clipMode === 'coronal' ? 'active' : ''} onClick={() => setClipMode('coronal')}>{tr('organ.targetClipCoronal', '冠状切面')}</button>
+                      <button type="button" className={clipMode === 'sagittal' ? 'active' : ''} onClick={() => setClipMode('sagittal')}>{tr('organ.targetClipSagittal', '矢状切面')}</button>
                     </div>
-                    <Toggle label="翻转裁剪" hint="显示切面另一侧" checked={clipFlip} onChange={setClipFlip} />
+                    <Toggle label={tr('organ.targetClipFlip', '翻转裁剪')} hint={tr('organ.targetClipFlipHint', '显示切面另一侧')} checked={clipFlip} onChange={setClipFlip} />
                     <div className="organ-actions">
                       <Button size="sm" icon={<Activity size={13} />} onClick={startSimulation} disabled={simulating || !pathInfo}>
-                        {simulating ? '模拟进针中…' : '模拟进针'}
+                        {simulating ? tr('organ.targetSimulating', '模拟进针中…') : tr('organ.targetSimulate', '模拟进针')}
                       </Button>
-                      <Button size="sm" icon={<RotateCcw size={13} />} onClick={resetNeedle}>复位针尖</Button>
+                      <Button size="sm" icon={<RotateCcw size={13} />} onClick={resetNeedle}>{tr('organ.targetResetNeedle', '复位针尖')}</Button>
                     </div>
                     <p className="organ-frame-note">
-                      路径经过：{collisionNames.length ? collisionNames.join('、') : '未检出其他参考器官（近似）'}
+                      {tr('organ.targetCollisions', '路径经过：{names}', {
+                        names: collisionNames.length
+                          ? collisionNames.join(lang === 'en' ? ', ' : '、')
+                          : tr('organ.targetNoCollisions', '未检出其他参考器官（近似）'),
+                      })}
                     </p>
                     <p className="organ-target-warning">
-                      <CircleAlert size={12} /> 教学 / 流程演示，不是手术规划或导航系统；不能用于真实穿刺、消融或介入操作。
+                      <CircleAlert size={12} /> {tr('organ.targetWarning', '教学 / 流程演示，不是手术规划或导航系统；不能用于真实穿刺、消融或介入操作。')}
                     </p>
                   </>
-                ) : <div className="wb-empty-line">选择上方靶点开始</div>}
+                ) : <div className="wb-empty-line">{tr('organ.targetSelect', '选择上方靶点开始')}</div>}
               </>
-            ) : <div className="wb-empty-line">切换到「靶点模拟」查看标准靶点、正交切面与进针演示。</div>}
+            ) : <div className="wb-empty-line">{tr('organ.targetHint', '切换到「靶点模拟」查看标准靶点、正交切面与进针演示。')}</div>}
           </Section>
 
-          <Section title="显示" code="RENDERING" right={<ShieldCheck size={13} />}>
+          <Section title={t('organ.display')} code="RENDERING" right={<ShieldCheck size={13} />}>
             <div className="organ-mode-row">
               <button
                 type="button"
                 className={mode === 'solid' ? 'active' : ''}
                 onClick={() => { setMode('solid'); setOpacity(1) }}
               >
-                实体
+                {t('organ.solid')}
               </button>
               <button
                 type="button"
                 className={mode === 'ghost' ? 'active' : ''}
                 onClick={() => { setMode('ghost'); setOpacity(0.42) }}
               >
-                半透明
+                {t('organ.ghost')}
               </button>
             </div>
             <div className="organ-view-grid">
-              <button type="button" className={view === 'anterior' ? 'active' : ''} onClick={() => selectView('anterior')}>前面观</button>
-              <button type="button" className={view === 'posterior' ? 'active' : ''} onClick={() => selectView('posterior')}>后面观</button>
-              <button type="button" className={view === 'left' ? 'active' : ''} onClick={() => selectView('left')}>左侧观</button>
-              <button type="button" className={view === 'right' ? 'active' : ''} onClick={() => selectView('right')}>右侧观</button>
+              <button type="button" className={view === 'anterior' ? 'active' : ''} onClick={() => selectView('anterior')}>{t('organ.viewAnterior')}</button>
+              <button type="button" className={view === 'posterior' ? 'active' : ''} onClick={() => selectView('posterior')}>{t('organ.viewPosterior')}</button>
+              <button type="button" className={view === 'left' ? 'active' : ''} onClick={() => selectView('left')}>{t('organ.viewLeft')}</button>
+              <button type="button" className={view === 'right' ? 'active' : ''} onClick={() => selectView('right')}>{t('organ.viewRight')}</button>
             </div>
-            <p className="organ-frame-note">放射学惯例：前面观时患者右侧位于图像左侧。</p>
+            <p className="organ-frame-note">{t('organ.radiology')}</p>
             <Slider
-              label="透明度 OPACITY"
+              label={t('organ.opacity')}
               value={opacity}
               min={0.15}
               max={1}
@@ -630,25 +652,31 @@ export default function OrganLibraryView({ notify }) {
               onChange={setOpacity}
               format={(value) => `${Math.round(value * 100)}%`}
             />
-            <Toggle label="自动旋转" hint="展示模式" checked={autoRotate} onChange={setAutoRotate} />
+            <Toggle label={t('organ.autoRotate')} hint={t('organ.showMode')} checked={autoRotate} onChange={setAutoRotate} />
           </Section>
 
-          <Section title="标准信息" code="STANDARD" right={<ShieldCheck size={13} />}>
+          <Section title={t('organ.info')} code="STANDARD" right={<ShieldCheck size={13} />}>
             <div className="scan-params">
-              <div><span>目录版本</span><b>{ORGAN_LIBRARY.version}</b></div>
-              <div><span>坐标系</span><b>{ORGAN_LIBRARY.frame.name}</b></div>
-              <div><span>单位</span><b>{ORGAN_LIBRARY.frame.units}</b></div>
-              <div><span>标准编码</span><b>{ORGAN_LIBRARY.organs.length + Object.keys(ORGAN_LIBRARY.standardCodes).length} 项</b></div>
-              <div><span>心脏子结构</span><b>{Object.keys(ORGAN_LIBRARY.segLabelMap).join(', ')}</b></div>
-              <div><span>几何来源</span><b>{selectedOrgan.mesh?.type === 'glb' ? '解剖 GLB' : '标准参考几何'}</b></div>
+              <div><span>{t('organ.catalogVersion')}</span><b>{ORGAN_LIBRARY.version}</b></div>
+              <div><span>{t('organ.frame')}</span><b>{ORGAN_LIBRARY.frame.name}</b></div>
+              <div><span>{t('organ.units')}</span><b>{ORGAN_LIBRARY.frame.units}</b></div>
+              <div><span>{t('organ.standardCodes')}</span><b>{t('organ.codeCount', { count: ORGAN_LIBRARY.organs.length + Object.keys(ORGAN_LIBRARY.standardCodes).length })}</b></div>
+              <div><span>{t('organ.heartParts')}</span><b>{Object.keys(ORGAN_LIBRARY.segLabelMap).join(', ')}</b></div>
+              <div><span>{t('organ.geometry')}</span><b>{t(selectedOrgan.mesh?.type === 'glb' ? 'organ.sourceGlb' : 'organ.sourceReference')}</b></div>
             </div>
-            <p className="organ-frame-note">{ORGAN_LIBRARY.frame.description}</p>
-            <p className="organ-source-note">{selectedOrgan.source}</p>
+            <p className="organ-frame-note">{t('organ.frameDescription')}</p>
+            <p className="organ-source-note">{
+              selectedOrgan.source?.startsWith('BodyParts3D')
+                ? t('codes.SOURCE_BODYPARTS3D')
+                : selectedOrgan.source?.startsWith('HuBMAP')
+                  ? t('codes.SOURCE_HUBMAP_HRA')
+                  : selectedOrgan.source
+            }</p>
           </Section>
 
           <div className="cta-disclaimer">
             <CircleAlert size={12} />
-            解剖参考模型与标准靶点用于方位、教学和流程演练；不是患者解剖，不用于诊断、测量或真实操作。
+            {tr('organ.detailDisclaimer', '解剖参考模型与标准靶点用于方位、教学和流程演练；不是患者解剖，不用于诊断、测量或真实操作。')}
           </div>
         </aside>
       </div>

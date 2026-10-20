@@ -1,6 +1,7 @@
 // Demo study adapter. All values are synthetic and are labelled as such in the
-// UI. Keeping them in one place removes the duplication that previously lived
-// inside individual components.
+// UI. Display strings follow the active language.
+
+import { t } from '../i18n.js'
 
 export const DEMO_STUDY_ID = 'demo-study'
 
@@ -37,10 +38,10 @@ export function createDemoStudy() {
   return {
     study: {
       id: DEMO_STUDY_ID,
-      subject: { id: 'demo-subject', pseudonym: '陈立群', sex: 'M', ageYears: 58 },
+      subject: { id: 'demo-subject', pseudonym: t('demo.pseudonym'), sex: 'M', ageYears: 58 },
       studyUid: 'DEMO-CCTA-2026-0417',
       studyDate: '2026-10-17',
-      description: 'CCTA + ICA + TTE · 冠状动脉综合评估',
+      description: t('demo.description'),
       modality: 'CT',
       source: 'demo',
       status: 'ready',
@@ -60,7 +61,7 @@ export function createDemoStudy() {
         id: 'demo-series',
         number: 3,
         modality: 'CT',
-        description: 'CCTA 75% R-R',
+        description: t('demo.series'),
         sliceCount: 168,
         rows: 256,
         cols: 256,
@@ -71,7 +72,7 @@ export function createDemoStudy() {
         contrastAgent: '320 mgI/mL · 60 mL',
         isSelected: true,
         candidateScore: 23,
-        reasons: ['演示数据'],
+        reasons: [t('demo.reasons')],
       },
     ],
     volumes: [
@@ -86,7 +87,7 @@ export function createDemoStudy() {
         markers: [
           {
             id: 'demo-lesion',
-            label: 'LAD 中段 70% 狭窄',
+            label: t('demo.marker'),
             voxel: [72, 89, 65],
             worldMm: [0.19, 0.49, -0.42],
             findingId: 'demo_STENOSIS_LAD',
@@ -104,14 +105,14 @@ export function createDemoStudy() {
     segmentations: [],
     meshes: [],
     measurements: [
-      demoMeasurement('STENOSIS_LAD', 'LAD 中段狭窄', 70, '%'),
-      demoMeasurement('FFR_CT', 'FFR-CT（远端）', 0.78, null),
-      demoMeasurement('CALCIUM_SCORE', 'Agatston 钙化积分', 286, null),
-      demoMeasurement('LV_VOLUME', '左心室腔容积（舒张期）', 142, 'mL'),
-      demoMeasurement('LV_EF', '左心室射血分数', 54, '%'),
-      demoMeasurement('LV_MASS', '左心室心肌质量', 112, 'g'),
-      demoMeasurement('GLS', '整体纵向应变', -16.8, '%'),
-      notComputed('AHA_SEGMENTS', 'AHA 17 段灌注/存活心肌', '演示数据仅作界面展示。'),
+      demoMeasurement('STENOSIS_LAD', t('demo.stenosis'), 70, '%'),
+      demoMeasurement('FFR_CT', t('demo.ffr'), 0.78, null),
+      demoMeasurement('CALCIUM_SCORE', t('demo.calcium'), 286, null),
+      demoMeasurement('LV_VOLUME', t('demo.lvVolume'), 142, 'mL'),
+      demoMeasurement('LV_EF', t('demo.lvEf'), 54, '%'),
+      demoMeasurement('LV_MASS', t('demo.lvMass'), 112, 'g'),
+      demoMeasurement('GLS', t('demo.gls'), -16.8, '%'),
+      notComputed('AHA_SEGMENTS', t('demo.aha'), t('demo.ahaReason')),
     ],
     reports: [],
     jobs: [],

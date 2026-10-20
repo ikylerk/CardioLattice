@@ -1,3 +1,5 @@
+import { t, useI18n, serverText, measurementLabel, errorDetail } from '../i18n.js'
+import { tImaging } from '../i18n-imaging.js'
 import React from 'react'
 import {
   CircleAlert,
@@ -13,32 +15,32 @@ import { createComparison, getComparison, getPriorCandidates } from '../api/clie
 
 const EMPTY = '—'
 
-const STATUS_MAP = {
-  ok: { label: '通过', tone: 'teal' },
-  success: { label: '通过', tone: 'teal' },
-  registered: { label: '已配准', tone: 'teal' },
-  complete: { label: '已完成', tone: 'teal' },
-  completed: { label: '计算完成', tone: 'teal' },
-  completed_with_warnings: { label: '完成 · 需复核', tone: 'amber' },
-  not_comparable: { label: '不可比', tone: 'amber' },
-  not_run: { label: '未执行', tone: 'neutral' },
-  low_quality: { label: '质量不足', tone: 'amber' },
-  warning: { label: '需复核', tone: 'amber' },
-  partial: { label: '部分完成', tone: 'amber' },
-  not_computed: { label: '未计算', tone: 'neutral' },
-  skipped: { label: '未执行', tone: 'neutral' },
-  failed: { label: '失败', tone: 'red' },
-  error: { label: '失败', tone: 'red' },
-}
+const statusLabels = () => ({
+  ok: { label: tImaging('comparison.passed'), tone: 'teal' },
+  success: { label: tImaging('comparison.passed'), tone: 'teal' },
+  registered: { label: tImaging('comparison.registered'), tone: 'teal' },
+  complete: { label: t('analysis.done'), tone: 'teal' },
+  completed: { label: tImaging('comparison.computed'), tone: 'teal' },
+  completed_with_warnings: { label: tImaging('comparison.reviewComplete'), tone: 'amber' },
+  not_comparable: { label: tImaging('comparison.notComparable'), tone: 'amber' },
+  not_run: { label: tImaging('comparison.notRun'), tone: 'neutral' },
+  low_quality: { label: tImaging('comparison.lowQuality'), tone: 'amber' },
+  warning: { label: tImaging('comparison.review'), tone: 'amber' },
+  partial: { label: tImaging('comparison.partial'), tone: 'amber' },
+  not_computed: { label: t('common.notComputed'), tone: 'neutral' },
+  skipped: { label: tImaging('comparison.notRun'), tone: 'neutral' },
+  failed: { label: t('status.failed'), tone: 'red' },
+  error: { label: t('status.failed'), tone: 'red' },
+})
 
-const COMPARABILITY_MAP = {
-  comparable: { label: '可比', tone: 'teal' },
-  not_comparable: { label: '不可比', tone: 'amber' },
-  incomparable: { label: '不可比', tone: 'amber' },
-  partially_comparable: { label: '部分可比', tone: 'amber' },
-  unknown: { label: '未知', tone: 'neutral' },
-  not_computed: { label: '未计算', tone: 'neutral' },
-}
+const comparabilityLabels = () => ({
+  comparable: { label: tImaging('comparison.comparable'), tone: 'teal' },
+  not_comparable: { label: tImaging('comparison.notComparable'), tone: 'amber' },
+  incomparable: { label: tImaging('comparison.notComparable'), tone: 'amber' },
+  partially_comparable: { label: tImaging('comparison.partiallyComparable'), tone: 'amber' },
+  unknown: { label: tImaging('common.unknown'), tone: 'neutral' },
+  not_computed: { label: t('common.notComputed'), tone: 'neutral' },
+})
 
 function isMissing(value) {
   return value === null || value === undefined || value === ''
@@ -63,7 +65,7 @@ function formatMetric(metric) {
   if (isMissing(metric)) return EMPTY
   if (typeof metric === 'object') {
     if (Array.isArray(metric)) return JSON.stringify(metric)
-    const name = metric.name || metric.label || metric.code || metric.method
+    const name = metric.name ? serverText(metric.name) : metric.label || metric.code ? measurementLabel(metric) : metric.method
     const hasValue = !isMissing(metric.value)
     if (!isMissing(name) && hasValue) return `${name} · ${formatNumber(metric.value, metric.unit || '')}`
     if (!isMissing(name)) return String(name)
@@ -101,17 +103,16 @@ function toWarningList(value) {
 }
 
 function warningText(warning) {
-  if (typeof warning === 'string') return warning
-  if (warning && typeof warning === 'object') {
-    return warning.message || warning.text || warning.code || warning.label || JSON.stringify(warning)
+  if (warning && typeof warning === 'object' && !Array.isArray(warning)) {
+    return serverText(warning.message || warning.text || warning.label || warning)
   }
-  return String(warning)
+  return serverText(warning)
 }
 
 function statusInfo(value) {
-  if (isMissing(value)) return { label: '未返回', tone: 'neutral', raw: EMPTY }
+  if (isMissing(value)) return { label: tImaging('common.notReturned'), tone: 'neutral', raw: EMPTY }
   const raw = String(value)
-  const known = STATUS_MAP[raw.toLowerCase()]
+  const known = statusLabels()[raw.toLowerCase()]
   return known ? { ...known, raw } : { label: raw, tone: 'neutral', raw }
 }
 
@@ -119,14 +120,14 @@ function comparabilityInfo(value) {
   if (value && typeof value === 'object') {
     const comparable = value.comparable === true
     return {
-      ...COMPARABILITY_MAP[comparable ? 'comparable' : 'not_comparable'],
+      ...comparabilityLabels()[comparable ? 'comparable' : 'not_comparable'],
       comparable,
       warnings: toWarningList(value.warnings),
     }
   }
-  if (isMissing(value)) return { label: '未标注', tone: 'neutral' }
+  if (isMissing(value)) return { label: tImaging('common.notSpecified'), tone: 'neutral' }
   const raw = String(value)
-  return { ...(COMPARABILITY_MAP[raw.toLowerCase()] || { label: raw, tone: 'neutral' }), comparable: false, warnings: ['旧版可比性未通过当前校验。'] }
+  return { ...(comparabilityLabels()[raw.toLowerCase()] || { label: raw, tone: 'neutral' }), comparable: false, warnings: [tImaging('comparison.legacy')] }
 }
 
 function CandidateRow({ candidate, selected, onSelect, disabled }) {
@@ -141,11 +142,11 @@ function CandidateRow({ candidate, selected, onSelect, disabled }) {
     >
       <span className="comparison-candidate-radio" aria-hidden="true" />
       <span className="comparison-candidate-main">
-        <b>{candidate.studyDate || '日期未知'}</b>
-        <span>{candidate.description || '无检查描述'}</span>
+        <b>{candidate.studyDate || tImaging('common.dateUnknown')}</b>
+        <span>{serverText(candidate.description) || tImaging('common.noStudyDescription')}</span>
       </span>
       <span className="comparison-candidate-meta">
-        <em>{candidate.source || '未标注来源'}</em>
+        <em>{candidate.source || tImaging('common.unspecifiedSource')}</em>
         <small>{candidate.id}</small>
       </span>
     </button>
@@ -153,6 +154,7 @@ function CandidateRow({ candidate, selected, onSelect, disabled }) {
 }
 
 export default function ComparisonView({ onNavigate }) {
+  useI18n()
   const { study, isApi } = useStudy()
   const current = study?.study
   const studyId = current?.id
@@ -191,7 +193,7 @@ export default function ComparisonView({ onNavigate }) {
         setCandidates(items.filter((item) => item?.id && item.id !== studyId))
       })
       .catch((err) => {
-        if (!cancelled) setCandidatesError(err.message || String(err))
+        if (!cancelled) setCandidatesError(errorDetail(err))
       })
       .finally(() => {
         if (!cancelled) setCandidatesLoading(false)
@@ -219,14 +221,18 @@ export default function ComparisonView({ onNavigate }) {
         payload = await getComparison(payload.id)
       }
       if (currentStudyIdRef.current !== requestStudyId || requestVersionRef.current !== requestVersion) return
-      if (!payload) throw new Error('对比接口未返回结果')
+      if (!payload) {
+        setRunError({ imagingKey: 'comparison.noResponse' })
+        return
+      }
       if (payload.currentStudyId !== requestStudyId || payload.priorStudyId !== priorId) {
-        throw new Error('对比结果与所选检查不一致，请重新运行')
+        setRunError({ imagingKey: 'comparison.wrongStudies' })
+        return
       }
       setResult(payload)
     } catch (err) {
       if (currentStudyIdRef.current === requestStudyId && requestVersionRef.current === requestVersion) {
-        setRunError(err.message || String(err))
+        setRunError(errorDetail(err))
       }
     } finally {
       if (currentStudyIdRef.current === requestStudyId && requestVersionRef.current === requestVersion) setRunning(false)
@@ -254,28 +260,26 @@ export default function ComparisonView({ onNavigate }) {
       <ViewHeader
         index="07"
         eyebrow="LONGITUDINAL COMPARISON"
-        title="纵向对比"
+        title={t('nav.comparison')}
         titleSuffix="LONGITUDINAL COMPARISON"
-        description="同一受试者既往检查的配准与差值浏览；只展示后端返回的可追溯指标，不预测未来事件。"
+        description={tImaging('comparison.description')}
         meta={
           <>
-            <span>{candidatesLoading ? '读取候选…' : `${candidates.length} 条既往候选`}</span>
+            <span>{candidatesLoading ? tImaging('comparison.loadingCandidates') : tImaging('comparison.candidateCount', { v0: candidates.length })}</span>
             <i />
-            <span>{result ? resultStatus.label : '尚未运行'}</span>
+            <span>{result ? resultStatus.label : tImaging('comparison.awaitingRun')}</span>
           </>
         }
         actions={
           <>
-            <Badge tone="amber" dot>研究用途 · 非预测</Badge>
+            <Badge tone="amber" dot>{tImaging('comparison.researchBadge')}</Badge>
             <Button
               variant="outline"
               size="sm"
               icon={<GitCompare size={14} />}
               onClick={runComparison}
               disabled={!studyId || !priorId || running}
-            >
-              运行纵向对比
-            </Button>
+            >{tImaging('comparison.run')}</Button>
           </>
         }
       />
@@ -284,78 +288,76 @@ export default function ComparisonView({ onNavigate }) {
         <div className="analysis-main comparison-main">
           <div className="analysis-strip comparison-strip">
             <Stat
-              label="既往候选"
+              label={tImaging('comparison.priorCandidates')}
               value={candidatesLoading ? EMPTY : candidates.length}
-              hint="同一受试者、当前检查之前"
+              hint={tImaging('comparison.earlierSameSubject')}
             />
             <Stat
-              label="已选既往"
+              label={tImaging('comparison.selectedPrior')}
               value={selected?.studyDate || EMPTY}
-              hint={selected?.description || '尚未选择'}
+              hint={selected?.description || tImaging('common.notSelected')}
             />
             <Stat
-              label="对比状态"
-              value={result ? resultStatus.label : '未运行'}
+              label={tImaging('comparison.status')}
+              value={result ? resultStatus.label : t('workbench.modelNotRun')}
               accent={result && resultStatus.tone !== 'teal' ? 'amber' : undefined}
-              hint={result ? '已返回结果' : '等待运行'}
+              hint={result ? tImaging('comparison.resultReturned') : tImaging('comparison.waiting')}
             />
             <Stat
-              label="指标差值"
+              label={tImaging('comparison.deltas')}
               value={result ? deltas.length : EMPTY}
-              hint={result ? `${comparableCount} 项标注可比` : '含 method / source / comparability'}
+              hint={result ? tImaging('comparison.comparableCount', { v0: comparableCount }) : tImaging('comparison.provenanceHint')}
             />
           </div>
 
-          <Section title="当前检查" code="CURRENT STUDY" right={<History size={13} />}>
+          <Section title={t('topbar.currentStudy')} code="CURRENT STUDY" right={<History size={13} />}>
             {current ? (
               <div className="scan-params comparison-current-grid">
-                <div><span>受试者</span><b>{current.subject?.pseudonym || EMPTY}</b></div>
-                <div><span>检查日期</span><b>{current.studyDate || EMPTY}</b></div>
-                <div><span>检查描述</span><b>{current.description || EMPTY}</b></div>
-                <div><span>模态</span><b>{current.modality || EMPTY}</b></div>
-                <div><span>来源</span><b>{current.source || EMPTY}</b></div>
-                <div><span>状态</span><b>{current.status || EMPTY}</b></div>
-                <div><span>检查 ID</span><b>{current.id || EMPTY}</b></div>
-                <div><span>受试者 ID</span><b>{current.subject?.id || EMPTY}</b></div>
+                <div><span>{t('report.subject')}</span><b>{current.subject?.pseudonym || EMPTY}</b></div>
+                <div><span>{t('report.studyDate')}</span><b>{current.studyDate || EMPTY}</b></div>
+                <div><span>{tImaging('common.studyDescription')}</span><b>{serverText(current.description) || EMPTY}</b></div>
+                <div><span>{t('workbench.modality')}</span><b>{current.modality || EMPTY}</b></div>
+                <div><span>{t('workbench.source')}</span><b>{current.source || EMPTY}</b></div>
+                <div><span>{tImaging('common.status')}</span><b>{current.status || EMPTY}</b></div>
+                <div><span>{tImaging('common.studyId')}</span><b>{current.id || EMPTY}</b></div>
+                <div><span>{tImaging('common.subjectId')}</span><b>{current.subject?.id || EMPTY}</b></div>
               </div>
             ) : (
               <div className="comparison-empty">
                 <CircleAlert size={16} />
-                <b>尚未选择检查</b>
-                <span>请先在检查工作台选择或上传一次检查，再运行纵向对比。</span>
-                <Button size="sm" variant="outline" onClick={() => onNavigate?.('workbench')}>
-                  前往检查工作台
-                </Button>
+                <b>{t('cta.emptyTitle')}</b>
+                <span>{tImaging('comparison.selectStudy')}</span>
+                <Button size="sm" variant="outline" onClick={() => onNavigate?.('workbench')}>{tImaging('comparison.openWorkbench')}</Button>
               </div>
             )}
           </Section>
 
-          <Section title="既往候选" code="PRIOR CANDIDATES" right={<History size={13} />}>
+          <Section title={tImaging('comparison.priorCandidates')} code="PRIOR CANDIDATES" right={<History size={13} />}>
             {!isApi ? (
               <div className="comparison-empty">
                 <CircleAlert size={16} />
-                <b>演示模式不提供纵向对比数据</b>
-                <span>纵向对比需要 API 模式下同一受试者的多次真实检查；不会使用演示数值替代。</span>
+                <b>{tImaging('comparison.noDemoTitle')}</b>
+                <span>{tImaging('comparison.noDemoBody')}</span>
               </div>
             ) : !studyId ? (
               <div className="comparison-empty">
                 <CircleAlert size={16} />
-                <b>缺少当前检查</b>
-                <span>选择当前检查后才能读取同一受试者的既往候选。</span>
+                <b>{tImaging('comparison.noCurrent')}</b>
+                <span>{tImaging('comparison.selectBeforeCandidates')}</span>
               </div>
             ) : candidatesLoading ? (
               <div className="comparison-empty">
                 <GitCompare size={16} />
-                <b>正在读取既往检查…</b>
-                <span>候选列表由后端按同一受试者筛选，不在此处推断。</span>
+                <b>{tImaging('comparison.loadingPrior')}</b>
+                <span>{tImaging('comparison.backendCandidates')}</span>
               </div>
             ) : candidatesError ? (
               <div className="workbench-error">
                 <CircleAlert size={14} />
-                <span>{candidatesError}</span>
+                <span>{serverText(candidatesError)}</span>
               </div>
             ) : candidates.length ? (
-              <div className="comparison-candidate-list" role="radiogroup" aria-label="既往检查候选">
+              <div className="comparison-candidate-list" role="radiogroup" aria-label={tImaging('comparison.candidatesAria')}>
                 {candidates.map((candidate) => (
                   <CandidateRow
                     key={candidate.id}
@@ -373,19 +375,19 @@ export default function ComparisonView({ onNavigate }) {
             ) : (
               <div className="comparison-empty">
                 <CircleAlert size={16} />
-                <b>未找到符合条件的既往检查</b>
-                <span>需要同一受试者的两次已就绪检查，且检查日期有效、既往日期严格早于当前。缺失日期或同日记录不会作为既往候选。</span>
+                <b>{tImaging('comparison.noCandidates')}</b>
+                <span>{tImaging('comparison.candidateRules')}</span>
               </div>
             )}
           </Section>
 
           <div className="comparison-run-bar">
             <div>
-              <span>已选既往检查</span>
+              <span>{tImaging('comparison.selectedPriorStudy')}</span>
               <b>
                 {selected
-                  ? `${selected.studyDate || '日期未知'} · ${selected.description || '无描述'}`
-                  : '尚未选择'}
+                  ? `${selected.studyDate || tImaging('common.dateUnknown')} · ${serverText(selected.description) || tImaging('common.noDescription')}`
+                  : tImaging('common.notSelected')}
               </b>
             </div>
             <Button
@@ -395,29 +397,29 @@ export default function ComparisonView({ onNavigate }) {
               onClick={runComparison}
               disabled={!studyId || !priorId || running}
             >
-              {running ? '运行中…' : '运行纵向对比'}
+              {running ? tImaging('comparison.running') : tImaging('comparison.run')}
             </Button>
           </div>
 
           {running ? (
             <div className="comparison-empty comparison-running">
               <GitCompare size={16} />
-              <b>正在配准并计算差值…</b>
-              <span>结果只包含后端返回的指标；未返回或 not_computed 的项保持为空。</span>
+              <b>{tImaging('comparison.computing')}</b>
+              <span>{tImaging('comparison.noInventedValues')}</span>
             </div>
           ) : null}
 
           {runError ? (
             <div className="workbench-error">
               <CircleAlert size={14} />
-              <span>{runError}</span>
+              <span>{runError.imagingKey ? tImaging(runError.imagingKey) : serverText(runError)}</span>
             </div>
           ) : null}
 
           {result ? (
             <>
               <Section
-                title="配准质量"
+                title={tImaging('comparison.registrationQuality')}
                 code="REGISTRATION QUALITY"
                 right={<ShieldCheck size={13} />}
               >
@@ -425,7 +427,7 @@ export default function ComparisonView({ onNavigate }) {
                   <div className="comparison-registration">
                     <div className="comparison-registration-head">
                       <div>
-                        <span>配准状态</span>
+                        <span>{tImaging('comparison.registrationStatus')}</span>
                         <Badge tone={registrationStatus.tone} dot>{registrationStatus.label}</Badge>
                         {registrationStatus.raw !== registrationStatus.label ? (
                           <em>{registrationStatus.raw}</em>
@@ -435,22 +437,22 @@ export default function ComparisonView({ onNavigate }) {
                     </div>
                     <div className="comparison-registration-grid">
                       <div>
-                        <span>方法 / METHOD</span>
+                        <span>{tImaging('comparison.method')}</span>
                         <b>{formatMetric(registration.method)}</b>
                       </div>
                       <div>
-                        <span>质量 / QUALITY</span>
-                        <b>{registration.quality === 'research_qc_passed' ? '工程质控通过 · 解剖准确性未验证' : formatValue(registration.quality)}</b>
+                        <span>{tImaging('comparison.quality')}</span>
+                        <b>{registration.quality === 'research_qc_passed' ? tImaging('comparison.engineeringQc') : formatValue(registration.quality)}</b>
                       </div>
                       <div>
-                        <span>度量 / METRIC</span>
+                        <span>{tImaging('comparison.metric')}</span>
                         <b>{formatMetric(registration.metric)}</b>
                       </div>
                     </div>
                     <div className="comparison-warnings">
                       <div className="comparison-warnings-title">
                         <CircleAlert size={12} />
-                        <span>配准警告</span>
+                        <span>{tImaging('comparison.registrationWarnings')}</span>
                       </div>
                       {registrationWarnings.length ? (
                         <ul>
@@ -460,7 +462,7 @@ export default function ComparisonView({ onNavigate }) {
                         </ul>
                       ) : (
                         <p className="comparison-warning-none">
-                          {hasRegistrationWarningsField ? '无配准警告。' : '后端未返回警告字段。'}
+                          {hasRegistrationWarningsField ? tImaging('comparison.noRegistrationWarnings') : tImaging('comparison.missingWarnings')}
                         </p>
                       )}
                     </div>
@@ -468,14 +470,14 @@ export default function ComparisonView({ onNavigate }) {
                 ) : (
                   <div className="comparison-empty">
                     <CircleAlert size={16} />
-                    <b>未返回配准信息</b>
-                    <span>对比结果中没有 registration 字段；不会以默认方法或质量填充。</span>
+                    <b>{tImaging('comparison.noRegistration')}</b>
+                    <span>{tImaging('comparison.noRegistrationBody')}</span>
                   </div>
                 )}
               </Section>
 
               <Section
-                title="指标差值"
+                title={tImaging('comparison.deltas')}
                 code="DELTA METRICS"
                 right={
                   <span className="comparison-result-meta">
@@ -488,13 +490,13 @@ export default function ComparisonView({ onNavigate }) {
                     <table className="comparison-table">
                       <thead>
                         <tr>
-                          <th>指标</th>
-                          <th>当前</th>
-                          <th>既往</th>
-                          <th>绝对变化</th>
-                          <th>百分比</th>
-                          <th>方法 / 来源</th>
-                          <th>可比性</th>
+                          <th>{t('report.colMetric')}</th>
+                          <th>{tImaging('comparison.current')}</th>
+                          <th>{tImaging('comparison.prior')}</th>
+                          <th>{tImaging('comparison.absoluteChange')}</th>
+                          <th>{tImaging('comparison.percentage')}</th>
+                          <th>{tImaging('comparison.methodSource')}</th>
+                          <th>{tImaging('comparison.comparability')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -510,21 +512,21 @@ export default function ComparisonView({ onNavigate }) {
                               className={incomplete ? 'not-computed' : ''}
                             >
                               <td>
-                                <b>{item.label || item.code || EMPTY}</b>
+                                <b>{measurementLabel(item) || EMPTY}</b>
                                 {item.label && item.code ? <em>{item.code}</em> : null}
                               </td>
-                              <td>{isMissing(item.current) ? <span className="comparison-missing">未计算</span> : formatValue(item.current, item.currentUnit ?? item.unit)}</td>
-                              <td>{isMissing(item.prior) ? <span className="comparison-missing">未计算</span> : formatValue(item.prior, item.priorUnit ?? item.unit)}</td>
+                              <td>{isMissing(item.current) ? <span className="comparison-missing">{t('common.notComputed')}</span> : formatValue(item.current, item.currentUnit ?? item.unit)}</td>
+                              <td>{isMissing(item.prior) ? <span className="comparison-missing">{t('common.notComputed')}</span> : formatValue(item.prior, item.priorUnit ?? item.unit)}</td>
                               <td>{comparable ? formatDelta(item.delta, item.unit) : EMPTY}</td>
                               <td>{comparable ? formatPercent(item.percent) : EMPTY}</td>
                               <td>
                                 <span>{formatMetric(item.method)}</span>
-                                <em>{item.source || EMPTY}</em>
-                                {item.comparability?.prior?.method && item.comparability.prior.method !== item.method ? <em>既往：{item.comparability.prior.method}</em> : null}
-                                {item.comparability?.prior?.source && item.comparability.prior.source !== item.source ? <em>既往来源：{item.comparability.prior.source}</em> : null}
+                                <em>{serverText(item.source) || EMPTY}</em>
+                                {item.comparability?.prior?.method && item.comparability.prior.method !== item.method ? <em>{tImaging('comparison.priorPrefix')}{formatMetric(item.comparability.prior.method)}</em> : null}
+                                {item.comparability?.prior?.source && item.comparability.prior.source !== item.source ? <em>{tImaging('comparison.priorSourcePrefix')}{serverText(item.comparability.prior.source)}</em> : null}
                               </td>
                               <td>
-                                <Badge tone={comparable ? comparability.tone : 'amber'}>{comparable ? comparability.label : '不可比'}</Badge>
+                                <Badge tone={comparable ? comparability.tone : 'amber'}>{comparable ? comparability.label : tImaging('comparison.notComparable')}</Badge>
                                 {reasons.map((reason, reasonIndex) => <em key={reasonIndex}>{warningText(reason)}</em>)}
                               </td>
                             </tr>
@@ -536,14 +538,14 @@ export default function ComparisonView({ onNavigate }) {
                 ) : (
                   <div className="comparison-empty">
                     <CircleAlert size={16} />
-                    <b>未返回可比较指标</b>
-                    <span>结果 deltas 为空或全部为 not_computed；不会用推算值填充差值表。</span>
+                    <b>{tImaging('comparison.noMetrics')}</b>
+                    <span>{tImaging('comparison.noMetricsBody')}</span>
                   </div>
                 )}
               </Section>
 
               {resultWarnings.length ? (
-                <Section title="对比警告" code="WARNINGS" right={<CircleAlert size={13} />}>
+                <Section title={tImaging('comparison.warnings')} code="WARNINGS" right={<CircleAlert size={13} />}>
                   <ul className="comparison-warning-list">
                     {resultWarnings.map((warning, index) => (
                       <li key={`${warningText(warning)}-${index}`}>{warningText(warning)}</li>
@@ -555,11 +557,8 @@ export default function ComparisonView({ onNavigate }) {
               <div className="comparison-disclaimer" role="note">
                 <ShieldAlert size={20} />
                 <div>
-                  <b>不是预测 · NOT A PREDICTION</b>
-                  <span>
-                    纵向对比只描述两次检查之间可量化指标的差异，不预测疾病进展、不推断未来风险，也不构成治疗建议。
-                    配准质量不足或指标不可比时，差值不应被解读为病情变化；所有结果需医生复核。
-                  </span>
+                  <b>{tImaging('comparison.notPrediction')}</b>
+                  <span>{tImaging('comparison.predictionScope')}</span>
                 </div>
               </div>
             </>
@@ -567,8 +566,8 @@ export default function ComparisonView({ onNavigate }) {
             <div className="comparison-placeholder">
               <GitCompare size={22} />
               <div>
-                <b>尚未生成对比</b>
-                <span>选择一条既往检查并运行纵向对比。结果只展示配准质量、可追溯差值与非预测声明。</span>
+                <b>{tImaging('comparison.noResult')}</b>
+                <span>{tImaging('comparison.runHint')}</span>
               </div>
             </div>
           )}
@@ -583,48 +582,43 @@ export default function ComparisonView({ onNavigate }) {
             <div className="selection-title">
               <span className="structure-swatch swatch-great" />
               <div>
-                <h2>{current?.subject?.pseudonym || '未选择检查'}</h2>
-                <small>{current?.studyDate || EMPTY} · {current?.description || EMPTY}</small>
+                <h2>{current?.subject?.pseudonym || t('topbar.noStudy')}</h2>
+                <small>{current?.studyDate || EMPTY} · {serverText(current?.description) || EMPTY}</small>
               </div>
             </div>
-            <p>
-              只比较同一受试者、当前检查之前的检查。不同受试者的检查不会进入候选列表；
-              缺失指标保持为空，不做插值或推算。
-            </p>
+            <p>{tImaging('comparison.subjectScope')}</p>
           </div>
 
-          <Section title="当前检查" code="CURRENT STUDY" right={<History size={13} />}>
+          <Section title={t('topbar.currentStudy')} code="CURRENT STUDY" right={<History size={13} />}>
             <div className="scan-params">
-              <div><span>检查 ID</span><b>{current?.id || EMPTY}</b></div>
-              <div><span>日期</span><b>{current?.studyDate || EMPTY}</b></div>
-              <div><span>模态</span><b>{current?.modality || EMPTY}</b></div>
-              <div><span>来源</span><b>{current?.source || EMPTY}</b></div>
-              <div><span>状态</span><b>{current?.status || EMPTY}</b></div>
-              <div><span>描述</span><b>{current?.description || EMPTY}</b></div>
+              <div><span>{tImaging('common.studyId')}</span><b>{current?.id || EMPTY}</b></div>
+              <div><span>{t('workbench.date')}</span><b>{current?.studyDate || EMPTY}</b></div>
+              <div><span>{t('workbench.modality')}</span><b>{current?.modality || EMPTY}</b></div>
+              <div><span>{t('workbench.source')}</span><b>{current?.source || EMPTY}</b></div>
+              <div><span>{tImaging('common.status')}</span><b>{current?.status || EMPTY}</b></div>
+              <div><span>{tImaging('common.description')}</span><b>{serverText(current?.description) || EMPTY}</b></div>
             </div>
           </Section>
 
-          <Section title="对比规则" code="PROTOCOL" right={<ShieldCheck size={13} />}>
+          <Section title={tImaging('comparison.protocol')} code="PROTOCOL" right={<ShieldCheck size={13} />}>
             <div className="comparison-rules">
               <div>
-                <b>同一受试者</b>
-                <span>按同一受试者 ID 校验；检查日期必须有效且早于当前，不以导入时间推断。</span>
+                <b>{tImaging('comparison.sameSubject')}</b>
+                <span>{tImaging('comparison.identityRule')}</span>
               </div>
               <div>
-                <b>可追溯</b>
-                <span>差值保留 method / source / comparability；缺失值不填充。</span>
+                <b>{tImaging('comparison.traceable')}</b>
+                <span>{tImaging('comparison.traceabilityRule')}</span>
               </div>
               <div>
-                <b>非预测</b>
-                <span>结果描述两次检查的差异，不推断未来事件。</span>
+                <b>{tImaging('comparison.nonPredictive')}</b>
+                <span>{tImaging('comparison.nonPredictiveRule')}</span>
               </div>
             </div>
           </Section>
 
           <div className="cta-disclaimer">
-            <CircleAlert size={12} />
-            研究原型。配准与差值结果需医生复核；不用于临床诊断、风险预测或治疗决策。
-          </div>
+            <CircleAlert size={12} />{tImaging('comparison.disclaimer')}</div>
         </aside>
       </div>
     </div>

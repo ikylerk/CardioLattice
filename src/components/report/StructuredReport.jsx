@@ -3,27 +3,23 @@ import { CheckCircle2, CircleAlert, FileSignature, History, Save, ShieldCheck } 
 import { Badge, Button } from '../ui.jsx'
 import { getReportVersions } from '../../api/reports.js'
 import { apiGet, apiPost } from '../../api/client.js'
+import { enumLabel, errorDetail, measurementLabel, serverText, t, useI18n } from '../../i18n.js'
+import { tReport } from '../../i18n-report.js'
 import './report-versions.css'
 
-const STATUS_LABEL = {
-  draft: '草稿',
-  clinician_reviewed: '医生已编辑',
-  approved: '已批准',
-  amended: '已修订',
-}
-
 function generatorLabel(report) {
-  if (report.generator === 'claude') return `AI 草稿 · ${report.model || 'Claude'}`
-  if (report.generator === 'human') return '医生编辑'
-  return '模板生成'
+  if (report.generator === 'claude') return t('report.aiDraft', { model: report.model || 'Claude' })
+  if (report.generator === 'human') return t('report.human')
+  return t('report.template')
 }
 
 function citationLabel(ref, measurementMap) {
   const item = measurementMap[ref]
-  return item ? `${item.label}${item.status === 'computed' && item.value != null ? `：${item.value} ${item.unit || ''}` : '（未计算）'}` : ref
+  return item ? `${measurementLabel(item)}${item.status === 'computed' && item.value != null ? `: ${item.value} ${item.unit || ''}` : tReport('notComputedCitation')}` : ref
 }
 
 export default function StructuredReport({ report: incomingReport, study, approveBusy, onRefresh, notify }) {
+  const { lang } = useI18n()
   const incomingIdRef = React.useRef(incomingReport?.id)
   incomingIdRef.current = incomingReport?.id
   const [report, setReport] = React.useState(incomingReport)
@@ -63,13 +59,13 @@ export default function StructuredReport({ report: incomingReport, study, approv
         setVersions(payload?.items || [])
         if (payload.currentVersion !== current.version || payload.contentHash !== current.contentHash ||
             JSON.stringify(current.content) !== JSON.stringify(report.content) || current.status !== report.status) {
-          setVersionsError('报告已更新，请刷新后重新复核。')
+          setVersionsError({ key: 'versionChanged' })
           return
         }
         setReviewBase({ baseVersion: current.version, baseContentHash: current.contentHash })
       })
       .catch((error) => {
-        if (!cancelled) setVersionsError(error.message || '版本历史加载失败')
+        if (!cancelled) setVersionsError(errorDetail(error) || { key: 'historyFailed' })
       })
       .finally(() => {
         if (!cancelled) setVersionsLoading(false)
@@ -89,7 +85,7 @@ export default function StructuredReport({ report: incomingReport, study, approv
       await onRefresh?.()
       notify?.(message)
     } catch {
-      notify?.(`${message}；其他检查数据刷新失败，请重新加载。`)
+      notify?.(tReport('refreshFailed', { message }))
     }
   }
 
@@ -101,11 +97,11 @@ export default function StructuredReport({ report: incomingReport, study, approv
         content: editedContent, ...reviewBase, actor: 'local-researcher', reason: amendReason.trim(),
       })
       setAmendReason('')
-      await applyResult(result, `已保存修订 v${result.version}，需重新复核。`)
+      await applyResult(result, tReport('amended', { version: result.version }))
     } catch (error) {
       setReviewBase(null)
-      setVersionsError('保存未完成，请刷新报告后重试。')
-      notify?.(error.message || '保存修订失败')
+      setVersionsError({ key: 'amendRetry' })
+      notify?.(serverText(errorDetail(error)) || tReport('amendFailed'))
     } finally {
       setAmendBusy(false)
     }
@@ -118,11 +114,11 @@ export default function StructuredReport({ report: incomingReport, study, approv
       const result = await apiPost(`/reports/${encodeURIComponent(report.id)}/approve`, {
         ...reviewBase, approvedBy: 'local-researcher',
       })
-      await applyResult(result, `已复核批准 v${result.version}。`)
+      await applyResult(result, tReport('approvedVersion', { version: result.version }))
     } catch (error) {
       setReviewBase(null)
-      setVersionsError('批准未完成，请刷新报告并核对待复核项。')
-      notify?.(error.message || '批准失败')
+      setVersionsError({ key: 'approveRetry' })
+      notify?.(serverText(errorDetail(error)) || t('report.approveFailed'))
     } finally {
       setReviewBusy(false)
     }
@@ -152,8 +148,8 @@ export default function StructuredReport({ report: incomingReport, study, approv
     return (
       <div className="report-empty">
         <CircleAlert size={22} />
-        <b>尚无报告草稿</b>
-        <span>运行检查流水线后，服务端会生成一份可追溯的结构化报告草稿。</span>
+        <b>{t('report.emptyTitle')}</b>
+        <span>{t('report.emptyBody')}</span>
       </div>
     )
   }
@@ -165,11 +161,15 @@ export default function StructuredReport({ report: incomingReport, study, approv
   const studyMeta = content.study || {}
   const measurementMap = Object.fromEntries((content.provenance?.measurement_snapshot || study?.measurements || []).map((item) => [item.id, item]))
   const citations = (refs) => refs?.length ? <div className="report-citations">{refs.map((ref) => <span key={ref} title={ref}>{citationLabel(ref, measurementMap)}</span>)}</div> : null
+  const storedLang = content.lang || content.language
+  const contentLang = storedLang === 'zh' || storedLang === 'zh-CN' ? 'zh-CN' : storedLang === 'en' ? 'en' : undefined
+  const storedLanguageName = contentLang === 'zh-CN' ? t('lang.nameZh') : contentLang === 'en' ? t('lang.nameEn') : storedLang
+  const locale = lang === 'zh' ? 'zh-CN' : 'en'
   const isApproved = report.status === 'approved'
   const isAi = report.generator === 'claude'
 
   return (
-    <article className="report-document structured-report">
+    <article className="report-document structured-report" lang={contentLang}>
       <div className="report-letterhead">
         <div className="report-brand">
           <span>CARDIOVASCULAR IMAGING · RESEARCH</span>
@@ -177,38 +177,39 @@ export default function StructuredReport({ report: incomingReport, study, approv
         <div className="report-number">
           <span>REPORT NO.</span>
           <b>{report.id.replace(/^rep_/, 'R-').toUpperCase()}</b>
-          <em>{STATUS_LABEL[report.status] || report.status} · {generatorLabel(report)}</em>
+          <em>{enumLabel('status', report.status)} · {generatorLabel(report)}</em>
+          {storedLanguageName ? <em>{t('report.storedLang', { lang: storedLanguageName })}</em> : null}
         </div>
       </div>
 
       <div className="report-title">
         <span className="report-title-kicker">RESEARCH STRUCTURED REPORT</span>
-        <h1>心血管影像结构化报告</h1>
-        <p>{studyMeta.description || 'CCTA'} · {studyMeta.modalities?.join(' / ') || studyMeta.modalities || '—'}</p>
+        <h1>{t('report.docTitle')}</h1>
+        <p>{typeof studyMeta.description === 'string' ? studyMeta.description : serverText(studyMeta.description) || 'CCTA'} · {studyMeta.modalities?.join(' / ') || studyMeta.modalities || '—'}</p>
       </div>
 
       <div className="report-patient">
-        <div><span>受试者</span><b>{subject.pseudonym || '—'}</b></div>
-        <div><span>性别 / 年龄</span><b>{subject.sex || '—'} / {subject.age_years ?? '—'}</b></div>
-        <div><span>检查日期</span><b>{studyMeta.date || '—'}</b></div>
-        <div><span>数据来源</span><b>{studyMeta.source || '—'}</b></div>
-        <div><span>报告状态</span><b>{STATUS_LABEL[report.status] || report.status}</b></div>
-        <div><span>生成方式</span><b>{generatorLabel(report)}</b></div>
+        <div><span>{t('report.subject')}</span><b>{subject.pseudonym || '—'}</b></div>
+        <div><span>{t('report.sexAge')}</span><b>{subject.sex || '—'} / {subject.age_years ?? '—'}</b></div>
+        <div><span>{t('report.studyDate')}</span><b>{studyMeta.date || '—'}</b></div>
+        <div><span>{t('report.dataSource')}</span><b>{studyMeta.source || '—'}</b></div>
+        <div><span>{t('report.reportStatus')}</span><b>{enumLabel('status', report.status)}</b></div>
+        <div><span>{t('report.generator')}</span><b>{generatorLabel(report)}</b></div>
       </div>
 
       {isAi ? (
         <div className="report-ai-banner">
           <CircleAlert size={13} />
-          AI 生成草稿：仅对结构化测量进行语言化，所有数值需医生逐条核对；未批准前不得作为正式报告。
+          {t('report.aiBanner')}
         </div>
       ) : null}
 
       {content.provenance?.fallback_reason ? (
         <div className="report-ai-banner" role="status">
-          <CircleAlert size={13} />模板回退：{content.provenance.fallback_reason}
+          <CircleAlert size={13} />{tReport('fallback')}{serverText(content.provenance.fallback_reason)}
         </div>
       ) : null}
-      {editing ? <p className="report-versions-status">正在编辑修订稿；保存后原批准失效，需要重新复核。</p> : null}
+      {editing ? <p className="report-versions-status">{tReport('editing')}</p> : null}
 
       {sections.map((section, index) => (
         <section className="report-section" key={section.id || index}>
@@ -216,9 +217,9 @@ export default function StructuredReport({ report: incomingReport, study, approv
           {(section.claims || []).map((claim, claimIndex) => (
             <div className="report-claim" key={claim.id}>
               <p>
-                {editing ? <textarea className="report-edit-text" aria-label={`${section.title} 第${claimIndex + 1}条`} value={claim.text} onChange={(event) => editText('sections', claimIndex, event.target.value, index)} /> : claim.text}
-                {claim.status === 'needs_review' ? <Badge tone="amber">待复核</Badge> : null}
-                {editing && claim.status === 'needs_review' ? <button type="button" className="report-versions-save" onClick={() => reviewClaim('sections', claimIndex, index)}>已核对并修正证据</button> : null}
+                {editing ? <textarea className="report-edit-text" aria-label={tReport('claimAria', { title: section.title, index: claimIndex + 1 })} value={claim.text} onChange={(event) => editText('sections', claimIndex, event.target.value, index)} /> : claim.text}
+                {claim.status === 'needs_review' ? <Badge tone="amber">{tReport('needsReview')}</Badge> : null}
+                {editing && claim.status === 'needs_review' ? <button type="button" className="report-versions-save" onClick={() => reviewClaim('sections', claimIndex, index)}>{tReport('evidenceReviewed')}</button> : null}
               </p>
               {(claim.evidence_refs || []).length ? (
                 <div className="report-citations">
@@ -229,20 +230,20 @@ export default function StructuredReport({ report: incomingReport, study, approv
               ) : null}
             </div>
           ))}
-          {!section.claims?.length ? <p className="report-muted">本节无内容。</p> : null}
+          {!section.claims?.length ? <p className="report-muted">{t('report.emptySection')}</p> : null}
         </section>
       ))}
 
       {content.impression?.length ? (
         <section className="report-section report-conclusion">
-          <h2><span>{String(sections.length + 1).padStart(2, '0')}</span> 印象</h2>
+          <h2><span>{String(sections.length + 1).padStart(2, '0')}</span> {t('report.impression')}</h2>
           <ol>
             {content.impression.map((item, index) => (
               <li key={item.id}>
-                {editing ? <textarea className="report-edit-text" aria-label={`印象 第${index + 1}条`} value={item.text} onChange={(event) => editText('impression', index, event.target.value)} /> : item.text}
-                {item.status === 'needs_review' ? <Badge tone="amber">待复核</Badge> : null}
-                {editing && item.status === 'needs_review' ? <button type="button" className="report-versions-save" onClick={() => reviewClaim('impression', index)}>已核对并修正证据</button> : null}
-                {item.status === 'research_only' ? <Badge tone="amber">研究</Badge> : null}
+                {editing ? <textarea className="report-edit-text" aria-label={tReport('claimAria', { title: t('report.impression'), index: index + 1 })} value={item.text} onChange={(event) => editText('impression', index, event.target.value)} /> : item.text}
+                {item.status === 'needs_review' ? <Badge tone="amber">{tReport('needsReview')}</Badge> : null}
+                {editing && item.status === 'needs_review' ? <button type="button" className="report-versions-save" onClick={() => reviewClaim('impression', index)}>{tReport('evidenceReviewed')}</button> : null}
+                {item.status === 'research_only' ? <Badge tone="amber">{t('common.research')}</Badge> : null}
                 {citations(item.evidence_refs)}
               </li>
             ))}
@@ -252,12 +253,12 @@ export default function StructuredReport({ report: incomingReport, study, approv
 
       {content.recommendations?.length ? (
         <section className="report-section">
-          <h2><span>{String(sections.length + 2).padStart(2, '0')}</span> 建议</h2>
+          <h2><span>{String(sections.length + 2).padStart(2, '0')}</span> {t('report.recTitle')}</h2>
           <ul className="report-recommendations">
             {content.recommendations.map((item, index) => <li key={item.id}>
-              {editing ? <textarea className="report-edit-text" aria-label={`建议 第${index + 1}条`} value={item.text} onChange={(event) => editText('recommendations', index, event.target.value)} /> : item.text}
-              {item.status === 'needs_review' ? <Badge tone="amber">待复核</Badge> : null}
-              {editing && item.status === 'needs_review' ? <button type="button" className="report-versions-save" onClick={() => reviewClaim('recommendations', index)}>已核对并修正证据</button> : null}
+              {editing ? <textarea className="report-edit-text" aria-label={tReport('claimAria', { title: t('report.recommendations'), index: index + 1 })} value={item.text} onChange={(event) => editText('recommendations', index, event.target.value)} /> : item.text}
+              {item.status === 'needs_review' ? <Badge tone="amber">{tReport('needsReview')}</Badge> : null}
+              {editing && item.status === 'needs_review' ? <button type="button" className="report-versions-save" onClick={() => reviewClaim('recommendations', index)}>{tReport('evidenceReviewed')}</button> : null}
               {citations(item.evidence_refs)}
             </li>)}
           </ul>
@@ -266,7 +267,7 @@ export default function StructuredReport({ report: incomingReport, study, approv
 
       {content.limitations?.length ? (
         <section className="report-section">
-          <h2>局限</h2>
+          <h2>{t('report.limitations')}</h2>
           <ul className="report-recommendations">
             {content.limitations.map((item, index) => <li key={index}>{item}</li>)}
           </ul>
@@ -276,32 +277,31 @@ export default function StructuredReport({ report: incomingReport, study, approv
       <div className="report-provenance">
         <ShieldCheck size={13} />
         <div>
-          <b>Provenance</b>
+          <b>{t('report.provenanceTitle')}</b>
           <span>
-            生成方式：{report.generator} · 模型：{report.model || '—'} · 模板：{report.promptVersion || '—'} ·
-            测量引用：{(content.provenance?.measurement_ids || []).length} 项
+            {t('report.provenance', { generator: report.generator, model: report.model || '—', prompt: report.promptVersion || '—', count: (content.provenance?.measurement_ids || []).length })}
           </span>
         </div>
       </div>
 
-      <section className="report-versions" aria-label="版本历史">
+      <section className="report-versions" aria-label={tReport('history')}>
         <header className="report-versions-head">
           <div>
             <History size={13} />
-            <b>版本历史</b>
+            <b>{tReport('history')}</b>
             <span>VERSIONS</span>
           </div>
-          <em>{versions.length} 个不可变快照</em>
+          <em>{tReport('snapshots', { count: versions.length })}</em>
         </header>
 
         {versionsLoading ? (
-          <p className="report-versions-status">正在加载版本历史…</p>
+          <p className="report-versions-status">{tReport('historyLoading')}</p>
         ) : null}
         {versionsError ? (
-          <p className="report-versions-status error">{versionsError}</p>
+          <p className="report-versions-status error">{versionsError.key ? tReport(versionsError.key) : serverText(versionsError)}</p>
         ) : null}
         {!versionsLoading && !versionsError && !versions.length ? (
-          <p className="report-versions-status">尚无版本快照。保存修订或批准报告后会生成不可变版本。</p>
+          <p className="report-versions-status">{tReport('historyEmpty')}</p>
         ) : null}
 
         {versions.length ? (
@@ -310,11 +310,11 @@ export default function StructuredReport({ report: incomingReport, study, approv
               <li key={version.id || version.version}>
                 <span className="report-versions-badge">v{version.version}</span>
                 <div className="report-versions-meta">
-                  <b>{STATUS_LABEL[version.status] || version.status}</b>
+                  <b>{enumLabel('status', version.status)}</b>
                   <span>
                     {version.editedBy || '—'} ·{' '}
                     <time dateTime={version.createdAt || undefined}>
-                      {version.createdAt ? new Date(version.createdAt).toLocaleString() : '—'}
+                      {version.createdAt ? new Date(version.createdAt).toLocaleString(locale) : '—'}
                     </time>
                   </span>
                   {version.reason ? <em>{version.reason}</em> : null}
@@ -333,14 +333,14 @@ export default function StructuredReport({ report: incomingReport, study, approv
           {!editing ? <button className="report-versions-save" type="button" disabled={!reviewBase || amendBusy || reviewBusy} onClick={() => {
             setEditedContent(JSON.parse(JSON.stringify(report.content || {})))
             setEditing(true)
-          }}>编辑修订</button> : <button className="report-versions-save" type="button" disabled={amendBusy} onClick={() => setEditing(false)}>取消编辑</button>}
+          }}>{tReport('edit')}</button> : <button className="report-versions-save" type="button" disabled={amendBusy} onClick={() => setEditing(false)}>{tReport('cancel')}</button>}
           <input
             type="text"
             value={amendReason}
             onChange={(event) => setAmendReason(event.target.value)}
-            placeholder="修订原因（必填）"
+            placeholder={tReport('reasonRequired')}
             disabled={!editing || amendBusy}
-            aria-label="修订原因"
+            aria-label={tReport('reason')}
             maxLength={240}
           />
           <button
@@ -350,7 +350,7 @@ export default function StructuredReport({ report: incomingReport, study, approv
             disabled={amendBusy || reviewBusy || !reviewBase || !changed || !amendReason.trim()}
           >
             <Save size={12} />
-            {amendBusy ? '保存中…' : '保存修订'}
+            {amendBusy ? tReport('saving') : tReport('save')}
           </button>
         </div>
       </section>
@@ -360,19 +360,19 @@ export default function StructuredReport({ report: incomingReport, study, approv
           <>
             <CheckCircle2 size={15} />
             <div>
-              <b>已批准</b>
-              <span>{report.approvedBy || '—'} · {report.approvedAt ? new Date(report.approvedAt).toLocaleString() : '—'}</span>
+              <b>{t('report.approved')}</b>
+              <span>{report.approvedBy || '—'} · {report.approvedAt ? new Date(report.approvedAt).toLocaleString(locale) : '—'}</span>
             </div>
           </>
         ) : (
           <>
             <FileSignature size={15} />
             <div>
-              <b>待医生复核</b>
-              <span>{hasReviewFlags ? '存在证据待复核项，需修订并完成逐项核对。' : '批准绑定当前版本和内容；修订后需重新复核。'}</span>
+              <b>{t('report.pending')}</b>
+              <span>{hasReviewFlags ? tReport('evidencePending') : tReport('approvalBound')}</span>
             </div>
             <Button variant="primary" size="sm" onClick={handleApprove} disabled={approveBusy || reviewBusy || amendBusy || editing || !reviewBase || hasReviewFlags}>
-              {approveBusy || reviewBusy ? '批准中…' : '批准报告'}
+              {approveBusy || reviewBusy ? t('report.approving') : t('report.approve')}
             </Button>
           </>
         )}
@@ -381,7 +381,7 @@ export default function StructuredReport({ report: incomingReport, study, approv
       <div className="report-disclaimer">
         <CircleAlert size={12} />
         <p>
-          {content.disclaimer || '研究原型。不可用于临床诊断或治疗决策。'}
+          {content.disclaimer || tReport('fallbackDisclaimer')}
         </p>
       </div>
       <div className="report-pagefoot">
