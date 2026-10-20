@@ -1,3 +1,5 @@
+import { getMprGeometry, getMprSampleLayout } from './mprGeometry.js'
+
 export const VOLUME_DIMS = [128, 128, 168]
 export const VOLUME_BOUNDS = {
   min: [-1.5, -1.2, -1.9],
@@ -226,26 +228,11 @@ export function sampleHU(volume, x, y, z) {
 }
 
 export function renderMPR(canvas, volume, plane, slices, windowWidth, windowLevel, dimmed = false) {
-  const [nx, ny, nz] = volume.dims
   const [huMin, huMax] = volume.huRange || [HU_MIN, HU_MAX]
   const huScale = (huMax - huMin) / 255
-  let width
-  let height
-  let sample
-
-  if (plane === 'axial') {
-    width = nx
-    height = ny
-    sample = (u, v) => volume.data[(slices.z * ny + (ny - 1 - v)) * nx + u]
-  } else if (plane === 'coronal') {
-    width = nx
-    height = nz
-    sample = (u, v) => volume.data[((nz - 1 - v) * ny + slices.y) * nx + u]
-  } else {
-    width = ny
-    height = nz
-    sample = (u, v) => volume.data[((nz - 1 - v) * ny + u) * nx + slices.x]
-  }
+  const geometry = getMprGeometry(volume, plane)
+  const { width, height } = geometry
+  const { offset: start, stepU, stepV } = getMprSampleLayout(geometry, slices)
 
   if (canvas.width !== width) canvas.width = width
   if (canvas.height !== height) canvas.height = height
@@ -256,7 +243,7 @@ export function renderMPR(canvas, volume, plane, slices, windowWidth, windowLeve
 
   for (let v = 0; v < height; v += 1) {
     for (let u = 0; u < width; u += 1) {
-      const raw = sample(u, v)
+      const raw = volume.data[start + u * stepU + v * stepV]
       const hu = raw * huScale + huMin
       let value = clamp((hu - low) / range, 0, 1)
       value = Math.pow(value, 0.92)

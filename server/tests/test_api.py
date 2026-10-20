@@ -57,12 +57,27 @@ def test_demo_pipeline_end_to_end():
         assert report["generator"] == "template"
         assert report["content"]["disclaimer"]
 
-        approved = client.post(
+        missing_lock = client.post(
             f"/api/studies/{study_id}/reports/{report['id']}/approve",
             json={"approvedBy": "dr.test"},
         )
+        assert missing_lock.status_code == 422
+        approved = client.post(
+            f"/api/studies/{study_id}/reports/{report['id']}/approve",
+            json={"approvedBy": "dr.test", "baseVersion": report["version"],
+                  "baseContentHash": report["contentHash"]},
+        )
         assert approved.status_code == 200
         assert approved.json()["status"] == "approved"
+        updated = client.get(f"/api/studies/{study_id}").json()["reports"][0]
+        assert updated["version"] == approved.json()["version"]
+        assert updated["contentHash"] == approved.json()["contentHash"]
+        stale = client.post(
+            f"/api/studies/{study_id}/reports/{report['id']}/approve",
+            json={"approvedBy": "dr.test", "baseVersion": report["version"],
+                  "baseContentHash": report["contentHash"]},
+        )
+        assert stale.status_code == 409
 
         audit = client.get(f"/api/studies/{study_id}/audit").json()
         assert audit["verified"] is True

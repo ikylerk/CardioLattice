@@ -26,13 +26,14 @@ M1 把「演示」换成了可验证的数据链路：
 | 审计哈希链 | ✅ 已实现 | 去标识、体数据、流水线、报告批准等事件 |
 | 标准器官模型库 | ✅ 已实现 | 19 个解剖参考器官、详细子结构、109 个参考靶点、靶点模拟 |
 | 冠脉分段与参考分析 | ✅ 已实现 | 17 个冠脉分段、AHA 1–17 心肌段映射、C 臂体位、参考 QCA |
-| 公开 NIfTI 导入 | ✅ 已实现 | ImageCAS/ASOCA 等公开影像 + 标签导入、预览体数据、GLB、报告草稿 |
-| 冠脉标签分析 | ✅ 已实现 | 骨架化中心线、管径剖面、候选狭窄（研究算法） |
+| 公开 NIfTI 导入 | ✅ 已实现 | 原始标签独立保存；在原始网格计算体积和生成网格；标签身份由显式映射确定 |
+| 冠脉标签分析 | ✅ 已实现 | 原始网格上的骨架中心线、管径剖面；逐分量检查骨架丢失，异常时不输出分析值 |
 | 参考图谱配准 | ✅ 已实现 | 四心腔 Umeyama 相似配准，映射 11 个参考靶点到患者帧 |
 | AI 辅助报告草稿 | ✅ 已实现 | Claude 结构化草稿 / 模板回退，证据引用、数字校验、医生批准 |
-| LLM 辅助报告（Claude） | 🚧 M2 | 只对结构化事实做语言化，不独立下诊断；接口与校验已设计 |
+| 报告修订与批准 | ✅ 已实现 | 不可变版本快照、内容哈希、过期修改拒绝；修订撤销当前批准 |
 | 冠脉管腔/狭窄/FFR-CT | 🚧 M3–M4 | 未接入经过验证的模型，UI 显示 `not_computed`，不编造数值 |
-| 纵向对比/预测 | 🚧 M3 | 先做配准与 delta；没有验证模型前不展示“未来事件概率” |
+| 纵向对比 | ✅ 研究实现 | 同一受试者的有序日期检查、刚性配准质控、逐项来源与采集条件校验；不满足条件时抑制差值 |
+| 预测 | 🚧 未实现 | 没有验证模型，不展示未来事件概率 |
 | 真实造影（XA）/超声（TTE） | 🚧 后续 | API 模式下明确显示「该检查不可用」，演示模式保留 |
 
 **最重要的边界**：单时相 CCTA 不能计算 EF/SV；Agatston 积分需要非增强钙化扫描；AHA 灌注/存活心肌不能只靠 CTA 推断；冠脉狭窄百分比必须来自经过独立验证的管腔模型。当前代码在这些项目上返回 `not_computed` 和原因。
@@ -91,7 +92,7 @@ FastAPI（server/）
   ├─ inline BackgroundTasks（本地）/ Redis + RQ worker（规划中）
   ├─ pydicom + SimpleITK + scikit-image + trimesh
   ├─ TotalSegmentator（可选真实分割）
-  └─ Anthropic SDK（M2，服务端密钥）
+  └─ Anthropic SDK（结构化草稿，服务端密钥；本轮未验证真实云调用）
 ```
 
 ### 流水线阶段
@@ -104,10 +105,11 @@ queued → validating → anonymizing → building_volume
 
 ### 坐标与单位
 
-- 内部统一 **RAS**（+x 右，+y 前，+z 头），单位毫米。
-- DICOM 输入为 LPS，在边界处转换。
-- 前端体数据按 `(z, y, x)` C-order 存储，MPR 按物理 spacing 计算纵横比。
-- GLB 网格已转换为场景单位；`scene_transform` 记录 mm → scene 的缩放与中心。
+- 影像物理坐标采用 SimpleITK 的 **LPS** 毫米坐标；方向矩阵、原点、间距共同定义体素位置。
+- 预览按 RAS 轴序重排，但保留完整 LPS 物理几何；重排不会移动物理点。
+- 前端体数据按 `(z, y, x)` C-order 存储，MPR 根据方向矩阵排列切面与方位标记，并按 spacing 计算纵横比。
+- GLB 顶点经原始标签物理坐标转换到预览轴坐标，再以体素中心范围居中、缩放。参考器官图谱有独立坐标约定。
+- 详见 [`docs/imaging-geometry.md`](docs/imaging-geometry.md)。
 
 ### 数据模型（核心）
 
@@ -146,7 +148,7 @@ queued → validating → anonymizing → building_volume
 
 > 这些是**解剖参考模型**，不是患者解剖，不能用于诊断或测量。器官 GLB 采用 **CC BY 4.0** 授权，与仓库代码的 MIT 授权分开；详见 [`src/assets/organs/ATTRIBUTION.md`](src/assets/organs/ATTRIBUTION.md)。
 
-当前版本提供标准目录、详细子结构、参考靶点和模拟操作界面；把图谱配准到患者体数据（atlas-to-patient registration）属于后续工作，并且只能用于方位/质控，不能用于推导患者测量。靶点与进针演示仅用于教学和流程演练，不是手术规划或导航系统。
+当前版本提供标准目录、详细子结构、参考靶点和模拟操作界面；心脏图谱支持研究性相似配准，需显式心腔语义与足够有效标志点，并显示拟合残差。残差不是靶点定位准确率，参考点不能用于推导患者病灶或测量。靶点与进针演示仅用于教学和流程演练，不是手术规划或导航系统。
 
 详见 [`docs/organ-library.md`](docs/organ-library.md)。
 
@@ -176,7 +178,8 @@ queued → validating → anonymizing → building_volume
 「检查工作台」新增 **公开数据导入（NIfTI）**，用于 ImageCAS / ASOCA 等公开 CCTA 数据：
 
 - 上传影像 `.nii.gz` + 标签 `.nii.gz`，可提供标签映射 JSON；
-- 服务端重采样、对齐标签、生成预览体数据、marching cubes 网格、标签体积和报告草稿；
+- 原始标签用于网格、体积和研究性中心线分析；另外对齐到预览网格以供显示，保存两者几何和输入哈希；
+- 不从标签数字猜测器官；标签 1 不会自动认定为冠脉，需要用户提供明确映射；
 - 研究路径标记为 `source=public_dataset`，与临床 DICOM 上传路径分开；
 - 不运行临床去标识、不计算狭窄/FFR/EF 等未验证指标。
 
@@ -202,10 +205,10 @@ queued → validating → anonymizing → building_volume
 报告抽屉新增「AI 草稿」：
 
 - 只把去标识化的结构化测量和研究事实发送给 Claude，不发送原始影像或姓名；
-- 强制 `submit_report` 工具 schema，每条陈述引用 measurement ID；
+- 请求 `submit_report` 结构化工具输出，在本地校验字段、证据引用和测量状态；缺少工具输出时明确回退；
 - 数字校验不通过时标记「待复核」；
 - 无 API key 或调用失败时回退模板报告，并在 provenance 记录原因；
-- 医生仍需逐条复核并批准，批准写入审计链。
+- 医生仍需逐条复核并批准，批准绑定当前版本与内容哈希；后续修改撤销当前批准并保留历史快照。
 
 配置：`ANTHROPIC_API_KEY`（服务端）、`ANTHROPIC_MODEL`（默认 `claude-sonnet-5-5`）。详见 [`docs/ai-reporting.md`](docs/ai-reporting.md)。
 

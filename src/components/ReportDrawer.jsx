@@ -68,7 +68,7 @@ function MiniEcho() {
 }
 
 export default function ReportDrawer({ open, onClose, notify }) {
-  const { study, isApi, isDemo, reports, approve, generateAiDraft } = useStudy()
+  const { study, isApi, isDemo, reports, approve, generateAiDraft, refreshCurrent } = useStudy()
   const [approveBusy, setApproveBusy] = React.useState(false)
   const [aiBusy, setAiBusy] = React.useState(false)
   if (!open) return null
@@ -109,7 +109,7 @@ ${(content.sections || []).map((section) => `${section.title}：${(section.claim
       notify(
         report?.generator === 'claude'
           ? 'Claude 草稿已生成，请医生逐条复核'
-          : '未配置 Claude API，已生成模板草稿',
+          : report?.content?.provenance?.fallback_reason || '已使用模板生成草稿，请复核',
       )
     } catch (error) {
       notify(error.message || 'AI 草稿生成失败')
@@ -122,7 +122,9 @@ ${(content.sections || []).map((section) => `${section.title}：${(section.claim
     if (!report) return
     setApproveBusy(true)
     try {
-      await approve(report.id, 'local-researcher')
+      await approve(report.id, 'local-researcher', {
+        baseVersion: report.version, baseContentHash: report.contentHash,
+      })
       notify('报告已批准，批准动作已写入审计链')
     } catch (error) {
       notify(error.message || '批准失败')
@@ -159,6 +161,8 @@ ${(content.sections || []).map((section) => `${section.title}：${(section.claim
               study={study}
               onApprove={handleApprove}
               approveBusy={approveBusy}
+              onRefresh={refreshCurrent}
+              notify={notify}
             />
           ) : (
           <article className="report-document">

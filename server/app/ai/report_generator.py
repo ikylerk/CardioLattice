@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import math
 import re
 from typing import Any
 
@@ -11,7 +12,7 @@ from ..config import settings
 from ..models import Measurement, Study
 from ..reporting import template_report
 
-PROMPT_VERSION = "report_v1"
+PROMPT_VERSION = "report_v2"
 
 SYSTEM_PROMPT = """你是 CardioScope Pro 研究原型的结构化报告助手。
 你只能使用用户提供的结构化事实，不得编造测量值、诊断、治疗建议、概率或患者信息。
@@ -90,7 +91,7 @@ def build_facts(study: Study, measurements: list[Measurement]) -> dict[str, Any]
                 "id": item.id,
                 "code": item.code,
                 "label": item.label,
-                "value": item.value,
+                "value": item.value if item.status == "computed" else None,
                 "unit": item.unit,
                 "method": item.method,
                 "source": item.source,
@@ -111,14 +112,14 @@ def build_facts(study: Study, measurements: list[Measurement]) -> dict[str, Any]
 def _call_claude(facts: dict[str, Any]) -> dict[str, Any]:
     from anthropic import Anthropic
 
-    client = Anthropic(api_key=settings.anthropic_api_key)
+    client = Anthropic(api_key=settings.anthropic_api_key, timeout=45.0, max_retries=1)
     response = client.messages.create(
         model=settings.anthropic_model,
         max_tokens=2200,
-        temperature=0.2,
         system=SYSTEM_PROMPT,
         tools=[REPORT_TOOL],
-        tool_choice={"type": "tool", "name": "submit_report"},
+        # Sonnet 5.5 rejects forced tool use; the response is still validated locally.
+        tool_choice={"type": "auto"},
         messages=[
             {
                 "role": "user",
@@ -132,30 +133,65 @@ def _call_claude(facts: dict[str, Any]) -> dict[str, Any]:
     raise ValueError("Claude did not return a submit_report tool call")
 
 
-NUMBER_RE = re.compile(r"(?<![A-Za-z])(-?\d+(?:\.\d+)?)(?![\d.])")
+def _validate_tool(tool: Any, measurements: list[Measurement]) -> dict:
+    """Validate the returned data locally; a tool schema is not validation."""
+    required = {"summary", "findings", "impression", "recommendations", "limitations"}
+    if not isinstance(tool, dict) or set(tool) != required:
+        raise ValueError("invalid report schema")
+    if not isinstance(tool["summary"], str) or not tool["summary"].strip():
+        raise ValueError("invalid summary")
+    if not isinstance(tool["limitations"], list) or any(
+        not isinstance(item, str) or not item.strip() for item in tool["limitations"]
+    ):
+        raise ValueError("invalid limitations")
+    by_id = {item.id: item for item in measurements}
+    for key in ("findings", "impression", "recommendations"):
+        if not isinstance(tool[key], list):
+            raise ValueError("invalid claim list")
+        for claim in tool[key]:
+            expected = {"text", "evidence_refs"} | ({"category"} if key == "recommendations" else set())
+            if not isinstance(claim, dict) or set(claim) != expected:
+                raise ValueError("invalid claim schema")
+            if not isinstance(claim["text"], str) or not claim["text"].strip():
+                raise ValueError("invalid claim text")
+            refs = claim["evidence_refs"]
+            if not isinstance(refs, list) or not refs or any(
+                not isinstance(ref, str) or ref not in by_id for ref in refs
+            ):
+                raise ValueError("claim must cite known measurements")
+            if any(by_id[ref].status != "computed" or by_id[ref].value is None for ref in refs):
+                raise ValueError("unavailable measurements belong only in limitations")
+            if key == "recommendations" and claim["category"] != "research_follow_up":
+                raise ValueError("unsupported recommendation category")
+    return tool
+
+
+NUMBER_RE = re.compile(r"(?<![A-Za-z\d.])[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?(?![\d.])")
 
 
 def _numeric_guardrail(content: dict, measurements: list[Measurement]) -> list[str]:
     by_id = {item.id: item for item in measurements}
     flagged = []
-    for section in content.get("sections", []):
-        for claim in section.get("claims", []):
-            refs = claim.get("evidence_refs") or []
-            allowed = []
-            for ref in refs:
-                item = by_id.get(ref)
-                if item and item.value is not None:
-                    allowed.append(float(item.value))
-            for match in NUMBER_RE.findall(claim.get("text", "")):
-                number = float(match)
-                if not allowed:
-                    claim["status"] = "needs_review"
-                    flagged.append(claim.get("id"))
-                    break
-                if not any(abs(number - value) <= max(0.5, abs(value) * 0.02) for value in allowed):
-                    claim["status"] = "needs_review"
-                    flagged.append(claim.get("id"))
-                    break
+    claims = [
+        claim for section in content.get("sections", []) for claim in section.get("claims", [])
+    ] + content.get("impression", []) + content.get("recommendations", [])
+    for claim in claims:
+        refs = claim.get("evidence_refs") or []
+        allowed = [
+            float(by_id[ref].value) for ref in refs
+            if ref in by_id and by_id[ref].status == "computed" and by_id[ref].value is not None
+            and math.isfinite(float(by_id[ref].value))
+        ]
+        for match in NUMBER_RE.findall(claim.get("text", "")):
+            number = float(match)
+            # Permit rounding to two decimal places, not broad 2%/0.5-unit
+            # deviations that can change small measurements substantially.
+            if not math.isfinite(number) or not any(
+                abs(number - value) <= max(0.00501, abs(value) * 1e-9) for value in allowed
+            ):
+                claim["status"] = "needs_review"
+                flagged.append(claim["id"])
+                break
     return flagged
 
 
@@ -244,6 +280,8 @@ def _build_content(study: Study, tool: dict[str, Any], model: str, measurements:
         },
     }
     flagged = _numeric_guardrail(content, measurements)
+    content["provenance"]["flagged_claim_ids"] = flagged
+    content["provenance"]["evidence_validation"] = "needs_review" if flagged else "references_checked"
     if flagged:
         content["limitations"].append(
             f"有 {len(flagged)} 条陈述的数字未能与引用测量对应，已标记为待复核。"
@@ -255,16 +293,21 @@ def generate_report_draft(db: Session, study: Study) -> tuple[dict, str, str | N
     measurements = list(
         db.scalars(select(Measurement).where(Measurement.study_id == study.id)).all()
     )
-    if not settings.anthropic_api_key:
-        content = template_report(study, measurements)
-        content["provenance"]["fallback_reason"] = "ANTHROPIC_API_KEY is not configured; template used."
-        return content, "template", None
-    try:
-        facts = build_facts(study, measurements)
-        tool = _call_claude(facts)
-        content = _build_content(study, tool, settings.anthropic_model, measurements)
-        return content, "claude", settings.anthropic_model
-    except Exception as exc:  # noqa: BLE001
-        content = template_report(study, measurements)
-        content["provenance"]["fallback_reason"] = f"Claude draft failed: {str(exc)[:200]}"
-        return content, "template", None
+    fallback_code = "not_configured"
+    if settings.anthropic_api_key:
+        try:
+            facts = build_facts(study, measurements)
+            tool = _validate_tool(_call_claude(facts), measurements)
+            content = _build_content(study, tool, settings.anthropic_model, measurements)
+            content["provenance"]["measurement_snapshot"] = facts["measurements"]
+            return content, "claude", settings.anthropic_model
+        except Exception:  # Model/schema failures must not leak raw service errors or credentials.
+            fallback_code = "generation_or_validation_failed"
+    content = template_report(study, measurements)
+    content["provenance"]["measurement_snapshot"] = build_facts(study, measurements)["measurements"]
+    content["provenance"]["fallback_code"] = fallback_code
+    content["provenance"]["fallback_reason"] = (
+        "未配置 AI 服务，已使用确定性模板。" if fallback_code == "not_configured"
+        else "AI 调用或结果校验失败，已使用确定性模板。"
+    )
+    return content, "template", None

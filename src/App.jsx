@@ -12,6 +12,7 @@ import EchoView from './components/EchoView.jsx'
 import AnalysisView from './components/AnalysisView.jsx'
 import StudyWorkbench from './components/StudyWorkbench.jsx'
 import OrganLibraryView from './components/OrganLibraryView.jsx'
+import ComparisonView from './components/ComparisonView.jsx'
 import { StudyProvider, useStudy } from './study/StudyContext.jsx'
 
 const VIEWS = {
@@ -22,6 +23,7 @@ const VIEWS = {
   echo: EchoView,
   analysis: AnalysisView,
   organs: OrganLibraryView,
+  comparison: ComparisonView,
 }
 
 const MODULE_IDS = new Set(MODULES.map((item) => item.id))
@@ -82,6 +84,7 @@ function AppShell() {
   React.useEffect(() => () => window.clearTimeout(toastTimer.current), [])
 
   React.useEffect(() => {
+    if (active === 'angio' && moduleFromHash() === 'angio' && window.location.hash.includes('=')) return
     const nextHash = `#${active}`
     if (window.location.hash !== nextHash) {
       window.history.replaceState(null, '', nextHash)

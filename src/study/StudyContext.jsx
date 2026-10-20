@@ -200,9 +200,9 @@ export function StudyProvider({ children }) {
     }
   }, [study?.study?.id])
 
-  const approve = React.useCallback(async (reportId, approvedBy) => {
+  const approve = React.useCallback(async (reportId, approvedBy, reviewBase) => {
     if (!study?.study?.id) return null
-    const report = await approveReport(study.study.id, reportId, approvedBy)
+    const report = await approveReport(study.study.id, reportId, approvedBy, reviewBase)
     await refreshCurrent()
     return report
   }, [study?.study?.id, refreshCurrent])

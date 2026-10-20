@@ -54,9 +54,18 @@ export default function PatientAnatomyView({ notify, onNavigate }) {
   const [autoRotate, setAutoRotate] = React.useState(true)
   const [opacity, setOpacity] = React.useState(1)
   const [structureNames, setStructureNames] = React.useState([])
+  const [hiddenStructures, setHiddenStructures] = React.useState([])
+  const [showTargets, setShowTargets] = React.useState(false)
+  const [showCenterline, setShowCenterline] = React.useState(true)
+  const structureNodesRef = React.useRef([])
+  const targetsRef = React.useRef(null)
+  const centerlineRef = React.useRef(null)
   const [stats, setStats] = React.useState({ vertices: 0, triangles: 0 })
   const registration = measurements.find((item) => item.code === 'ATLAS_REGISTRATION_RMS')
+    || measurements.find((item) => item.code === 'ATLAS_REGISTRATION')
   const registrationTargets = registration?.provenance?.targets || []
+  const centerlineMeasurement = measurements.find((item) => item.code === 'CORONARY_CENTERLINE_LENGTH')
+  const coronaryCenterline = centerlineMeasurement?.provenance?.centerline || []
   const autoRotateRef = React.useRef(autoRotate)
   const materialsRef = React.useRef([])
 
@@ -100,6 +109,12 @@ export default function PatientAnatomyView({ notify, onNavigate }) {
     const loader = new GLTFLoader()
     setLoading(true)
     setError('')
+    setHiddenStructures([])
+    setShowTargets(false)
+    setShowCenterline(true)
+    structureNodesRef.current = []
+    targetsRef.current = null
+    centerlineRef.current = null
     loader.load(
       modelUrl,
       (gltf) => {
@@ -112,6 +127,7 @@ export default function PatientAnatomyView({ notify, onNavigate }) {
         root.traverse((node) => {
           if (!node.isMesh) return
           names.push(node.name)
+          structureNodesRef.current.push(node)
           const geometry = node.geometry
           vertices += geometry?.attributes?.position?.count || 0
           triangles += geometry?.index ? geometry.index.count / 3 : (geometry?.attributes?.position?.count || 0) / 3
@@ -129,7 +145,7 @@ export default function PatientAnatomyView({ notify, onNavigate }) {
           materials.push(node.material)
         })
         materialsRef.current = materials
-        setStructureNames(names)
+        setStructureNames([...new Set(names)])
         setStats({ vertices, triangles: Math.round(triangles) })
         scene.add(root)
         if (registrationTargets.length) {
@@ -149,7 +165,27 @@ export default function PatientAnatomyView({ notify, onNavigate }) {
             marker.userData.targetId = target.id
             markerGroup.add(marker)
           }
+          markerGroup.visible = false
+          targetsRef.current = markerGroup
           scene.add(markerGroup)
+        }
+        if (coronaryCenterline.length > 1) {
+          const scale = study?.meshes?.[0]?.sceneTransform?.scale || 1
+          const centered = centerlineMeasurement?.provenance?.centerline_frame === 'patient_preview_centered_mm'
+          const center = study?.meshes?.[0]?.sceneTransform?.center_mm || [0, 0, 0]
+          const points = coronaryCenterline.map((point) => new THREE.Vector3(
+            (point[0] - (centered ? 0 : center[0])) * scale,
+            (point[1] - (centered ? 0 : center[1])) * scale,
+            (point[2] - (centered ? 0 : center[2])) * scale,
+          ))
+          const geometry = new THREE.BufferGeometry().setFromPoints(points)
+          const line = new THREE.Line(
+            geometry,
+            new THREE.LineBasicMaterial({ color: 0x67d8cc, transparent: true, opacity: 0.9, depthTest: false }),
+          )
+          line.renderOrder = 19
+          centerlineRef.current = line
+          scene.add(line)
         }
         const box = new THREE.Box3().setFromObject(root)
         const size = box.getSize(new THREE.Vector3())
@@ -218,6 +254,20 @@ export default function PatientAnatomyView({ notify, onNavigate }) {
   React.useEffect(() => {
     autoRotateRef.current = autoRotate
   }, [autoRotate])
+
+  React.useEffect(() => {
+    for (const node of structureNodesRef.current) {
+      node.visible = !hiddenStructures.includes(node.name)
+    }
+  }, [hiddenStructures])
+
+  React.useEffect(() => {
+    if (targetsRef.current) targetsRef.current.visible = showTargets
+  }, [showTargets])
+
+  React.useEffect(() => {
+    if (centerlineRef.current) centerlineRef.current.visible = showCenterline
+  }, [showCenterline])
 
   React.useEffect(() => {
     for (const material of materialsRef.current) {
@@ -309,7 +359,7 @@ export default function PatientAnatomyView({ notify, onNavigate }) {
           {loading ? <div className="webgl-error">正在加载 GLB 网格…</div> : null}
           {error ? <div className="webgl-error">{error}</div> : null}
           <div className="volume-overlay-top">
-            <span>PATIENT MESH · RAS</span>
+            <span>SEGMENTATION · 3D</span>
             <span>{autoRotate ? 'AUTO ROTATE' : 'STATIC'}</span>
           </div>
           <div className="volume-tip"><Rotate3d size={11} /> 拖动旋转 · 滚轮缩放</div>
@@ -331,8 +381,11 @@ export default function PatientAnatomyView({ notify, onNavigate }) {
             <p>
               {synthetic
                 ? '当前网格由合成夹具的 ground-truth 掩膜生成，仅用于验证 DICOM → 掩膜 → GLB 链路。'
-                : '当前网格由研究分割模型生成，未经临床验证；冠脉管腔与狭窄未包含在此模型中。'}
+                : isPublic
+                  ? '当前表面与测量来自导入的原始标签；图像预览单独降采样。这些标签不是本系统 AI 自动识别的结果。'
+                  : '当前网格由研究分割模型生成，未经临床验证；冠脉管腔与狭窄未包含在此模型中。'}
               {registrationTargets.length ? ` 已将 ${registrationTargets.length} 个参考靶点映射到患者坐标系（研究性配准，非患者病灶）。` : ''}
+              {coronaryCenterline.length ? ' 已叠加冠脉中心线（研究性骨架分析）。' : ''}
             </p>
             <div className="selection-stats">
               <Stat label="结构" value={structureNames.length} hint="GLB nodes" />
@@ -342,12 +395,21 @@ export default function PatientAnatomyView({ notify, onNavigate }) {
           </div>
 
           <Section title="结构清单" code="STRUCTURES" right={<Layers size={13} />}>
+            <Button size="sm" onClick={() => setHiddenStructures([])}>显示全部结构</Button>
             <div className="patient-structure-list">
               {structureNames.map((name) => (
                 <div key={name}>
                   <i style={{ background: `#${findNodeColor(name).toString(16).padStart(6, '0')}` }} />
-                  <span>{name}</span>
-                  <small>{STRUCTURE_NAMES[name] || '分割结构'}</small>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={!hiddenStructures.includes(name)}
+                      onChange={() => setHiddenStructures((current) => current.includes(name)
+                        ? current.filter((item) => item !== name) : [...current, name])}
+                    />
+                    {STRUCTURE_NAMES[name] || name}
+                  </label>
+                  <Button size="sm" aria-label={`仅查看 ${name}`} onClick={() => setHiddenStructures(structureNames.filter((item) => item !== name))}>单独查看</Button>
                 </div>
               ))}
             </div>
@@ -366,6 +428,12 @@ export default function PatientAnatomyView({ notify, onNavigate }) {
           </Section>
 
           <Section title="显示" code="RENDERING" right={<Box size={13} />}>
+            {registrationTargets.length ? (
+              <Toggle label="参考靶点" hint="拟合残差不代表靶点精度" checked={showTargets} onChange={setShowTargets} />
+            ) : registration?.reason ? <p className="workbench-hint">{registration.reason}</p> : null}
+            {coronaryCenterline.length ? (
+              <Toggle label="冠脉中心线" hint="显示最长路径，管径仅覆盖该路径" checked={showCenterline} onChange={setShowCenterline} />
+            ) : null}
             <Slider
               label="透明度"
               value={opacity}

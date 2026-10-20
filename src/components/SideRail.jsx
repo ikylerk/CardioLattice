@@ -1,5 +1,5 @@
 import React from 'react'
-import { Activity, Box, CircleHelp, FileText, FolderOpen, Layers, Orbit, ScanLine, Settings2, Waves } from 'lucide-react'
+import { Activity, Box, CircleHelp, FileText, FolderOpen, GitCompare, Layers, Orbit, ScanLine, Settings2, Waves } from 'lucide-react'
 
 export const MODULES = [
   { id: 'workbench', label: '检查工作台', en: 'WORKBENCH', icon: FolderOpen, key: '0' },
@@ -9,6 +9,7 @@ export const MODULES = [
   { id: 'echo', label: '心脏超声', en: 'ECHO', icon: Waves, key: '04' },
   { id: 'analysis', label: '定量分析', en: 'ANALYSIS', icon: Activity, key: '05' },
   { id: 'organs', label: '器官模型库', en: 'ORGAN ATLAS', icon: Box, key: '6' },
+  { id: 'comparison', label: '纵向对比', en: 'LONGITUDINAL', icon: GitCompare, key: '7' },
 ]
 
 export default function SideRail({ active, onChange, onReport }) {

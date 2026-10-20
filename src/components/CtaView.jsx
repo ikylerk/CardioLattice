@@ -16,7 +16,8 @@ import ViewHeader from './ViewHeader.jsx'
 import MprViewport from './MprViewport.jsx'
 import { Badge, Button, Section, Segmented, Slider, Stat, Toggle } from './ui.jsx'
 import VolumeRenderer from '../three/VolumeRenderer.js'
-import { getCardiacVolume } from '../three/volume.js'
+import { getCardiacVolume, VOLUME_DIMS } from '../three/volume.js'
+import { getMprGeometry, getMprSliceIndex } from '../three/mprGeometry.js'
 import { getVolumeData } from '../api/client.js'
 import { useStudy } from '../study/StudyContext.jsx'
 
@@ -468,30 +469,26 @@ export default function CtaView({ notify, bpm, playing }) {
 
           <Section title="多平面定位" code="MPR LOCALIZER" right={<Crosshair size={13} />}>
             <div className="cta-slice-sliders">
-              <Slider
-                label="轴位 AXIAL · Z"
-                value={slices.z}
-                min={0}
-                max={(volume?.dims[2] || 168) - 1}
-                onChange={(value) => setSlices((current) => ({ ...current, z: value }))}
-                format={(value) => `${String(value + 1).padStart(3, '0')} / ${volume?.dims[2] || 168}`}
-              />
-              <Slider
-                label="冠状 CORONAL · Y"
-                value={slices.y}
-                min={0}
-                max={(volume?.dims[1] || 128) - 1}
-                onChange={(value) => setSlices((current) => ({ ...current, y: value }))}
-                format={(value) => `${String(value + 1).padStart(3, '0')} / ${volume?.dims[1] || 128}`}
-              />
-              <Slider
-                label="矢状 SAGITTAL · X"
-                value={slices.x}
-                min={0}
-                max={(volume?.dims[0] || 128) - 1}
-                onChange={(value) => setSlices((current) => ({ ...current, x: value }))}
-                format={(value) => `${String(value + 1).padStart(3, '0')} / ${volume?.dims[0] || 128}`}
-              />
+              {[
+                { plane: 'axial', label: '轴位 AXIAL' },
+                { plane: 'coronal', label: '冠状 CORONAL' },
+                { plane: 'sagittal', label: '矢状 SAGITTAL' },
+              ].map(({ plane, label }) => {
+                const geometry = getMprGeometry(volume || { dims: VOLUME_DIMS }, plane)
+                const { sliceKey, total, oblique, orientation } = geometry
+                const title = orientation === 'unknown' ? '原生切面 NATIVE' : `${oblique ? '斜' : ''}${label}`
+                return (
+                  <Slider
+                    key={plane}
+                    label={`${title} · ${sliceKey.toUpperCase()}`}
+                    value={getMprSliceIndex(geometry, slices)}
+                    min={0}
+                    max={total - 1}
+                    onChange={(value) => setSlices((current) => ({ ...current, [sliceKey]: value }))}
+                    format={(value) => `${String(value + 1).padStart(3, '0')} / ${total}`}
+                  />
+                )
+              })}
             </div>
             <div className="cta-slice-note">
               <span className="cta-lesion-pin" />

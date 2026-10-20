@@ -33,7 +33,7 @@ from .registration import register_cardiac_atlas
 from .reporting import template_report
 from .storage import storage
 
-PIPELINE_VERSION = "m1.0"
+PIPELINE_VERSION = "m1.1-physical-geometry"
 
 
 def _progress(db, job: Job, stage: str, progress: int, message: str) -> None:
@@ -297,9 +297,9 @@ def run_pipeline(study_id: str, job_id: str) -> None:
                 nx, ny, nz = preview.dims
                 voxel = [int(round(cx)), int(round(cy)), int(round(cz))]
                 world = [
-                    (voxel[0] - nx / 2) * sx,
-                    (voxel[1] - ny / 2) * sy,
-                    (voxel[2] - nz / 2) * sz,
+                    (voxel[0] + 0.5 - nx / 2) * sx,
+                    (voxel[1] + 0.5 - ny / 2) * sy,
+                    (voxel[2] + 0.5 - nz / 2) * sz,
                 ]
                 volume.markers = [
                     {

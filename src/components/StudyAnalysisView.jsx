@@ -12,8 +12,21 @@ import ViewHeader from './ViewHeader.jsx'
 import { Badge, Button, Section, Stat } from './ui.jsx'
 import { useStudy } from '../study/StudyContext.jsx'
 
+const CORONARY_ANALYSIS_CODES = new Set([
+  'CORONARY_CENTERLINE_LENGTH',
+  'CORONARY_TOTAL_LENGTH',
+  'CORONARY_MEAN_DIAMETER',
+  'CORONARY_MIN_DIAMETER',
+  'CORONARY_REFERENCE_DIAMETER',
+  'CORONARY_STENOSIS_CANDIDATES',
+])
+
+function isComputedNumber(item) {
+  return item?.status === 'computed' && typeof item.value === 'number' && Number.isFinite(item.value)
+}
+
 function MeasurementCard({ item }) {
-  const computed = item.status === 'computed' && item.value !== null && item.value !== undefined
+  const computed = isComputedNumber(item)
   return (
     <div className={`analysis-metric ${computed ? '' : 'not-computed'}`}>
       <span>{item.label}</span>
@@ -21,7 +34,7 @@ function MeasurementCard({ item }) {
         {computed ? item.value : '—'}
         {computed && item.unit ? <small>{item.unit}</small> : null}
       </strong>
-      <em>{computed ? `${item.method} · ${item.validationStatus}` : '未计算'}</em>
+      <em>{computed ? `${item.method} · ${item.source || '来源未标注'} · ${item.validationStatus}` : '未计算'}</em>
       {!computed && item.reason ? <p>{item.reason}</p> : null}
     </div>
   )
@@ -29,13 +42,25 @@ function MeasurementCard({ item }) {
 
 export default function StudyAnalysisView({ onNavigate }) {
   const { study, measurements } = useStudy()
-  const computed = measurements.filter((item) => item.status === 'computed' && item.value !== null)
-  const notComputed = measurements.filter((item) => item.status !== 'computed')
-  const coronary = measurements.filter(
-    (item) => item.code.startsWith('CORONARY_') && item.status === 'computed' && item.value !== null,
-  )
-  const candidateMeasurement = measurements.find((item) => item.code === 'CORONARY_STENOSIS_CANDIDATES')
-  const stenosisCandidates = candidateMeasurement?.provenance?.candidates || []
+  const computed = measurements.filter(isComputedNumber)
+  const notComputed = measurements.filter((item) => !isComputedNumber(item))
+  const coronaryMeasurements = measurements.filter((item) => CORONARY_ANALYSIS_CODES.has(item.code))
+  const coronary = coronaryMeasurements.filter(isComputedNumber)
+  const coronaryFailures = measurements.filter((item) => (
+    CORONARY_ANALYSIS_CODES.has(item.code) || /^CORONARY_(?:[A-Z0-9]+_)*CENTERLINE$/.test(item.code || '')
+  ) && !isComputedNumber(item))
+  const hasCoronaryInput = measurements.some((item) => /^CORONARY_/.test(item.code || ''))
+  const candidateMeasurement = coronaryMeasurements.find((item) => item.code === 'CORONARY_STENOSIS_CANDIDATES')
+  const stenosisCandidates = Array.isArray(candidateMeasurement?.provenance?.candidates)
+    ? candidateMeasurement.provenance.candidates
+    : []
+  const candidateCountValid = isComputedNumber(candidateMeasurement)
+    && Number.isInteger(candidateMeasurement.value) && candidateMeasurement.value >= 0
+  const coronaryComplete = candidateCountValid && coronaryFailures.length === 0
+    && (candidateMeasurement.value !== 0 || stenosisCandidates.length === 0)
+  const coronaryIncompleteReason = !candidateCountValid
+    ? '候选数尚未完成计算或不是有效的非负整数；标签体积已计算不代表中心线分析成功。'
+    : '中心线分析状态或候选明细不一致，不能解读为零候选。'
   const registration = measurements.find((item) => item.code === 'ATLAS_REGISTRATION_RMS')
   const registrationTargets = registration?.provenance?.targets || []
   const segmentation = study?.segmentations?.[0]
@@ -94,7 +119,7 @@ export default function StudyAnalysisView({ onNavigate }) {
             )}
           </Section>
 
-          {coronary.length ? (
+          {hasCoronaryInput ? (
             <Section title="冠脉中心线分析（研究）" code="CORONARY MASK ANALYSIS" right={<Activity size={13} />}>
               <div className="analysis-metric-grid">
                 {coronary.map((item) => <MeasurementCard key={item.id} item={item} />)}
@@ -102,12 +127,29 @@ export default function StudyAnalysisView({ onNavigate }) {
               <p className="analysis-research-note">
                 基于冠脉标签掩膜的骨架化、距离变换和半径剖面计算；不是经过验证的 QCA，不能用于临床狭窄分级。
               </p>
-              {stenosisCandidates.length ? (
+              {!coronaryComplete ? (
+                <div className="analysis-placeholder">
+                  <CircleAlert size={16} />
+                  <div>
+                    <b>冠脉中心线分析未完成</b>
+                    {coronaryFailures.length ? coronaryFailures.map((item, index) => (
+                      <p key={item.id || `${item.code}-${index}`}>
+                        {item.reason || '该中心线指标未完成计算或数值无效。'}
+                        <br />
+                        <small>{item.code} · {item.method || '方法未标注'} · {item.source || '来源未标注'}</small>
+                      </p>
+                    )) : <span>{coronaryIncompleteReason}</span>}
+                  </div>
+                </div>
+              ) : candidateMeasurement.value > 0 ? (
                 <div className="coronary-candidate-table">
                   <div className="coronary-candidate-head">
                     <span>候选狭窄（研究）</span>
-                    <b>{stenosisCandidates.length} 个</b>
+                    <b>{candidateMeasurement.value} 个</b>
                   </div>
+                  {stenosisCandidates.length !== candidateMeasurement.value ? (
+                    <p className="analysis-research-note">候选明细未完整返回，不能把缺失明细解释为未检出；请复核原始分析结果。</p>
+                  ) : null}
                   <table>
                     <thead>
                       <tr><th>位置 (mm)</th><th>管径</th><th>参考管径</th><th>管径减少</th><th>路径位置</th></tr>
@@ -130,7 +172,7 @@ export default function StudyAnalysisView({ onNavigate }) {
                   <CircleAlert size={16} />
                   <div>
                     <b>未检出半径剖面候选</b>
-                    <span>没有局部管径明显减低的骨架段；该结果不代表不存在病变。</span>
+                    <span>本次已完成的主中心线路径分析返回 0 个候选；不代表整棵冠脉树或其他分支不存在病变。</span>
                   </div>
                 </div>
               )}
@@ -243,8 +285,11 @@ export default function StudyAnalysisView({ onNavigate }) {
               <div className="analysis-placeholder">
                 <GitCompare size={22} />
                 <div>
-                  <b>M3 里程碑</b>
-                  <span>既往检查配准与 delta 分析尚未实现；不会以「预测」名义展示无数据支撑的结论。</span>
+                  <b>既往检查配准与指标差值</b>
+                  <span>需要同一受试者的两次已就绪检查，既往检查日期须有效且严格早于当前。配准质控未通过、测量来源或方法不一致时不显示差值；心腔容积还需一致且明确的采集时相。仅供研究，不预测病情进展。</span>
+                  <Button size="sm" variant="outline" icon={<GitCompare size={14} />} onClick={() => onNavigate?.('comparison')}>
+                    打开纵向对比
+                  </Button>
                 </div>
               </div>
             </Section>

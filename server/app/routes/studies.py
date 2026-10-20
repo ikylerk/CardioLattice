@@ -12,11 +12,14 @@ from sqlalchemy.orm import Session
 
 from .. import audit
 from ..config import settings
+from ..capabilities import get_runtime_capabilities
 from ..db import SessionLocal, get_db
 from ..ingest import create_study_from_paths, enqueue_pipeline, new_study_id, prepare_upload
 from ..models import AuditEvent, Job, Report, Study, utcnow
+from ..pipeline import PIPELINE_VERSION
 from ..schemas import job_out, report_out, study_bundle, study_summary
 from ..storage import storage
+from .reports import VersionApproval, approve_report_version
 
 router = APIRouter(prefix="/api")
 
@@ -25,8 +28,8 @@ class SeriesSelection(BaseModel):
     seriesId: str
 
 
-class ApproveRequest(BaseModel):
-    approvedBy: str = settings.default_actor
+class ApproveRequest(VersionApproval):
+    pass
 
 
 def _bundle(db: Session, study_id: str):
@@ -42,7 +45,8 @@ def health():
         "status": "ok",
         "dataMode": "api",
         "segmentationAdapter": settings.segmentation_adapter,
-        "pipelineVersion": "m1.0",
+        "pipelineVersion": PIPELINE_VERSION,
+        "capabilities": get_runtime_capabilities(),
         "researchOnly": True,
     }
 
@@ -285,23 +289,11 @@ def approve_report(
     body: ApproveRequest,
     db: Session = Depends(get_db),
 ):
+    """Compatibility URL with the same exact-version review contract."""
     report = db.get(Report, report_id)
     if report is None or report.study_id != study_id:
         raise HTTPException(status_code=404, detail="report not found")
-    if report.status == "approved":
-        return report_out(report)
-    report.status = "approved"
-    report.approved_by = body.approvedBy
-    report.approved_at = utcnow()
-    audit.record(
-        db,
-        study_id=study_id,
-        actor=body.approvedBy,
-        action="report_approved",
-        payload={"report_id": report.id},
-    )
-    db.commit()
-    return report_out(report)
+    return approve_report_version(report_id, body, db)
 
 
 @router.get("/studies/{study_id}/files/{relative_path:path}")

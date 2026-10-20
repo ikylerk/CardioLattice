@@ -115,6 +115,10 @@ def measurement_out(item: Measurement) -> dict:
 
 
 def report_out(report: Report) -> dict:
+    from sqlalchemy.orm import object_session
+    from .report_versions import content_hash, current_version
+
+    db = object_session(report)
     return {
         "id": report.id,
         "studyId": report.study_id,
@@ -125,7 +129,8 @@ def report_out(report: Report) -> dict:
         "promptVersion": report.prompt_version,
         "approvedBy": report.approved_by,
         "approvedAt": report.approved_at.isoformat() if report.approved_at else None,
-        "version": 1,
+        "version": current_version(db, report.id) if db else None,
+        "contentHash": content_hash(report.content),
     }
 
 

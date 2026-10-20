@@ -3,6 +3,8 @@ node_modules/
 dist/
 dist-cloud/
 .mimosa/
+.playwright-mcp/
+.serena/
 
 # Python
 server/.venv/

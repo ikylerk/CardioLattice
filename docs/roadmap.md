@@ -1,5 +1,21 @@
 # Roadmap
 
+## Verified iteration — 2026-10-20
+
+- Native NIfTI label preservation, physical-coordinate alignment, multi-component
+  meshes, high-valued labels and source-grid measurements are implemented.
+- MPR orientation, report revision/approval version locking and longitudinal
+  comparison are integrated and exercised with synthetic known-answer inputs.
+- Coronary skeleton extraction checks every original connected component;
+  missing/fragmented components suppress analysis instead of producing partial
+  success. This is not an external QCA validation.
+- AI report requests have local schema/evidence checks and SDK contract tests.
+  A real cloud call and real image-model inference remain unverified in this
+  environment; implementation status does not imply live model availability.
+- The milestones below retain the remaining external validation, model,
+  deployment and clinical work. See `longitudinal-comparison.md`,
+  `imaging-geometry.md` and `report-version-review-handoff.md` for current behavior.
+
 ## M1 — Real data chain (current)
 
 - DICOM upload, safe extraction, series scoring and selection.
@@ -11,7 +27,7 @@
 - Audit hash chain, report approval, deletion.
 - Backend tests and Playwright E2E; offline demo build preserved.
 
-## Atlas-based normalization (next)
+## Atlas-based normalization (research implemented; external validation pending)
 
 - Register the standard organ atlas to the patient volume/mesh for orientation
   and left/right sanity checks.
@@ -40,7 +56,7 @@
   external validation is complete.
 - Add patient-specific coronary metrics only after model-registry approval.
 
-## M3 — Longitudinal comparison
+## M3 — Longitudinal comparison (research implemented; validation pending)
 
 - Prior-study selection by pseudonymous subject.
 - Rigid/affine registration with quality metrics (Dice, centroid distance,

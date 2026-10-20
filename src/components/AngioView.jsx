@@ -56,8 +56,8 @@ function readAngioHash() {
   const b = Number(params.get('b'))
   const system = params.get('sys')
   return {
-    rot: params.has('a') && Number.isFinite(a) ? a : -30,
-    tilt: params.has('b') && Number.isFinite(b) ? b : -30,
+    rot: params.get('a')?.trim() && Number.isFinite(a) ? Math.max(-90, Math.min(90, a)) : -30,
+    tilt: params.get('b')?.trim() && Number.isFinite(b) ? Math.max(-45, Math.min(45, b)) : -30,
     side: system === 'right' ? 'right' : system === 'both' ? 'both' : 'left',
   }
 }
@@ -75,6 +75,21 @@ export default function AngioView({ playing, setPlaying, notify }) {
   const [mode, setMode] = React.useState('fluoro')
   const [rot, setRot] = React.useState(initial.rot)
   const [tilt, setTilt] = React.useState(initial.tilt)
+  React.useEffect(() => {
+    window.history.replaceState(null, '', `#a=${rot}&b=${tilt}&sys=${side}`)
+  }, [rot, tilt, side])
+  React.useEffect(() => {
+    const applyHash = () => {
+      const params = new URLSearchParams(window.location.hash.slice(1))
+      if (!params.has('a') && !params.has('b') && !params.has('sys')) return
+      const next = readAngioHash()
+      setRot(next.rot)
+      setTilt(next.tilt)
+      setSide(next.side)
+    }
+    window.addEventListener('hashchange', applyHash)
+    return () => window.removeEventListener('hashchange', applyHash)
+  }, [])
   const [labels, setLabels] = React.useState(true)
   const [frame, setFrame] = React.useState(128)
   const [qca, setQca] = React.useState('idle')

@@ -16,6 +16,7 @@ import {
 import ViewHeader from './ViewHeader.jsx'
 import { Badge, Button, Divider, Section } from './ui.jsx'
 import { useStudy } from '../study/StudyContext.jsx'
+import RuntimeCapabilities from './RuntimeCapabilities.jsx'
 
 const STATUS_LABEL = {
   uploaded: '已上传',
@@ -49,11 +50,11 @@ function ProgressTimeline({ job }) {
     ['validating', '校验'],
     ['anonymizing', '去标识'],
     ['building_volume', '体数据'],
-    ['segmenting', '分割'],
+    ['segmenting', job.type === 'public_import' ? '标签对齐' : '分割'],
     ['meshing', '3D 建模'],
     ['computing_metrics', '测量'],
     ['drafting_report', '报告草稿'],
-  ]
+  ].filter(([key]) => job.type !== 'public_import' || key !== 'anonymizing')
   const currentIndex = stages.findIndex(([key]) => key === job.stage)
   return (
     <div className="wb-progress">
@@ -96,6 +97,7 @@ export default function StudyWorkbench({ onNavigate, notify }) {
     importPublic,
     chooseSeries,
     refreshCurrent,
+    refreshStudies,
     loadAudit,
     setError,
   } = useStudy()
@@ -103,7 +105,7 @@ export default function StudyWorkbench({ onNavigate, notify }) {
   const [selectedSeries, setSelectedSeries] = React.useState('')
   const [publicImage, setPublicImage] = React.useState(null)
   const [publicLabels, setPublicLabels] = React.useState(null)
-  const [publicDataset, setPublicDataset] = React.useState('ImageCAS')
+  const [publicDataset, setPublicDataset] = React.useState('')
   const [publicLabelMap, setPublicLabelMap] = React.useState('')
   const fileInputRef = React.useRef(null)
 
@@ -167,7 +169,7 @@ export default function StudyWorkbench({ onNavigate, notify }) {
         eyebrow="STUDY WORKBENCH"
         title="检查工作台"
         titleSuffix="DICOM → 3D → AI → REPORT"
-        description="上传原始 CCTA DICOM，服务端完成去标识、体数据重建、分割建模与结构化报告草稿。"
+        description="上传 CCTA DICOM 进行去标识与体数据重建；也可导入已有标签生成三维模型。自动分割与报告生成方式见当前运行能力。"
         meta={
           <>
             <span>{isApi ? 'API ONLINE' : 'OFFLINE DEMO'}</span>
@@ -184,7 +186,7 @@ export default function StudyWorkbench({ onNavigate, notify }) {
               variant="outline"
               size="sm"
               icon={<RefreshCw size={14} />}
-              onClick={() => refreshCurrent().catch((err) => setError(err.message))}
+              onClick={() => Promise.all([refreshStudies(), refreshCurrent()]).catch((err) => setError(err.message))}
             >
               刷新
             </Button>
@@ -194,6 +196,7 @@ export default function StudyWorkbench({ onNavigate, notify }) {
 
       <div className="module-body workbench-body">
         <div className="workbench-main">
+          {isApi ? <RuntimeCapabilities /> : null}
           <div
             className={`upload-zone ${dragging ? 'dragging' : ''} ${!isApi ? 'disabled' : ''}`}
             onDragOver={(event) => {
@@ -258,12 +261,12 @@ export default function StudyWorkbench({ onNavigate, notify }) {
             <div className="public-import-grid">
               <label className="public-file">
                 <span>影像 .nii.gz</span>
-                <input type="file" accept=".nii,.nii.gz,.gz" onChange={(event) => setPublicImage(event.target.files?.[0] || null)} />
+                <input type="file" accept=".nii,.nii.gz" onChange={(event) => setPublicImage(event.target.files?.[0] || null)} />
                 <b>{publicImage?.name || '未选择'}</b>
               </label>
               <label className="public-file">
                 <span>标签 .nii.gz</span>
-                <input type="file" accept=".nii,.nii.gz,.gz" onChange={(event) => setPublicLabels(event.target.files?.[0] || null)} />
+                <input type="file" accept=".nii,.nii.gz" onChange={(event) => setPublicLabels(event.target.files?.[0] || null)} />
                 <b>{publicLabels?.name || '未选择'}</b>
               </label>
             </div>
@@ -276,6 +279,12 @@ export default function StudyWorkbench({ onNavigate, notify }) {
                 标签映射 JSON（可选）
                 <input value={publicLabelMap} onChange={(event) => setPublicLabelMap(event.target.value)} placeholder='{"1":{"code":"CORONARY_TREE","name":"冠脉树"}}' />
               </label>
+            </div>
+            <div className="workbench-actions">
+              <Button size="sm" onClick={() => setPublicLabelMap('{"1":{"code":"CORONARY_TREE","name":"冠脉树"}}')}>
+                使用冠脉标签 1 映射
+              </Button>
+              <span className="workbench-hint">仅在数据说明确认编号 1 代表冠脉时使用；留空按普通结构导入。</span>
             </div>
             <div className="workbench-actions">
               <Button
@@ -390,7 +399,7 @@ export default function StudyWorkbench({ onNavigate, notify }) {
               <div className="stat">
                 <span>检查状态</span>
                 <strong>{STATUS_LABEL[current?.status] || '—'}</strong>
-                <em>{current?.source === 'demo' ? '合成夹具' : 'DICOM'}</em>
+                <em>{current?.source === 'demo' ? '合成夹具' : current?.source === 'public_dataset' ? 'NIfTI 标签' : 'DICOM'}</em>
               </div>
               <div className="stat">
                 <span>测量项</span>

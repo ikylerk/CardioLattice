@@ -21,7 +21,7 @@ router = APIRouter(prefix="/api")
 
 def _extension_ok(name: str | None) -> bool:
     lower = (name or "").lower()
-    return lower.endswith(".nii") or lower.endswith(".nii.gz") or lower.endswith(".gz")
+    return lower.endswith(".nii") or lower.endswith(".nii.gz")
 
 
 @router.post("/public/import", status_code=202)
@@ -43,16 +43,18 @@ def import_public_case(
     study_id = new_study_id()
     public_dir = storage.study_dir(study_id) / "upload" / "public"
     public_dir.mkdir(parents=True, exist_ok=True)
-    image_path = public_dir / (Path(image.filename or "image.nii.gz").name)
-    labels_path = public_dir / (Path(labels.filename or "labels.nii.gz").name)
+    image_path = public_dir / ("image.nii.gz" if (image.filename or "").lower().endswith(".gz") else "image.nii")
+    labels_path = public_dir / ("labels.nii.gz" if (labels.filename or "").lower().endswith(".gz") else "labels.nii")
     try:
-        for upload, target in ((image, image_path), (labels, labels_path)):
+        input_hashes = {}
+        for key, upload, target in (("image", image, image_path), ("labels", labels, labels_path)):
+            content_hash = hashlib.sha256()
             with target.open("wb") as handle:
                 while chunk := upload.file.read(1024 * 1024):
+                    content_hash.update(chunk)
                     handle.write(chunk)
-        digest = hashlib.sha256(
-            f"{dataset}:{image.filename}:{labels.filename}:{image_path.stat().st_size}".encode()
-        ).hexdigest()
+            input_hashes[key] = content_hash.hexdigest()
+        digest = hashlib.sha256(f"{dataset}:{input_hashes['image']}".encode()).hexdigest()
         subject = db.query(Subject).filter(Subject.patient_id_hash == digest).first()
         if subject is None:
             subject = Subject(
@@ -77,6 +79,8 @@ def import_public_case(
                 "labels_path": storage.relative(labels_path),
                 "dataset": dataset,
                 "label_map": label_map,
+                "input_hashes": input_hashes,
+                "dataset_verification": "user_declared",
             },
         )
         db.add(study)

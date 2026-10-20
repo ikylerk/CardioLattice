@@ -71,6 +71,18 @@ export async function getStudy(studyId) {
   return apiGet(`/studies/${studyId}`)
 }
 
+export async function getPriorCandidates(studyId) {
+  return apiGet(`/studies/${studyId}/prior-candidates`)
+}
+
+export async function createComparison(currentStudyId, priorStudyId) {
+  return apiPost('/comparisons', { currentStudyId, priorStudyId })
+}
+
+export async function getComparison(id) {
+  return apiGet(`/comparisons/${id}`)
+}
+
 export async function generateAiReport(studyId) {
   return apiPost(`/studies/${studyId}/ai/report-draft`)
 }
@@ -87,12 +99,12 @@ export async function rerunPipeline(studyId) {
   return apiPost(`/studies/${studyId}/pipeline`)
 }
 
-export async function approveReport(studyId, reportId, approvedBy = 'local-researcher') {
-  return apiPost(`/studies/${studyId}/reports/${reportId}/approve`, { approvedBy })
+export async function approveReport(studyId, reportId, approvedBy = 'local-researcher', { baseVersion, baseContentHash } = {}) {
+  return apiPost(`/studies/${studyId}/reports/${reportId}/approve`, { approvedBy, baseVersion, baseContentHash })
 }
 
-export async function patchReport(reportId, content) {
-  return apiPatch(`/reports/${reportId}`, { content })
+export async function patchReport(reportId, content, { baseVersion, baseContentHash, actor, reason } = {}) {
+  return apiPatch(`/reports/${reportId}`, { content, baseVersion, baseContentHash, actor, reason })
 }
 
 export async function getAudit(studyId) {
