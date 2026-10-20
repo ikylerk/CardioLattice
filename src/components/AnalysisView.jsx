@@ -18,31 +18,39 @@ import ViewHeader from './ViewHeader.jsx'
 import { Badge, Button, Section, Stat } from './ui.jsx'
 import StudyAnalysisView from './StudyAnalysisView.jsx'
 import { useStudy } from '../study/StudyContext.jsx'
+import { useI18n } from '../i18n.js'
 
 const SEGMENTS = [
-  { id: 1, name: '基底前壁', territory: 'LAD', ring: 'basal', center: -90, perfusion: 'severe', stenosis: 70, wma: '运动减弱', viability: 92 },
-  { id: 2, name: '基底前间隔', territory: 'LAD', ring: 'basal', center: -150, perfusion: 'mild', stenosis: 70, wma: '正常', viability: 96 },
-  { id: 3, name: '基底下间隔', territory: 'RCA', ring: 'basal', center: 150, perfusion: 'normal', stenosis: 0, wma: '正常', viability: 98 },
-  { id: 4, name: '基底下壁', territory: 'RCA', ring: 'basal', center: 90, perfusion: 'normal', stenosis: 30, wma: '正常', viability: 97 },
-  { id: 5, name: '基底下侧壁', territory: 'LCX', ring: 'basal', center: 30, perfusion: 'mild', stenosis: 22, wma: '正常', viability: 96 },
-  { id: 6, name: '基底前侧壁', territory: 'LCX', ring: 'basal', center: -30, perfusion: 'normal', stenosis: 0, wma: '正常', viability: 98 },
-  { id: 7, name: '中间前壁', territory: 'LAD', ring: 'mid', center: -90, perfusion: 'severe', stenosis: 70, wma: '运动减弱', viability: 91 },
-  { id: 8, name: '中间前间隔', territory: 'LAD', ring: 'mid', center: -150, perfusion: 'mild', stenosis: 70, wma: '正常', viability: 95 },
-  { id: 9, name: '中间下间隔', territory: 'RCA', ring: 'mid', center: 150, perfusion: 'normal', stenosis: 0, wma: '正常', viability: 98 },
-  { id: 10, name: '中间下壁', territory: 'RCA', ring: 'mid', center: 90, perfusion: 'normal', stenosis: 30, wma: '正常', viability: 97 },
-  { id: 11, name: '中间下侧壁', territory: 'LCX', ring: 'mid', center: 30, perfusion: 'mild', stenosis: 22, wma: '正常', viability: 97 },
-  { id: 12, name: '中间前侧壁', territory: 'LCX', ring: 'mid', center: -30, perfusion: 'normal', stenosis: 0, wma: '正常', viability: 98 },
-  { id: 13, name: '心尖前壁', territory: 'LAD', ring: 'apical', center: -90, perfusion: 'severe', stenosis: 70, wma: '运动减弱', viability: 90 },
-  { id: 14, name: '心尖间隔', territory: 'LAD', ring: 'apical', center: 180, perfusion: 'mild', stenosis: 70, wma: '正常', viability: 94 },
-  { id: 15, name: '心尖下壁', territory: 'RCA', ring: 'apical', center: 90, perfusion: 'normal', stenosis: 0, wma: '正常', viability: 97 },
-  { id: 16, name: '心尖侧壁', territory: 'LCX', ring: 'apical', center: 0, perfusion: 'normal', stenosis: 0, wma: '正常', viability: 98 },
-  { id: 17, name: '心尖', territory: 'LAD', ring: 'apex', center: 0, perfusion: 'mild', stenosis: 70, wma: '正常', viability: 93 },
+  { id: 1, nameKey: 'analysis.seg1', territory: 'LAD', ring: 'basal', center: -90, perfusion: 'severe', stenosis: 70, wmaKey: 'analysis.wmaHypo', viability: 92 },
+  { id: 2, nameKey: 'analysis.seg2', territory: 'LAD', ring: 'basal', center: -150, perfusion: 'mild', stenosis: 70, wmaKey: 'analysis.wmaNormal', viability: 96 },
+  { id: 3, nameKey: 'analysis.seg3', territory: 'RCA', ring: 'basal', center: 150, perfusion: 'normal', stenosis: 0, wmaKey: 'analysis.wmaNormal', viability: 98 },
+  { id: 4, nameKey: 'analysis.seg4', territory: 'RCA', ring: 'basal', center: 90, perfusion: 'normal', stenosis: 30, wmaKey: 'analysis.wmaNormal', viability: 97 },
+  { id: 5, nameKey: 'analysis.seg5', territory: 'LCX', ring: 'basal', center: 30, perfusion: 'mild', stenosis: 22, wmaKey: 'analysis.wmaNormal', viability: 96 },
+  { id: 6, nameKey: 'analysis.seg6', territory: 'LCX', ring: 'basal', center: -30, perfusion: 'normal', stenosis: 0, wmaKey: 'analysis.wmaNormal', viability: 98 },
+  { id: 7, nameKey: 'analysis.seg7', territory: 'LAD', ring: 'mid', center: -90, perfusion: 'severe', stenosis: 70, wmaKey: 'analysis.wmaHypo', viability: 91 },
+  { id: 8, nameKey: 'analysis.seg8', territory: 'LAD', ring: 'mid', center: -150, perfusion: 'mild', stenosis: 70, wmaKey: 'analysis.wmaNormal', viability: 95 },
+  { id: 9, nameKey: 'analysis.seg9', territory: 'RCA', ring: 'mid', center: 150, perfusion: 'normal', stenosis: 0, wmaKey: 'analysis.wmaNormal', viability: 98 },
+  { id: 10, nameKey: 'analysis.seg10', territory: 'RCA', ring: 'mid', center: 90, perfusion: 'normal', stenosis: 30, wmaKey: 'analysis.wmaNormal', viability: 97 },
+  { id: 11, nameKey: 'analysis.seg11', territory: 'LCX', ring: 'mid', center: 30, perfusion: 'mild', stenosis: 22, wmaKey: 'analysis.wmaNormal', viability: 97 },
+  { id: 12, nameKey: 'analysis.seg12', territory: 'LCX', ring: 'mid', center: -30, perfusion: 'normal', stenosis: 0, wmaKey: 'analysis.wmaNormal', viability: 98 },
+  { id: 13, nameKey: 'analysis.seg13', territory: 'LAD', ring: 'apical', center: -90, perfusion: 'severe', stenosis: 70, wmaKey: 'analysis.wmaHypo', viability: 90 },
+  { id: 14, nameKey: 'analysis.seg14', territory: 'LAD', ring: 'apical', center: 180, perfusion: 'mild', stenosis: 70, wmaKey: 'analysis.wmaNormal', viability: 94 },
+  { id: 15, nameKey: 'analysis.seg15', territory: 'RCA', ring: 'apical', center: 90, perfusion: 'normal', stenosis: 0, wmaKey: 'analysis.wmaNormal', viability: 97 },
+  { id: 16, nameKey: 'analysis.seg16', territory: 'LCX', ring: 'apical', center: 0, perfusion: 'normal', stenosis: 0, wmaKey: 'analysis.wmaNormal', viability: 98 },
+  { id: 17, nameKey: 'analysis.seg17', territory: 'LAD', ring: 'apex', center: 0, perfusion: 'mild', stenosis: 70, wmaKey: 'analysis.wmaNormal', viability: 93 },
 ]
 
 const PERF_STYLE = {
-  severe: { fill: 'rgba(168, 67, 59, .82)', stroke: '#c87b6e', label: '可逆性缺损' },
-  mild: { fill: 'rgba(151, 111, 56, .72)', stroke: '#b9945d', label: '轻度灌注减低' },
-  normal: { fill: 'rgba(42, 92, 88, .7)', stroke: '#527f7c', label: '灌注正常' },
+  severe: { fill: 'rgba(168, 67, 59, .82)', stroke: '#c87b6e', labelKey: 'analysis.perfSevereLabel' },
+  mild: { fill: 'rgba(151, 111, 56, .72)', stroke: '#b9945d', labelKey: 'analysis.perfMildLabel' },
+  normal: { fill: 'rgba(42, 92, 88, .7)', stroke: '#527f7c', labelKey: 'analysis.perfNormalLabel' },
+}
+
+const RING_KEYS = {
+  basal: 'analysis.ringBasal',
+  mid: 'analysis.ringMid',
+  apical: 'analysis.ringApical',
+  apex: 'analysis.ringApex',
 }
 
 const RING_GEOMETRY = {
@@ -66,12 +74,13 @@ function ringPath(cx, cy, rIn, rOut, start, end) {
 }
 
 function AhaBullseye({ selected, onSelect }) {
+  const { t } = useI18n()
   const size = 380
   const cx = 190
   const cy = 190
   const selectedSegment = SEGMENTS.find((segment) => segment.id === selected)
   return (
-    <svg className="aha-bullseye" viewBox={`0 0 ${size} ${size}`} role="img" aria-label="AHA 17 段心肌灌注牛眼图">
+    <svg className="aha-bullseye" viewBox={`0 0 ${size} ${size}`} role="img" aria-label={t('analysis.bullseye')}>
       <defs>
         <radialGradient id="bullseyeCenter" cx="50%" cy="50%" r="50%">
           <stop offset="0" stopColor="#173437" />
@@ -131,7 +140,7 @@ function AhaBullseye({ selected, onSelect }) {
       </g>
       <g transform={`translate(190 ${size - 3})`}>
         <text textAnchor="middle" className="aha-selected-label">
-          {selectedSegment ? `${String(selectedSegment.id).padStart(2, '0')} · ${selectedSegment.name} · ${selectedSegment.territory}` : 'AHA 17-SEGMENT MODEL'}
+          {selectedSegment ? `${String(selectedSegment.id).padStart(2, '0')} · ${t(selectedSegment.nameKey)} · ${selectedSegment.territory}` : 'AHA 17-SEGMENT MODEL'}
         </text>
       </g>
     </svg>
@@ -139,6 +148,7 @@ function AhaBullseye({ selected, onSelect }) {
 }
 
 function FfrChart() {
+  const { t } = useI18n()
   const width = 360
   const height = 154
   const plot = { left: 34, right: 346, top: 17, bottom: 123 }
@@ -157,7 +167,7 @@ function FfrChart() {
   }
   const path = points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point[0].toFixed(1)} ${point[1].toFixed(1)}`).join(' ')
   return (
-    <svg className="ffr-chart" viewBox={`0 0 ${width} ${height}`} role="img" aria-label="FFR-CT 回撤曲线">
+    <svg className="ffr-chart" viewBox={`0 0 ${width} ${height}`} role="img" aria-label={t('analysis.ffrAria')}>
       <rect width={width} height={height} fill="transparent" />
       {[0.6, 0.7, 0.8, 0.9, 1.0].map((value) => (
         <g key={value}>
@@ -189,13 +199,14 @@ function FfrChart() {
 }
 
 function PvLoop() {
+  const { t } = useI18n()
   const width = 360
   const height = 154
   const plot = { left: 34, right: 340, top: 18, bottom: 124 }
   const x = (volume) => plot.left + ((volume - 50) / 110) * (plot.right - plot.left)
   const y = (pressure) => plot.bottom - (pressure / 140) * (plot.bottom - plot.top)
   return (
-    <svg className="pv-loop" viewBox={`0 0 ${width} ${height}`} role="img" aria-label="左心室压力容积环">
+    <svg className="pv-loop" viewBox={`0 0 ${width} ${height}`} role="img" aria-label={t('analysis.pvAria')}>
       <rect width={width} height={height} fill="transparent" />
       {[0, 40, 80, 120].map((pressure) => (
         <g key={pressure}>
@@ -234,6 +245,7 @@ export default function AnalysisView(props) {
 }
 
 function DemoAnalysisView({ notify, onReport, onNavigate }) {
+  const { t } = useI18n()
   const [selected, setSelected] = React.useState(7)
   const segment = SEGMENTS.find((item) => item.id === selected)
 
@@ -242,9 +254,9 @@ function DemoAnalysisView({ notify, onReport, onNavigate }) {
       <ViewHeader
         index="05"
         eyebrow="QUANTITATIVE ANALYSIS"
-        title="定量分析"
+        title={t('analysis.title')}
         titleSuffix="MULTIMODAL"
-        description="AHA 17 段供血 · FFR-CT 血流动力学 · 左心功能与风险分层"
+        description={t('analysis.description')}
         meta={
           <>
             <span>AHA 17-SEGMENT</span>
@@ -256,9 +268,9 @@ function DemoAnalysisView({ notify, onReport, onNavigate }) {
         }
         actions={
           <>
-            <Badge tone="teal" dot>多模态融合完成</Badge>
+            <Badge tone="teal" dot>{t('analysis.fused')}</Badge>
             <Button variant="outline" size="sm" icon={<FileText size={14} />} onClick={onReport}>
-              查看报告
+              {t('analysis.openReport')}
             </Button>
           </>
         }
@@ -268,12 +280,12 @@ function DemoAnalysisView({ notify, onReport, onNavigate }) {
         <div className="viewer analysis-viewer">
           <div className="analysis-top-strip">
             <div className="analysis-risk-chips">
-              <span><b>12%</b> 缺血负荷</span>
-              <span><b>9%</b> 可逆性缺损</span>
-              <span><b>91%</b> 存活心肌</span>
+              <span><b>12%</b> {t('analysis.burden')}</span>
+              <span><b>9%</b> {t('analysis.reversible')}</span>
+              <span><b>91%</b> {t('analysis.viable')}</span>
               <span><b>0.78</b> FFR-CT</span>
             </div>
-            <div className="analysis-updated"><Sparkles size={11} /> AI 融合 CCTA · QCA · ECHO</div>
+            <div className="analysis-updated"><Sparkles size={11} /> {t('analysis.fusionLine')}</div>
           </div>
 
           <div className="analysis-grid">
@@ -281,12 +293,12 @@ function DemoAnalysisView({ notify, onReport, onNavigate }) {
               <div className="analysis-card-head">
                 <div>
                   <span className="analysis-kicker">MYOCARDIAL PERFUSION / AHA 17</span>
-                  <h2>心肌供血与灌注</h2>
+                  <h2>{t('analysis.perfusion')}</h2>
                 </div>
                 <div className="analysis-legend">
-                  <span><i className="perf-normal" />正常</span>
-                  <span><i className="perf-mild" />减低</span>
-                  <span><i className="perf-severe" />缺损</span>
+                  <span><i className="perf-normal" />{t('analysis.perfNormal')}</span>
+                  <span><i className="perf-mild" />{t('analysis.perfMild')}</span>
+                  <span><i className="perf-severe" />{t('analysis.perfSevere')}</span>
                 </div>
               </div>
               <div className="bullseye-wrap">
@@ -294,24 +306,24 @@ function DemoAnalysisView({ notify, onReport, onNavigate }) {
                 <div className="bullseye-side">
                   <div className="territory-card lad">
                     <span>LAD</span>
-                    <b>前壁 / 前间隔</b>
-                    <em>缺血 12% · 左室质量 46%</em>
+                    <b>{t('analysis.ladTerritory')}</b>
+                    <em>{t('analysis.ladBurden')}</em>
                   </div>
                   <div className="territory-card lcx">
                     <span>LCX</span>
-                    <b>侧壁 / 下侧壁</b>
-                    <em>缺血 2% · 左室质量 29%</em>
+                    <b>{t('analysis.lcxTerritory')}</b>
+                    <em>{t('analysis.lcxBurden')}</em>
                   </div>
                   <div className="territory-card rca">
                     <span>RCA</span>
-                    <b>下壁 / 下间隔</b>
-                    <em>缺血 0% · 左室质量 25%</em>
+                    <b>{t('analysis.rcaTerritory')}</b>
+                    <em>{t('analysis.rcaBurden')}</em>
                   </div>
                 </div>
               </div>
               <div className="bullseye-foot">
-                <span>负荷心肌灌注（模拟）</span>
-                <span>可逆性缺损主要位于 LAD 供血区</span>
+                <span>{t('analysis.stress')}</span>
+                <span>{t('analysis.ladDefect')}</span>
               </div>
             </div>
 
@@ -320,15 +332,15 @@ function DemoAnalysisView({ notify, onReport, onNavigate }) {
                 <div className="analysis-card-head compact">
                   <div>
                     <span className="analysis-kicker">FFR-CT PULLBACK / LAD</span>
-                    <h2>血流动力学</h2>
+                    <h2>{t('analysis.hemo')}</h2>
                   </div>
                   <Badge tone="amber">FFR 0.78</Badge>
                 </div>
                 <FfrChart />
                 <div className="chart-foot">
                   <span>ΔP 24 mmHg</span>
-                  <span>病变长度 18 mm</span>
-                  <span>远端压力比 0.78</span>
+                  <span>{t('analysis.lesionLength')}</span>
+                  <span>{t('analysis.distalRatio')}</span>
                 </div>
               </div>
 
@@ -336,7 +348,7 @@ function DemoAnalysisView({ notify, onReport, onNavigate }) {
                 <div className="analysis-card-head compact">
                   <div>
                     <span className="analysis-kicker">LEFT VENTRICULAR FUNCTION</span>
-                    <h2>压力容积环</h2>
+                    <h2>{t('analysis.pv')}</h2>
                   </div>
                   <Badge tone="teal">EF 54%</Badge>
                 </div>
@@ -344,7 +356,7 @@ function DemoAnalysisView({ notify, onReport, onNavigate }) {
                 <div className="chart-foot">
                   <span>GLS -16.8%</span>
                   <span>E/e' 9.4</span>
-                  <span>每搏量 77 mL</span>
+                  <span>{t('analysis.sv')}</span>
                 </div>
               </div>
             </div>
@@ -353,14 +365,14 @@ function DemoAnalysisView({ notify, onReport, onNavigate }) {
           <div className="analysis-bottom">
             <div className="analysis-evidence">
               <span className="analysis-evidence-title">EVIDENCE TRAIL</span>
-              <div><Layers size={12} /><b>CCTA</b><span>LAD 70% · 钙化 286</span><CheckCircle2 size={11} /></div>
+              <div><Layers size={12} /><b>CCTA</b><span>LAD 70% · {t('analysis.calcium')} 286</span><CheckCircle2 size={11} /></div>
               <ChevronRight size={11} />
               <div><ScanLine size={12} /><b>QCA</b><span>MLD 0.96 · RVD 3.20</span><CheckCircle2 size={11} /></div>
               <ChevronRight size={11} />
-              <div><Waves size={12} /><b>ECHO</b><span>LVEF 54% · 心尖运动减弱</span><CheckCircle2 size={11} /></div>
+              <div><Waves size={12} /><b>ECHO</b><span>{t('analysis.echoWall')}</span><CheckCircle2 size={11} /></div>
             </div>
             <Button variant="ghost" size="sm" icon={<ArrowUpRight size={13} />} onClick={() => onNavigate('angio')}>
-              查看原始影像
+              {t('analysis.viewSource')}
             </Button>
           </div>
         </div>
@@ -374,39 +386,39 @@ function DemoAnalysisView({ notify, onReport, onNavigate }) {
             <div className="analysis-hero-head">
               <span className="analysis-severity" />
               <div>
-                <h2>LAD 中段重度狭窄</h2>
-                <p>伴前壁及心尖部可逆性缺血</p>
+                <h2>{t('analysis.heroTitle')}</h2>
+                <p>{t('analysis.heroSub')}</p>
               </div>
             </div>
             <div className="analysis-hero-stats">
-              <div><span>直径狭窄</span><b>70<small>%</small></b></div>
+              <div><span>{t('analysis.ds')}</span><b>70<small>%</small></b></div>
               <div><span>FFR-CT</span><b>0.78</b></div>
-              <div><span>缺血负荷</span><b>12<small>%</small></b></div>
+              <div><span>{t('analysis.burdenShort')}</span><b>12<small>%</small></b></div>
             </div>
             <div className="analysis-conclusion">
               <CircleAlert size={13} />
-              <p>解剖学狭窄与血流动力学缺血一致。建议有创 FFR 复核，并评估 LAD 中段 PCI 与优化药物治疗。</p>
+              <p>{t('analysis.conclusion')}</p>
             </div>
           </div>
 
-          <Section title="所选心肌段" code="AHA SEGMENT" right={<Target size={13} />}>
+          <Section title={t('analysis.segment')} code="AHA SEGMENT" right={<Target size={13} />}>
             {segment ? (
               <div className="segment-detail">
                 <div className="segment-detail-head">
                   <span className="segment-id">{String(segment.id).padStart(2, '0')}</span>
                   <div>
-                    <b>{segment.name}</b>
-                    <small>{segment.territory} 供血区 · {segment.ring === 'basal' ? '基底段' : segment.ring === 'mid' ? '中间段' : segment.ring === 'apical' ? '心尖段' : '心尖'}</small>
+                    <b>{t(segment.nameKey)}</b>
+                    <small>{t('analysis.territory', { vessel: segment.territory, ring: t(RING_KEYS[segment.ring]) })}</small>
                   </div>
-                  <span className={`segment-perfusion ${segment.perfusion}`}>{PERF_STYLE[segment.perfusion].label}</span>
+                  <span className={`segment-perfusion ${segment.perfusion}`}>{t(PERF_STYLE[segment.perfusion].labelKey)}</span>
                 </div>
                 <div className="segment-metrics">
-                  <Stat label="供血血管狭窄" value={segment.stenosis} unit="%" accent={segment.stenosis >= 50 ? 'amber' : undefined} />
-                  <Stat label="室壁运动" value={segment.wma} />
-                  <Stat label="心肌存活" value={segment.viability} unit="%" />
+                  <Stat label={t('analysis.vesselStenosis')} value={segment.stenosis} unit="%" accent={segment.stenosis >= 50 ? 'amber' : undefined} />
+                  <Stat label={t('analysis.wma')} value={t(segment.wmaKey)} />
+                  <Stat label={t('analysis.viability')} value={segment.viability} unit="%" />
                 </div>
                 <div className="segment-bar">
-                  <span>灌注储备</span>
+                  <span>{t('analysis.reserve')}</span>
                   <div><i style={{ width: `${segment.viability}%` }} /></div>
                   <b>{segment.viability}%</b>
                 </div>
@@ -414,44 +426,44 @@ function DemoAnalysisView({ notify, onReport, onNavigate }) {
             ) : null}
           </Section>
 
-          <Section title="综合风险" code="RISK STRATIFICATION" right={<Activity size={13} />}>
+          <Section title={t('analysis.risk')} code="RISK STRATIFICATION" right={<Activity size={13} />}>
             <div className="risk-grid">
-              <div><span>SYNTAX SCORE</span><b>12</b><em>中低危</em></div>
-              <div><span>10Y MACE</span><b>8.4%</b><em>中危</em></div>
-              <div><span>钙化积分</span><b>286</b><em>Agatston</em></div>
-              <div><span>心肌质量指数</span><b>58</b><em>g/m²</em></div>
+              <div><span>SYNTAX SCORE</span><b>12</b><em>{t('analysis.syntaxRisk')}</em></div>
+              <div><span>10Y MACE</span><b>8.4%</b><em>{t('analysis.mace')}</em></div>
+              <div><span>{t('analysis.calcium')}</span><b>286</b><em>Agatston</em></div>
+              <div><span>{t('analysis.massIndex')}</span><b>58</b><em>g/m²</em></div>
             </div>
           </Section>
 
-          <Section title="治疗路径" code="HEART TEAM" right={<GitBranch size={13} />}>
+          <Section title={t('analysis.path')} code="HEART TEAM" right={<GitBranch size={13} />}>
             <div className="treatment-path">
               <div className="path-step done">
                 <span>01</span>
-                <div><b>优化药物治疗</b><small>他汀 · 抗血小板 · β 受体阻滞剂</small></div>
+                <div><b>{t('analysis.path1')}</b><small>{t('analysis.path1sub')}</small></div>
               </div>
               <div className="path-step active">
                 <span>02</span>
-                <div><b>有创 FFR 复核</b><small>LAD 中段 · 目标 &lt; 0.80</small></div>
+                <div><b>{t('analysis.path2')}</b><small>{t('analysis.path2sub')}</small></div>
               </div>
               <div className="path-step">
                 <span>03</span>
-                <div><b>LAD PCI 评估</b><small>虚拟支架 3.0 × 18 mm</small></div>
+                <div><b>{t('analysis.path3')}</b><small>{t('analysis.path3sub')}</small></div>
               </div>
             </div>
           </Section>
 
-          <Section title="多模态证据" code="SOURCE STUDIES" right={<HeartPulse size={13} />}>
+          <Section title={t('analysis.evidence')} code="SOURCE STUDIES" right={<HeartPulse size={13} />}>
             <div className="source-studies">
-              <div><Layers size={13} /><span>CCTA · 0.5 mm</span><b>已完成</b></div>
-              <div><ScanLine size={13} /><span>ICA / QCA</span><b>已完成</b></div>
-              <div><Waves size={13} /><span>Echo · GLS</span><b>已完成</b></div>
-              <div><Activity size={13} /><span>FFR-CT</span><b>AI 估算</b></div>
+              <div><Layers size={13} /><span>CCTA · 0.5 mm</span><b>{t('analysis.done')}</b></div>
+              <div><ScanLine size={13} /><span>ICA / QCA</span><b>{t('analysis.done')}</b></div>
+              <div><Waves size={13} /><span>Echo · GLS</span><b>{t('analysis.done')}</b></div>
+              <div><Activity size={13} /><span>FFR-CT</span><b>{t('analysis.aiEstimate')}</b></div>
             </div>
           </Section>
 
           <div className="analysis-actions">
-            <Button variant="outline" size="sm" onClick={() => notify('分析结果已同步至结构化报告')}>同步分析</Button>
-            <Button variant="primary" size="sm" icon={<FileText size={14} />} onClick={onReport}>生成诊断报告</Button>
+            <Button variant="outline" size="sm" onClick={() => notify(t('analysis.syncToast'))}>{t('analysis.sync')}</Button>
+            <Button variant="primary" size="sm" icon={<FileText size={14} />} onClick={onReport}>{t('analysis.makeReport')}</Button>
           </div>
         </aside>
       </div>

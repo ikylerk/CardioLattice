@@ -16,7 +16,7 @@ jobs:
       - uses: astral-sh/setup-uv@v10.3.0
         with:
           python-version: "3.11"
-      - run: uv sync --extra dev
+      - run: uv sync --frozen --extra dev
       - run: uv run pytest
 
   frontend:
@@ -28,5 +28,6 @@ jobs:
           node-version: "22"
           cache: npm
       - run: npm ci
+      - run: npm run test:frontend
       - run: npm run build
       - run: npm run build:cloud

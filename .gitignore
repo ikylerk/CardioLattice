@@ -1,11 +1,13 @@
 # Dependencies and builds
-node_modules/
+node_modules
 dist/
 dist-cloud/
 .mimosa/
+.playwright-mcp/
+.serena/
 
 # Python
-server/.venv/
+server/.venv
 server/var/
 server/.pytest_cache/
 server/**/__pycache__/

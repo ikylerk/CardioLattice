@@ -14,6 +14,11 @@ from pydicom.dataset import Dataset
 from pydicom.uid import generate_uid
 from scipy import ndimage
 
+from ..codes import CodedError
+
+# Matched against DICOM SeriesDescription. Not shown to users.
+_SERIES_DESCRIPTION_KEYWORDS_ZH = ("冠脉", "心脏")
+
 # Headers we intentionally keep for research/QC. Everything else is removed or
 # replaced by the de-identification profile below.
 KEEP_ATTRIBUTES = {
@@ -147,6 +152,7 @@ class PreviewVolume:
     default_slices: dict
     stats: dict
     crop_box_zyx: list[int] = field(default_factory=list)
+    source_spacing: list[float] = field(default_factory=list)
 
 
 def _as_list(value) -> list[float] | None:
@@ -221,35 +227,37 @@ def _as_float(value) -> float | None:
 def score_series(info: SeriesInfo) -> tuple[float, list[str]]:
     score = 0.0
     reasons: list[str] = []
-    text = f"{info.description} {' '.join(str(item) for item in (info.reasons or []))}".lower()
 
     if info.modality == "CT":
         score += 10
-        reasons.append("CT modality")
+        reasons.append("SERIES_CT_MODALITY")
     if info.image_orientation:
         score += 2
-        reasons.append("axial geometry")
+        reasons.append("SERIES_AXIAL_GEOMETRY")
     if info.slice_thickness is not None and info.slice_thickness <= 1.25:
         score += 3
-        reasons.append("thin slices")
-    if any(keyword in info.description.lower() for keyword in ("ccta", "cardiac", "coronary", "heart", "冠脉", "心脏")):
+        reasons.append("SERIES_THIN_SLICES")
+    description = info.description.lower()
+    if any(keyword in description for keyword in ("ccta", "cardiac", "coronary", "heart")) or any(
+        keyword in info.description for keyword in _SERIES_DESCRIPTION_KEYWORDS_ZH
+    ):
         score += 4
-        reasons.append("cardiac protocol description")
+        reasons.append("SERIES_CARDIAC_PROTOCOL")
     if info.contrast_agent:
         score += 2
-        reasons.append("contrast agent present")
+        reasons.append("SERIES_CONTRAST_PRESENT")
     if info.slice_count >= 64:
         score += 2
-        reasons.append(">=64 slices")
+        reasons.append("SERIES_ENOUGH_SLICES")
     if info.slice_count < 16:
         score -= 50
-        reasons.append("too few slices")
+        reasons.append("SERIES_TOO_FEW_SLICES")
     if any(keyword in info.description.lower() for keyword in ("scout", "topogram", "localizer", "dose", "report")):
         score -= 100
-        reasons.append("excluded non-diagnostic series")
+        reasons.append("SERIES_EXCLUDED_NONDIAGNOSTIC")
     if info.modality != "CT":
         score -= 50
-        reasons.append("non-CT series")
+        reasons.append("SERIES_NON_CT")
     return score, reasons
 
 
@@ -370,7 +378,7 @@ def load_series(files: list[Path], *, resample_mm: float = 1.5, salt: str = "loc
         datasets.append((key, ds))
 
     if len(datasets) < 2:
-        raise ValueError("selected series has fewer than two slices with pixel data")
+        raise CodedError("TOO_FEW_SLICES")
     datasets.sort(key=lambda item: item[0])
     first = datasets[0][1]
 
@@ -382,7 +390,7 @@ def load_series(files: list[Path], *, resample_mm: float = 1.5, salt: str = "loc
     arrays = []
     for _, ds in datasets:
         if int(ds.Rows) != rows or int(ds.Columns) != cols:
-            raise ValueError("inconsistent Rows/Columns within the selected series")
+            raise CodedError("INCONSISTENT_DIMENSIONS")
         raw = ds.pixel_array.astype(np.float32)
         slope = _as_float(getattr(ds, "RescaleSlope", 1)) or 1.0
         intercept = _as_float(getattr(ds, "RescaleIntercept", 0)) or 0.0
@@ -449,14 +457,8 @@ def load_series(files: list[Path], *, resample_mm: float = 1.5, salt: str = "loc
 
 
 def _to_ras(image: sitk.Image) -> sitk.Image:
-    """Canonicalise to RAS axis order and make the direction diagonal positive."""
-    canonical = sitk.DICOMOrient(image, "RAS")
-    direction = np.asarray(canonical.GetDirection(), dtype=float).reshape(3, 3)
-    flips = [bool(direction[i, i] < 0) for i in range(3)]
-    if any(flips):
-        # SimpleITK's flipAxes is in (x, y, z) index order.
-        canonical = sitk.Flip(canonical, flips, flipAboutOrigin=True)
-    return canonical
+    """Reorder voxel axes toward RAS while preserving physical LPS coordinates."""
+    return sitk.DICOMOrient(image, "RAS")
 
 
 def _crop_center(
@@ -478,9 +480,16 @@ def build_preview(
     loaded: LoadedSeries,
     *,
     max_dim: int = 192,
-    crop_mm: float = 280.0,
+    crop_mm: float | None = 280.0,
 ) -> PreviewVolume:
-    array, crop_box = _crop_center(loaded.array_hu, loaded.spacing_mm, crop_mm)
+    if max_dim < 2:
+        raise ValueError("max_dim must be at least 2")
+    if crop_mm is None:
+        array = loaded.array_hu
+        nz0, ny0, nx0 = array.shape
+        crop_box = [0, nz0, 0, ny0, 0, nx0]
+    else:
+        array, crop_box = _crop_center(loaded.array_hu, loaded.spacing_mm, crop_mm)
     # Downsample so that the largest axis is <= max_dim.
     dims_zyx = np.array(array.shape, dtype=np.float32)
     factor = max(1.0, float(dims_zyx.max()) / float(max_dim))
@@ -526,20 +535,22 @@ def build_preview(
     bounds_min = [-value / 2 for value in size]
     bounds_max = [value / 2 for value in size]
 
-    origin = list(loaded.origin)
     direction = list(loaded.direction)
-    affine = [
-        [direction[0], direction[1], direction[2], origin[0]],
-        [direction[3], direction[4], direction[5], origin[1]],
-        [direction[6], direction[7], direction[8], origin[2]],
-        [0.0, 0.0, 0.0, 1.0],
-    ]
+    matrix = np.asarray(direction, dtype=float).reshape(3, 3)
+    offset_xyz = np.array([crop_box[4], crop_box[2], crop_box[0]], dtype=float)
+    origin = (np.asarray(loaded.origin) + matrix @ (offset_xyz * loaded.spacing_mm)).tolist()
+    affine_matrix = np.eye(4)
+    affine_matrix[:3, :3] = matrix @ np.diag(spacing_xyz)
+    affine_matrix[:3, 3] = origin
+    affine = affine_matrix.tolist()
     default_slices = {"x": nx // 2, "y": ny // 2, "z": nz // 2}
     stats = {
         "min": float(array.min()) if array.size else None,
         "max": float(array.max()) if array.size else None,
         "p005": lo,
         "p995": hi,
+        "physicalCoordinateSystem": "LPS",
+        "affineConvention": "voxel_index_xyz_to_lps_mm",
     }
     return PreviewVolume(
         data=u8,
@@ -554,6 +565,7 @@ def build_preview(
         default_slices=default_slices,
         stats=stats,
         crop_box_zyx=crop_box,
+        source_spacing=list(loaded.spacing_mm),
     )
 
 
@@ -567,12 +579,12 @@ def safe_extract_zip(archive: Path, target: Path, max_total_bytes: int) -> list[
                 continue
             name = Path(info.filename)
             if name.is_absolute() or ".." in name.parts:
-                raise ValueError("zip entry path traversal rejected")
+                raise CodedError("ZIP_TRAVERSAL")
             if info.file_size > max_total_bytes:
-                raise ValueError("zip entry exceeds size limit")
+                raise CodedError("ZIP_ENTRY_TOO_LARGE")
             total += info.file_size
             if total > max_total_bytes:
-                raise ValueError("zip expands beyond the upload size limit")
+                raise CodedError("ZIP_EXPANDS_TOO_LARGE")
         zf.extractall(target)
     extracted = [path for path in target.rglob("*") if path.is_file()]
     return extracted
@@ -581,6 +593,8 @@ def safe_extract_zip(archive: Path, target: Path, max_total_bytes: int) -> list[
 def write_hu_nifti(loaded: LoadedSeries, path: Path) -> None:
     image = sitk.GetImageFromArray(loaded.array_hu)
     image.SetSpacing(loaded.spacing_mm)
+    image.SetOrigin(loaded.origin)
+    image.SetDirection(loaded.direction)
     path.parent.mkdir(parents=True, exist_ok=True)
     sitk.WriteImage(image, str(path))
 
@@ -602,7 +616,7 @@ def load_label_image(path: Path, *, resample_mm: float = 1.5) -> tuple[np.ndarra
         sitk.sitkUInt16,
     )
     canonical = _to_ras(resampled)
-    array = sitk.GetArrayFromImage(canonical).astype(np.uint8)
+    array = sitk.GetArrayFromImage(canonical).astype(np.uint16)
     spacing = tuple(float(v) for v in canonical.GetSpacing())
     return array, spacing
 
@@ -610,22 +624,23 @@ def load_label_image(path: Path, *, resample_mm: float = 1.5) -> tuple[np.ndarra
 def align_labels_to_preview(label_array: np.ndarray, preview: PreviewVolume) -> np.ndarray:
     z0, z1, y0, y1, x0, x1 = preview.crop_box_zyx
     cropped = label_array[z0:z1, y0:y1, x0:x1]
-    target = (preview.dims[2], preview.dims[1], preview.dims[0])
-    if cropped.shape != target:
-        zoom = tuple(t / max(1, c) for t, c in zip(target, cropped.shape))
-        cropped = ndimage.zoom(cropped, zoom, order=0, prefilter=False)
-        # Guard against off-by-one rounding from the zoom.
-        cropped = cropped[: target[0], : target[1], : target[2]]
-        if cropped.shape != target:
-            padded = np.zeros(target, dtype=cropped.dtype)
-            padded[: cropped.shape[0], : cropped.shape[1], : cropped.shape[2]] = cropped
-            cropped = padded
-    return cropped.astype(np.uint8)
+    target = tuple(preview.dims[::-1])
+    if cropped.shape == target and np.allclose(preview.source_spacing or preview.spacing, preview.spacing):
+        return cropped.copy()
+    image = sitk.GetImageFromArray(cropped)
+    image.SetSpacing(preview.source_spacing or preview.spacing)
+    image.SetOrigin(preview.origin)
+    image.SetDirection(preview.direction)
+    aligned = sitk.Resample(
+        image, preview.dims, sitk.Transform(), sitk.sitkNearestNeighbor,
+        preview.origin, preview.spacing, preview.direction, 0, image.GetPixelID(),
+    )
+    return sitk.GetArrayFromImage(aligned)
 
 
 def load_volume_bytes(path: Path, dims: list[int]) -> np.ndarray:
     data = np.fromfile(path, dtype=np.uint8)
     expected = int(np.prod(dims))
     if data.size != expected:
-        raise ValueError(f"volume byte size {data.size} does not match dims {dims}")
+        raise CodedError("VOLUME_SIZE", size=int(data.size), dims=[int(item) for item in dims])
     return data.reshape((dims[2], dims[1], dims[0]))

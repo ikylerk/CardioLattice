@@ -38,7 +38,7 @@ def test_public_nifti_import(tmp_path):
                     "image": ("image.nii.gz", image, "application/gzip"),
                     "labels": ("labels.nii.gz", labels, "application/gzip"),
                 },
-                data={"dataset": "synthetic_public"},
+                data={"dataset": "synthetic_public", "label_map": '{"1":"CORONARY_TREE"}'},
             )
         assert response.status_code == 202, response.text
         payload = response.json()
@@ -61,3 +61,116 @@ def test_public_nifti_import(tmp_path):
         assert measurements["CORONARY_STENOSIS_CANDIDATES"]["status"] == "computed"
         assert measurements["STENOSIS"]["status"] == "not_computed"
         assert len(bundle["reports"]) == 1
+
+
+def test_same_filename_upload_preserves_native_label_and_input_hashes(tmp_path):
+    import hashlib
+    import json
+    from app.db import SessionLocal
+    from app.models import Study
+    from app.storage import storage
+
+    labels = np.zeros((18, 24, 32), dtype=np.uint16)
+    labels[3:14, 6:18, 7:22] = 300
+    image = sitk.GetImageFromArray(np.where(labels, 330, -800).astype(np.float32))
+    image.SetSpacing((0.5, 0.75, 1.25))
+    image.SetOrigin((33, -22, 11))
+    mask = sitk.GetImageFromArray(labels)
+    mask.CopyInformation(image)
+    image_path, mask_path = tmp_path / "image.nii.gz", tmp_path / "mask.nii.gz"
+    sitk.WriteImage(image, str(image_path))
+    sitk.WriteImage(mask, str(mask_path))
+    with TestClient(app) as client:
+        response = client.post("/api/public/import", files={
+            "image": ("case.nii.gz", image_path.read_bytes(), "application/gzip"),
+            "labels": ("case.nii.gz", mask_path.read_bytes(), "application/gzip"),
+        }, data={"dataset": "synthetic_geometry_validation",
+                 "label_map": json.dumps({"300": "TEST_STRUCTURE"})})
+        assert response.status_code == 202
+        bundle = response.json()["study"]
+        assert bundle["study"]["status"] == "ready"
+        measurement = next(m for m in bundle["measurements"] if m["code"] == "TEST_STRUCTURE_VOLUME")
+        expected = round(np.count_nonzero(labels) * 0.5 * 0.75 * 1.25 / 1000, 2)
+        assert measurement["value"] == expected
+        assert measurement["provenance"]["measurement_grid"] == "native_label"
+        with SessionLocal() as db:
+            study = db.get(Study, bundle["study"]["id"])
+            meta = study.fixture_meta
+            assert meta["image_path"] != meta["labels_path"]
+            assert storage.path_for(meta["image_path"]).read_bytes() == image_path.read_bytes()
+            assert storage.path_for(meta["labels_path"]).read_bytes() == mask_path.read_bytes()
+            assert meta["input_hashes"]["image"] == hashlib.sha256(image_path.read_bytes()).hexdigest()
+            assert meta["input_hashes"]["labels"] == hashlib.sha256(mask_path.read_bytes()).hexdigest()
+        assert not any(m["code"].startswith("CORONARY_") for m in bundle["measurements"])
+
+
+def test_unmapped_binary_mask_is_not_automatically_a_coronary_tree(tmp_path):
+    image_path, labels_path = _write_case(tmp_path)
+    with TestClient(app) as client:
+        response = client.post("/api/public/import", files={
+            "image": ("image.nii.gz", image_path.read_bytes(), "application/gzip"),
+            "labels": ("labels.nii.gz", labels_path.read_bytes(), "application/gzip"),
+        }, data={"dataset": "synthetic_unmapped"})
+        bundle = response.json()["study"]
+        assert bundle["study"]["status"] == "ready"
+        assert bundle["meshes"][0]["structureCode"] == "LABEL_1"
+        assert not any(m["code"].startswith("CORONARY_") for m in bundle["measurements"])
+
+
+def test_skeleton_component_loss_preserves_models_but_suppresses_analysis(tmp_path):
+    import json
+
+    labels = np.zeros((40, 40, 40), dtype=np.uint16)
+    labels[5:35, 5:9, 5:9] = 1  # Lee thinning removes this even-width component.
+    labels[5:35, 25:30, 25:30] = 300
+    image = sitk.GetImageFromArray(np.where(labels, 320, -800).astype(np.float32))
+    image.SetSpacing((0.5, 0.75, 1.25))
+    mask = sitk.GetImageFromArray(labels)
+    mask.CopyInformation(image)
+    image_path, mask_path = tmp_path / "image.nii.gz", tmp_path / "labels.nii.gz"
+    sitk.WriteImage(image, str(image_path))
+    sitk.WriteImage(mask, str(mask_path))
+
+    with TestClient(app) as client:
+        response = client.post("/api/public/import", files={
+            "image": ("image.nii.gz", image_path.read_bytes(), "application/gzip"),
+            "labels": ("labels.nii.gz", mask_path.read_bytes(), "application/gzip"),
+        }, data={"dataset": "synthetic_skeleton_loss_validation",
+                 "label_map": json.dumps({"1": "CORONARY_LEFT", "300": "CORONARY_RIGHT"})})
+        assert response.status_code == 202, response.text
+        bundle = response.json()["study"]
+        assert bundle["study"]["status"] == "ready"
+        assert {m["structureCode"] for m in bundle["meshes"]} == {
+            "CORONARY_LEFT", "CORONARY_RIGHT",
+        }
+        measurements = {m["code"]: m for m in bundle["measurements"]}
+        for code in ("CORONARY_LEFT_VOLUME", "CORONARY_RIGHT_VOLUME"):
+            assert measurements[code]["status"] == "computed"
+            assert measurements[code]["value"] > 0
+        failed = measurements["CORONARY_TREE_CENTERLINE"]
+        assert failed["status"] == "not_computed"
+        assert failed["value"] is None
+        assert "component 1 uncovered" in failed["reason"]
+        assert "CORONARY_CENTERLINE_LENGTH" not in measurements
+        assert "CORONARY_MIN_DIAMETER" not in measurements
+        assert "CORONARY_STENOSIS_CANDIDATES" not in measurements
+
+
+def test_public_import_report_language_default_explicit_and_invalid(tmp_path):
+    image_path, labels_path = _write_case(tmp_path)
+    files = {
+        "image": ("image.nii.gz", image_path.read_bytes(), "application/gzip"),
+        "labels": ("labels.nii.gz", labels_path.read_bytes(), "application/gzip"),
+    }
+    with TestClient(app) as client:
+        for query, expected in (("", "en"), ("?lang=en", "en"), ("?lang=zh", "zh")):
+            response = client.post("/api/public/import" + query, files=files)
+            assert response.status_code == 202, response.text
+            content = response.json()["study"]["reports"][0]["content"]
+            assert content["lang"] == expected
+            assert content["provenance"]["lang"] == expected
+        before = len(client.get("/api/studies").json()["items"])
+        invalid = client.post("/api/public/import?lang=fr", files=files)
+        assert invalid.status_code == 400
+        assert invalid.json()["detail"]["code"] == "INVALID_LANG"
+        assert len(client.get("/api/studies").json()["items"]) == before

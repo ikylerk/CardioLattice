@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from .codes import as_coded, label_coded, reason_coded
 from .models import Job, MeshRecord, Measurement, Report, Segmentation, Series, Study, VolumeRecord
 
 
@@ -12,6 +13,10 @@ def subject_out(subject) -> dict | None:
         "sex": subject.sex,
         "ageYears": subject.age_years,
     }
+
+
+def _coded_list(values: list | None) -> list:
+    return [as_coded(item) if isinstance(item, str) else item for item in (values or [])]
 
 
 def series_out(series: Series) -> dict:
@@ -31,8 +36,32 @@ def series_out(series: Series) -> dict:
         "contrastAgent": series.contrast_agent,
         "isSelected": series.is_selected,
         "candidateScore": series.candidate_score,
-        "reasons": series.reasons or [],
+        "reasons": _coded_list(series.reasons),
     }
+
+
+def _markers(markers: list | None) -> list:
+    output = []
+    for marker in markers or []:
+        if not isinstance(marker, dict):
+            output.append(marker)
+            continue
+        item = dict(marker)
+        label = item.get("label")
+        if isinstance(label, str):
+            item["label"] = as_coded(label)
+        output.append(item)
+    return output
+
+
+def _quality(quality: dict | None) -> dict | None:
+    if not isinstance(quality, dict):
+        return quality
+    cloned = dict(quality)
+    warnings = cloned.get("warnings")
+    if isinstance(warnings, list):
+        cloned["warnings"] = _coded_list(warnings)
+    return cloned
 
 
 def volume_out(volume: VolumeRecord) -> dict:
@@ -57,12 +86,22 @@ def volume_out(volume: VolumeRecord) -> dict:
             volume.dims[2] * volume.spacing[2] / 2,
         ],
         "defaultSlices": volume.default_slices,
-        "markers": volume.markers or [],
+        "markers": _markers(volume.markers),
         "stats": volume.stats,
         "bytes": volume.bytes,
         "dataUrl": f"/api/volumes/{volume.id}/data",
         "pipelineVersion": volume.pipeline_version,
     }
+
+
+def _note_dict(value: dict | None) -> dict | None:
+    if not isinstance(value, dict):
+        return value
+    cloned = dict(value)
+    note = cloned.get("note")
+    if isinstance(note, str):
+        cloned["note"] = as_coded(note)
+    return cloned
 
 
 def segmentation_out(segmentation: Segmentation) -> dict:
@@ -76,8 +115,8 @@ def segmentation_out(segmentation: Segmentation) -> dict:
         "status": segmentation.status,
         "labelMap": segmentation.label_map,
         "standardLabelMap": (segmentation.provenance or {}).get("standard_label_map", {}),
-        "quality": segmentation.quality,
-        "provenance": segmentation.provenance,
+        "quality": _quality(segmentation.quality),
+        "provenance": _note_dict(segmentation.provenance),
     }
 
 
@@ -92,8 +131,8 @@ def mesh_out(mesh: MeshRecord) -> dict:
         "vertexCount": mesh.vertex_count,
         "triangleCount": mesh.triangle_count,
         "bbox": mesh.bbox,
-        "sceneTransform": mesh.scene_transform,
-        "provenance": mesh.provenance,
+        "sceneTransform": _note_dict(mesh.scene_transform),
+        "provenance": _note_dict(mesh.provenance),
     }
 
 
@@ -101,20 +140,25 @@ def measurement_out(item: Measurement) -> dict:
     return {
         "id": item.id,
         "code": item.code,
-        "label": item.label,
+        "label": label_coded(item.code, item.label),
         "value": item.value,
         "unit": item.unit,
         "method": item.method,
         "source": item.source,
         "validationStatus": item.validation_status,
         "status": item.status,
-        "reason": item.reason,
+        "reason": reason_coded(item.code, item.status, item.reason),
         "segmentAha": item.segment_aha,
         "provenance": item.provenance,
     }
 
 
 def report_out(report: Report) -> dict:
+    """Return stored content and its actual review version, without translation."""
+    from sqlalchemy.orm import object_session
+    from .report_versions import content_hash, current_version
+
+    db = object_session(report)
     return {
         "id": report.id,
         "studyId": report.study_id,
@@ -125,7 +169,8 @@ def report_out(report: Report) -> dict:
         "promptVersion": report.prompt_version,
         "approvedBy": report.approved_by,
         "approvedAt": report.approved_at.isoformat() if report.approved_at else None,
-        "version": 1,
+        "version": current_version(db, report.id) if db else None,
+        "contentHash": content_hash(report.content),
     }
 
 
@@ -137,8 +182,8 @@ def job_out(job: Job) -> dict:
         "state": job.state,
         "progress": job.progress,
         "stage": job.stage,
-        "message": job.message,
-        "error": job.error,
+        "message": as_coded(job.message),
+        "error": as_coded(job.error),
     }
 
 
@@ -166,7 +211,7 @@ def study_summary(study: Study) -> dict:
         "modality": study.modality,
         "source": study.source,
         "status": study.status,
-        "error": study.error,
+        "error": as_coded(study.error),
         "createdAt": study.created_at.isoformat() if study.created_at else None,
         "availability": availability_out(study),
     }

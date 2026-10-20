@@ -1,0 +1,201 @@
+/* Report version history panel — styled for the light "paper" report. */
+.report-edit-text {
+  display: block;
+  width: 100%;
+  min-height: 64px;
+  padding: 8px;
+  border: 1px solid #6d9c94;
+  background: #fffef8;
+  color: #263d37;
+  font: inherit;
+  line-height: 1.6;
+  resize: vertical;
+  box-sizing: border-box;
+}
+.report-versions-actions { flex-wrap: wrap; }
+
+.report-versions {
+  margin: 16px 0;
+  border: 1px solid #d6d0c2;
+  background: rgba(255, 255, 255, 0.26);
+  color: #354542;
+}
+
+.report-versions-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 10px;
+  border-bottom: 1px solid #e1dccf;
+  background: rgba(86, 112, 106, 0.06);
+}
+
+.report-versions-head > div {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #3b5a55;
+}
+
+.report-versions-head b {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+}
+
+.report-versions-head > div span {
+  font-family: var(--font-mono);
+  font-size: 6px;
+  letter-spacing: 1.1px;
+  color: #8d9289;
+}
+
+.report-versions-head em {
+  font-family: var(--font-mono);
+  font-size: 6.5px;
+  font-style: normal;
+  color: #858c81;
+}
+
+.report-versions-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.report-versions-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 10px;
+  border-bottom: 1px solid #e8e3d7;
+}
+
+.report-versions-list li:last-child {
+  border-bottom: 0;
+}
+
+.report-versions-badge {
+  flex: 0 0 auto;
+  min-width: 26px;
+  padding: 2px 5px;
+  border: 1px solid rgba(58, 126, 118, 0.35);
+  border-radius: 3px;
+  background: rgba(103, 216, 204, 0.14);
+  color: #2c5c58;
+  font-family: var(--font-mono);
+  font-size: 7px;
+  text-align: center;
+}
+
+.report-versions-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.report-versions-meta b {
+  font-family: var(--font-sans);
+  font-size: 8.5px;
+  font-weight: 600;
+  color: #34403d;
+}
+
+.report-versions-meta span,
+.report-versions-meta em {
+  font-family: var(--font-mono);
+  font-size: 6.5px;
+  font-style: normal;
+  line-height: 1.45;
+  color: #7d847b;
+  overflow-wrap: anywhere;
+}
+
+.report-versions-meta em {
+  color: #8a6a42;
+}
+
+.report-versions-hash {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: 6px;
+  color: #9a9f95;
+  padding-top: 2px;
+}
+
+.report-versions-status {
+  padding: 6px 10px;
+  font-family: var(--font-mono);
+  font-size: 7px;
+  color: #7d847b;
+}
+
+.report-versions-status.error {
+  color: #8d3f3f;
+}
+
+.report-versions-actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 10px;
+  border-top: 1px solid #e1dccf;
+  background: rgba(86, 112, 106, 0.04);
+}
+
+.report-versions-actions input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 26px;
+  padding: 0 8px;
+  border: 1px solid #d6d0c2;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.6);
+  color: #34403d;
+  font-family: var(--font-sans);
+  font-size: 8px;
+  outline: none;
+}
+
+.report-versions-actions input::placeholder {
+  color: #9a9f95;
+}
+
+.report-versions-actions input:focus {
+  border-color: #6d9c94;
+  box-shadow: 0 0 0 2px rgba(109, 156, 148, 0.16);
+}
+
+.report-versions-save {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 9px;
+  border: 1px solid #577f78;
+  border-radius: 3px;
+  background: #456e68;
+  color: #f4f1e9;
+  font-family: var(--font-sans);
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  transition: background 0.16s ease, opacity 0.16s ease;
+}
+
+.report-versions-save:hover:not(:disabled) {
+  background: #375c57;
+}
+
+.report-versions-save:disabled {
+  opacity: 0.55;
+  cursor: default;
+}

@@ -10,21 +10,22 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import HEART_DATA from '../data/heart-data.json'
 import heartModelUrl from '../assets/heart.glb?url'
+import { t } from '../i18n.js'
 
 const STRUCTURE_LABELS = [
-  { id: 'LV', anchor: 'point', position: [1.12, 0.24, -0.46], text: 'LV', cn: '左心室', group: 'chamber' },
-  { id: 'RV', anchor: 'point', position: [-1.02, 0.22, -0.48], text: 'RV', cn: '右心室', group: 'chamber' },
-  { id: 'LA', anchor: 'point', position: [0.7, 0.04, 0.82], text: 'LA', cn: '左心房', group: 'chamber' },
-  { id: 'RA', anchor: 'point', position: [-0.86, 0.02, 0.74], text: 'RA', cn: '右心房', group: 'chamber' },
-  { id: 'AO', anchor: 'point', position: [0.32, -0.02, 1.48], text: 'AO', cn: '主动脉', group: 'great' },
-  { id: 'PT', anchor: 'point', position: [-0.5, 0.1, 1.32], text: 'PA', cn: '肺动脉', group: 'great' },
-  { id: 'LCX', anchor: 'vessel', vessel: 'LCX', t: 0.5, position: [1.02, 0.22, 0.02], text: 'LCx', cn: '回旋支', group: 'coronary' },
-  { id: 'RCA', anchor: 'vessel', vessel: 'RCA', t: 0.55, position: [-1.02, 0.12, -0.12], text: 'RCA', cn: '右冠状动脉', group: 'coronary' },
+  { id: 'LV', anchor: 'point', position: [1.12, 0.24, -0.46], text: 'LV', labelKey: 'anatomy.lv', group: 'chamber' },
+  { id: 'RV', anchor: 'point', position: [-1.02, 0.22, -0.48], text: 'RV', labelKey: 'anatomy.rv', group: 'chamber' },
+  { id: 'LA', anchor: 'point', position: [0.7, 0.04, 0.82], text: 'LA', labelKey: 'anatomy.la', group: 'chamber' },
+  { id: 'RA', anchor: 'point', position: [-0.86, 0.02, 0.74], text: 'RA', labelKey: 'anatomy.ra', group: 'chamber' },
+  { id: 'AO', anchor: 'point', position: [0.32, -0.02, 1.48], text: 'AO', labelKey: 'anatomy.ao', group: 'great' },
+  { id: 'PT', anchor: 'point', position: [-0.5, 0.1, 1.32], text: 'PA', labelKey: 'anatomy.pt', group: 'great' },
+  { id: 'LCX', anchor: 'vessel', vessel: 'LCX', t: 0.5, position: [1.02, 0.22, 0.02], text: 'LCx', labelKey: 'anatomy.lcxFull', group: 'coronary' },
+  { id: 'RCA', anchor: 'vessel', vessel: 'RCA', t: 0.55, position: [-1.02, 0.12, -0.12], text: 'RCA', labelKey: 'anatomy.rcaFull', group: 'coronary' },
 ]
 
 const LESIONS = [
-  { vessel: 'LAD', t: 0.57, severity: 0.72, length: 18, label: 'LAD 中段', note: '70% 直径狭窄' },
-  { vessel: 'RCA', t: 0.36, severity: 0.32, length: 10, label: 'RCA 近段', note: '30% 轻度狭窄' },
+  { vessel: 'LAD', t: 0.57, severity: 0.72, length: 18, labelKey: 'anatomy.lesionLad' },
+  { vessel: 'RCA', t: 0.36, severity: 0.32, length: 10, labelKey: 'anatomy.lesionRca' },
 ]
 
 const GROUP_BASE_OPACITY = {
@@ -660,7 +661,7 @@ export default class HeartEngine {
       const element = document.createElement('button')
       element.type = 'button'
       element.className = `scene-label scene-label-${item.group}${position.x > 0.08 ? ' flip' : ''}`
-      element.innerHTML = `<span class="label-line"></span><span class="label-card"><b>${item.text}</b><small>${item.cn}</small></span>`
+      element.innerHTML = `<span class="label-line"></span><span class="label-card"><b>${item.text}</b><small>${t(item.labelKey)}</small></span>`
       element.addEventListener('click', (event) => {
         event.stopPropagation()
         this.setSelected(item.id)
@@ -669,7 +670,7 @@ export default class HeartEngine {
       const object = new CSS2DObject(element)
       object.position.copy(position).sub(this.modelCenter)
       this.labelGroup.add(object)
-      this.labelObjects.push({ object, item, element })
+      this.labelObjects.push({ object, item, element, labelKey: item.labelKey })
     }
 
     for (const marker of this.lesionMarkers) {
@@ -677,7 +678,7 @@ export default class HeartEngine {
       const element = document.createElement('button')
       element.type = 'button'
       element.className = `scene-label scene-label-lesion${marker.anchor.x > 0 ? ' flip' : ''}`
-      element.innerHTML = `<span class="label-line"></span><span class="label-card"><b>${Math.round(marker.lesion.severity * 100)}%</b><small>${marker.lesion.label}</small></span>`
+      element.innerHTML = `<span class="label-line"></span><span class="label-card"><b>${Math.round(marker.lesion.severity * 100)}%</b><small>${t(marker.lesion.labelKey)}</small></span>`
       element.addEventListener('click', (event) => {
         event.stopPropagation()
         this.setSelected(marker.vessel.id)
@@ -687,7 +688,7 @@ export default class HeartEngine {
       const anchor = marker.anchor.clone().add(marker.anchor.clone().normalize().multiplyScalar(0.04))
       object.position.copy(anchor).sub(this.modelCenter)
       this.labelGroup.add(object)
-      this.labelObjects.push({ object, item: { group: 'lesion', id: marker.vessel.id }, element })
+      this.labelObjects.push({ object, item: { group: 'lesion', id: marker.vessel.id }, element, labelKey: marker.lesion.labelKey })
     }
   }
 
@@ -917,7 +918,7 @@ export default class HeartEngine {
       const element = document.createElement('button')
       element.type = 'button'
       element.className = `scene-label scene-label-${item.group}${position.x > 0.08 ? ' flip' : ''}`
-      element.innerHTML = `<span class="label-line"></span><span class="label-card"><b>${item.text}</b><small>${item.cn}</small></span>`
+      element.innerHTML = `<span class="label-line"></span><span class="label-card"><b>${item.text}</b><small>${t(item.labelKey)}</small></span>`
       element.addEventListener('click', (event) => {
         event.stopPropagation()
         this.setSelected(item.id)
@@ -926,7 +927,14 @@ export default class HeartEngine {
       const object = new CSS2DObject(element)
       object.position.copy(position).sub(this.modelCenter)
       this.labelGroup.add(object)
-      this.labelObjects.push({ object, item, element })
+      this.labelObjects.push({ object, item, element, labelKey: item.labelKey })
+    }
+  }
+
+  applyLanguage() {
+    for (const label of this.labelObjects) {
+      const caption = label.element.querySelector('small')
+      if (caption && label.labelKey) caption.textContent = t(label.labelKey)
     }
   }
 

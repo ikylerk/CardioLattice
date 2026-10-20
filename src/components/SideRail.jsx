@@ -1,19 +1,22 @@
 import React from 'react'
 import { Activity, Box, CircleHelp, FileText, FolderOpen, Layers, Orbit, ScanLine, Settings2, Waves } from 'lucide-react'
+import { useI18n } from '../i18n.js'
 
 export const MODULES = [
-  { id: 'workbench', label: '检查工作台', en: 'WORKBENCH', icon: FolderOpen, key: '0' },
-  { id: 'anatomy', label: '三维解剖', en: 'ANATOMY', icon: Orbit, key: '01' },
-  { id: 'angio', label: '冠脉造影', en: 'ANGIO', icon: ScanLine, key: '02' },
-  { id: 'cta', label: 'CT 影像', en: 'CCTA', icon: Layers, key: '03' },
-  { id: 'echo', label: '心脏超声', en: 'ECHO', icon: Waves, key: '04' },
-  { id: 'analysis', label: '定量分析', en: 'ANALYSIS', icon: Activity, key: '05' },
-  { id: 'organs', label: '器官模型库', en: 'ORGAN ATLAS', icon: Box, key: '6' },
+  { id: 'workbench', labelKey: 'nav.workbench', en: 'WORKBENCH', icon: FolderOpen, key: '0' },
+  { id: 'anatomy', labelKey: 'nav.anatomy', en: 'ANATOMY', icon: Orbit, key: '01' },
+  { id: 'angio', labelKey: 'nav.angio', en: 'ANGIO', icon: ScanLine, key: '02' },
+  { id: 'cta', labelKey: 'nav.cta', en: 'CCTA', icon: Layers, key: '03' },
+  { id: 'echo', labelKey: 'nav.echo', en: 'ECHO', icon: Waves, key: '04' },
+  { id: 'analysis', labelKey: 'nav.analysis', en: 'ANALYSIS', icon: Activity, key: '05' },
+  { id: 'comparison', labelKey: 'nav.comparison', en: 'COMPARE', icon: Layers, key: '7' },
+  { id: 'organs', labelKey: 'nav.organs', en: 'ORGAN ATLAS', icon: Box, key: '6' },
 ]
 
 export default function SideRail({ active, onChange, onReport }) {
+  const { t } = useI18n()
   return (
-    <nav className="side-rail" aria-label="影像模块">
+    <nav className="side-rail" aria-label={t('nav.aria')}>
       <div className="rail-index">CV<br />SUITE</div>
       <div className="rail-items">
         {MODULES.map((item) => {
@@ -29,7 +32,7 @@ export default function SideRail({ active, onChange, onReport }) {
               <span className="rail-icon">
                 <Icon size={20} strokeWidth={1.65} />
               </span>
-              <span>{item.label}</span>
+              <span>{t(item.labelKey)}</span>
               <em>{item.en}</em>
               <kbd>{item.key}</kbd>
             </button>
@@ -37,15 +40,15 @@ export default function SideRail({ active, onChange, onReport }) {
         })}
       </div>
       <div className="rail-bottom">
-        <button className="rail-mini" type="button" onClick={onReport} title="结构化报告">
+        <button className="rail-mini" type="button" onClick={onReport} title={t('nav.reportTitle')}>
           <FileText size={17} />
-          <span>报告</span>
+          <span>{t('nav.report')}</span>
         </button>
-        <button className="rail-mini" type="button" title="设置">
+        <button className="rail-mini" type="button" title={t('nav.settings')}>
           <Settings2 size={17} />
-          <span>设置</span>
+          <span>{t('nav.settings')}</span>
         </button>
-        <button className="rail-mini" type="button" title="帮助">
+        <button className="rail-mini" type="button" title={t('nav.help')}>
           <CircleHelp size={17} />
         </button>
         <div className="rail-version">v2.0</div>

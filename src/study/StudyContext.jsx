@@ -1,4 +1,5 @@
 import React from 'react'
+import { errorDetail } from '../i18n.js'
 import {
   approveReport,
   createDemoStudy,
@@ -76,7 +77,7 @@ export function StudyProvider({ children }) {
           }
         }
       } catch (err) {
-        if (!cancelled) setError(err.message || String(err))
+        if (!cancelled) setError(errorDetail(err))
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -121,7 +122,7 @@ export function StudyProvider({ children }) {
         await loadStudy(studyId)
       }
     } catch (err) {
-      setError(err.message || String(err))
+      setError(errorDetail(err))
     } finally {
       setLoading(false)
     }
@@ -138,7 +139,7 @@ export function StudyProvider({ children }) {
       await refreshStudies()
       return response
     } catch (err) {
-      setError(err.message || String(err))
+      setError(errorDetail(err))
       throw err
     } finally {
       setUploading(false)
@@ -156,7 +157,7 @@ export function StudyProvider({ children }) {
       await refreshStudies()
       return response
     } catch (err) {
-      setError(err.message || String(err))
+      setError(errorDetail(err))
       throw err
     } finally {
       setUploading(false)
@@ -180,7 +181,7 @@ export function StudyProvider({ children }) {
       await refreshStudies()
       return response
     } catch (err) {
-      setError(err.message || String(err))
+      setError(errorDetail(err))
       throw err
     } finally {
       setUploading(false)
@@ -195,14 +196,14 @@ export function StudyProvider({ children }) {
       setStudy(response.study)
       return response
     } catch (err) {
-      setError(err.message || String(err))
+      setError(errorDetail(err))
       throw err
     }
   }, [study?.study?.id])
 
-  const approve = React.useCallback(async (reportId, approvedBy) => {
+  const approve = React.useCallback(async (reportId, approvedBy, reviewBase) => {
     if (!study?.study?.id) return null
-    const report = await approveReport(study.study.id, reportId, approvedBy)
+    const report = await approveReport(study.study.id, reportId, approvedBy, reviewBase)
     await refreshCurrent()
     return report
   }, [study?.study?.id, refreshCurrent])

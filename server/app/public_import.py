@@ -11,7 +11,7 @@ from .config import settings
 from .db import SessionLocal
 from .imaging.coronary_analysis import analyze_coronary_mask
 from .imaging.mesh import build_structure_glb
-from .imaging.nifti import label_volumes_ml, load_nifti_case
+from .imaging.nifti import label_volumes_ml, load_nifti_case, native_points_to_preview_mm
 from .models import (
     Job,
     Measurement,
@@ -34,34 +34,48 @@ PALETTE = [
 
 def parse_label_spec(raw: str | None, labels: np.ndarray) -> dict[int, dict]:
     present = sorted(int(value) for value in np.unique(labels) if int(value) != 0)
-    if raw:
+    parsed = json.loads(raw) if raw else {}
+    if not isinstance(parsed, dict):
+        raise ValueError("label_map must be a JSON object")
+    spec = {}
+    used_codes = set()
+    for key, value in parsed.items():
         try:
-            parsed = json.loads(raw)
-        except json.JSONDecodeError as exc:
-            raise ValueError(f"invalid label_map JSON: {exc}") from exc
-        spec = {}
-        for key, value in parsed.items():
             value_int = int(key)
-            if isinstance(value, str):
-                value = {"code": value, "name": value}
-            if not isinstance(value, dict):
-                raise ValueError("label_map values must be objects or strings")
-            spec[value_int] = {
-                "code": value.get("code") or f"LABEL_{value_int}",
-                "name": value.get("name") or value.get("code") or f"标签 {value_int}",
-                "color": value.get("color") or list(PALETTE[len(spec) % len(PALETTE)]),
+        except (TypeError, ValueError) as exc:
+            raise ValueError("label_map keys must be integer label IDs") from exc
+        if value_int not in present or value_int in spec:
+            raise ValueError(f"label_map ID {key} is absent, zero, or duplicated")
+        if isinstance(value, str):
+            value = {"code": value, "name": value}
+        if not isinstance(value, dict):
+            raise ValueError("label_map values must be objects or strings")
+        code = value.get("code") or f"LABEL_{value_int}"
+        name = value.get("name") or code
+        if not isinstance(code, str) or not code.strip() or not isinstance(name, str):
+            raise ValueError("label_map code/name must be nonempty strings")
+        code = code.strip().upper()
+        if code in used_codes:
+            raise ValueError(f"duplicate structure code: {code}")
+        color = value.get("color", list(PALETTE[len(spec) % len(PALETTE)]))
+        if (not isinstance(color, (list, tuple)) or len(color) != 3
+                or any(type(c) is not int or not 0 <= c <= 255 for c in color)):
+            raise ValueError("label_map color must contain three integers in [0, 255]")
+        used_codes.add(code)
+        spec[value_int] = {"code": code, "name": name, "color": color}
+    # A binary mask can represent any organ. Never infer coronary semantics
+    # from label number 1 or from a user-entered dataset title.
+    for value in present:
+        if value not in spec:
+            code = f"LABEL_{value}"
+            if code in used_codes:
+                raise ValueError(f"duplicate structure code: {code}")
+            used_codes.add(code)
+            spec[value] = {
+                "code": code, "name": f"标签 {value}",
+                "color": list(PALETTE[len(spec) % len(PALETTE)]),
             }
-        return spec
-    if present == [1]:
-        return {1: {"code": "CORONARY_TREE", "name": "冠脉树（公开数据）", "color": list(PALETTE[0])}}
-    return {
-        value: {
-            "code": f"LABEL_{value}",
-            "name": f"标签 {value}",
-            "color": list(PALETTE[index % len(PALETTE)]),
-        }
-        for index, value in enumerate(present)
-    }
+    return spec
 
 
 def _progress(db, job: Job, stage: str, progress: int, message: str) -> None:
@@ -87,13 +101,16 @@ def run_public_import(study_id: str, job_id: str) -> None:
         labels_path = storage.path_for(meta["labels_path"])
 
         _progress(db, job, "validating", 8, "Loading public NIfTI image and labels")
-        preview, labels, volume_meta = load_nifti_case(
+        case = load_nifti_case(
             image_path,
             labels_path,
             resample_mm=settings.resample_mm,
             max_dim=settings.max_voxels,
         )
-        spec = parse_label_spec(meta.get("label_map"), labels)
+        preview, labels, volume_meta = case
+        native_labels = case.native_labels
+        native_spacing = case.native_geometry["spacing"]
+        spec = parse_label_spec(meta.get("label_map"), native_labels)
         if not spec:
             raise ValueError("label map is empty")
 
@@ -113,7 +130,7 @@ def run_public_import(study_id: str, job_id: str) -> None:
             hu_range=preview.hu_range,
             data_path=storage.relative(volume_path),
             bytes=int(preview.data.nbytes),
-            pipeline_version="public-nifti-v1",
+            pipeline_version="public-nifti-v2",
             default_slices=preview.default_slices,
             markers=[],
             stats=preview.stats,
@@ -124,6 +141,8 @@ def run_public_import(study_id: str, job_id: str) -> None:
         _progress(db, job, "segmenting", 50, "Aligning public dataset labels")
         labels_path_npy = storage.study_dir(study.id) / "derived" / "labels.npy"
         np.save(labels_path_npy, labels)
+        native_path = labels_path_npy.with_name("native_labels.npy")
+        np.save(native_path, native_labels)
         segmentation = Segmentation(
             study_id=study.id,
             volume_id=volume.id,
@@ -138,6 +157,11 @@ def run_public_import(study_id: str, job_id: str) -> None:
                 "source": "public_dataset",
                 "dataset": meta.get("dataset"),
                 "label_spec": spec,
+                "native_mask_path": storage.relative(native_path),
+                "native_geometry": case.native_geometry,
+                "measurement_grid": "native_label",
+                "dataset_verification": "user_declared",
+                "input_hashes": meta.get("input_hashes", {}),
                 "validation_status": "public_dataset",
             },
         )
@@ -146,7 +170,9 @@ def run_public_import(study_id: str, job_id: str) -> None:
 
         _progress(db, job, "meshing", 70, "Extracting label surfaces")
         mesh_path = storage.study_dir(study.id) / "derived" / "public_structures.glb"
-        infos, scene_transform = build_structure_glb(labels, preview, mesh_path, spec)
+        infos, scene_transform = build_structure_glb(
+            native_labels, preview, mesh_path, spec, source_geometry=case.native_geometry,
+        )
         for info in infos:
             db.add(
                 MeshRecord(
@@ -169,7 +195,7 @@ def run_public_import(study_id: str, job_id: str) -> None:
         db.commit()
 
         _progress(db, job, "computing_metrics", 85, "Computing reference label volumes")
-        volumes = label_volumes_ml(labels, preview.spacing)
+        volumes = label_volumes_ml(native_labels, native_spacing)
         for value, item in spec.items():
             db.add(
                 Measurement(
@@ -182,16 +208,26 @@ def run_public_import(study_id: str, job_id: str) -> None:
                     source=meta.get("dataset") or "public_dataset",
                     validation_status="public_dataset",
                     status="computed",
-                    provenance={"segmentation_id": segmentation.id, "label_value": value},
+                    provenance={
+                        "segmentation_id": segmentation.id, "label_value": value,
+                        "measurement_grid": "native_label", "native_geometry": case.native_geometry,
+                        "input_hashes": meta.get("input_hashes", {}),
+                    },
                 )
             )
         coronary_labels = [
             (value, item) for value, item in spec.items()
             if "CORONARY" in item["code"].upper()
         ]
-        for value, item in coronary_labels:
+        coronary_values = [value for value, _ in coronary_labels]
+        # Analyze one union of explicitly named coronary labels. Otherwise each
+        # branch would emit duplicate global metric codes and the UI could pick
+        # an arbitrary branch as the whole-tree result.
+        coronary_inputs = [(1, {"code": "CORONARY_TREE", "name": "冠脉树"})] if coronary_values else []
+        for value, item in coronary_inputs:
             try:
-                analysis = analyze_coronary_mask(labels, preview.spacing, label_value=value)
+                coronary_mask = np.isin(native_labels, coronary_values).astype(np.uint8)
+                analysis = analyze_coronary_mask(coronary_mask, native_spacing, label_value=1)
                 analysis_path = storage.study_dir(study.id) / "derived" / f"coronary_analysis_{value}.json"
                 analysis_path.write_text(
                     json.dumps(analysis.as_dict(), ensure_ascii=False, indent=2),
@@ -199,14 +235,34 @@ def run_public_import(study_id: str, job_id: str) -> None:
                 )
                 analysis_relative = storage.relative(analysis_path)
                 analysis_metrics = [
-                    ("CORONARY_CENTERLINE_LENGTH", "冠脉中心线长度（研究）", analysis.centerline_length_mm, "mm"),
+                    ("CORONARY_CENTERLINE_LENGTH", "冠脉主中心线路径长度（研究）", analysis.centerline_length_mm, "mm"),
                     ("CORONARY_TOTAL_LENGTH", "冠脉骨架总长度（研究）", analysis.skeleton_total_length_mm, "mm"),
-                    ("CORONARY_MEAN_DIAMETER", "冠脉平均管径（研究）", analysis.mean_diameter_mm, "mm"),
-                    ("CORONARY_MIN_DIAMETER", "冠脉最小管径（研究）", analysis.min_diameter_mm, "mm"),
-                    ("CORONARY_REFERENCE_DIAMETER", "冠脉参考管径（研究）", analysis.reference_diameter_mm, "mm"),
+                    ("CORONARY_MEAN_DIAMETER", "主中心线路径平均管径（研究）", analysis.mean_diameter_mm, "mm"),
+                    ("CORONARY_MIN_DIAMETER", "主中心线路径最小管径（研究）", analysis.min_diameter_mm, "mm"),
+                    ("CORONARY_REFERENCE_DIAMETER", "主中心线路径参考管径（研究）", analysis.reference_diameter_mm, "mm"),
                     ("CORONARY_STENOSIS_CANDIDATES", "冠脉狭窄候选（研究）", len(analysis.stenosis_candidates), "个"),
                 ]
                 for code, label, metric_value, unit in analysis_metrics:
+                    provenance = {
+                        "segmentation_id": segmentation.id,
+                        "label_values": coronary_values,
+                        "analysis_path": analysis_relative,
+                        "measurement_grid": "native_label",
+                        "native_geometry": case.native_geometry,
+                        "input_hashes": meta.get("input_hashes", {}),
+                        "centerline_frame": "patient_preview_centered_mm",
+                        "branch_count": analysis.branch_count,
+                        "component_count": analysis.component_count,
+                        "diameter_scope": "longest_path_only",
+                        "candidate_frame": "native_label_index_axis_mm",
+                        "endpoints": analysis.endpoints,
+                        "candidates": analysis.stenosis_candidates,
+                        "note": analysis.as_dict()["note"],
+                    }
+                    if code == "CORONARY_CENTERLINE_LENGTH":
+                        centerline = native_points_to_preview_mm(analysis.centerline, case.native_geometry, preview)
+                        center = (np.asarray(preview.dims) - 1) * preview.spacing / 2
+                        provenance["centerline"] = (np.asarray(centerline) - center).tolist()
                     db.add(
                         Measurement(
                             study_id=study.id,
@@ -218,15 +274,7 @@ def run_public_import(study_id: str, job_id: str) -> None:
                             source=meta.get("dataset") or "public_dataset",
                             validation_status="research",
                             status="computed",
-                            provenance={
-                                "segmentation_id": segmentation.id,
-                                "label_value": value,
-                                "analysis_path": analysis_relative,
-                                "branch_count": analysis.branch_count,
-                                "endpoints": analysis.endpoints,
-                                "candidates": analysis.stenosis_candidates,
-                                "note": analysis.as_dict()["note"],
-                            },
+                            provenance=provenance,
                         )
                     )
             except Exception as exc:  # noqa: BLE001
@@ -277,7 +325,7 @@ def run_public_import(study_id: str, job_id: str) -> None:
         report = Report(
             study_id=study.id,
             status="draft",
-            content=template_report(study, measurements),
+            content=template_report(study, measurements, (job.payload or {}).get("lang", "en")),
             generator="template",
         )
         db.add(report)

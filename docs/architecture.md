@@ -1,177 +1,176 @@
 # Architecture
 
-## 1. Goals and non-goals
+[简体中文](architecture.zh-CN.md)
 
-**Goal:** make the path from a raw CCTA DICOM series to a traceable 3D model and structured report real and testable, without fabricating clinical AI outputs.
+## Scope and runtime
 
-**Non-goals for M1:**
+CardioScope Pro is a research imaging workstation. It implements DICOM ingestion,
+public NIfTI image/label import, preview volumes, label-derived meshes and
+measurements, research registration/comparison, and versioned structured reports.
+Clinical diagnosis, validated stenosis grading, FFR-CT, single-phase EF,
+perfusion and procedural navigation are outside demonstrated capabilities.
 
-- autonomous diagnosis, stenosis grading or FFR-CT;
-- real angiography/echo ingestion;
-- multi-tenant cloud hardening;
-- regulatory clearance.
-
-## 2. Runtime components
-
-```
-Browser (React/Vite/three.js)
-  │  same-origin /api
-  ▼
-FastAPI (server/app)
-  ├── SQLite (local-lite)          → Postgres (production target)
-  ├── local filesystem (local-lite) → S3/MinIO (production target)
-  ├── inline BackgroundTasks        → Redis + RQ worker (production target)
-  ├── imaging pipeline (pydicom/SimpleITK/scikit-image/trimesh)
-  └── report generator (deterministic template now; Claude in M2)
+```text
+React / Vite / three.js → same-origin /api → FastAPI
+  ├── SQLite + local filesystem
+  ├── in-process background jobs
+  ├── DICOM / NIfTI / segmentation / mesh / measurement processing
+  ├── research atlas registration and longitudinal comparison
+  └── template reports + optional Claude drafts + review/version history
 ```
 
-The browser never receives raw DICOM. It receives a downsampled 8-bit volume,
-GLB meshes, structured measurements and report content.
+Postgres, S3-compatible storage, Redis/RQ workers and production identity/access
+controls are deployment targets. The included Compose stack uses SQLite, local
+storage and the synthetic segmentation adapter. A successful build does not
+establish deployment readiness or a working model runtime.
 
-## 3. Data flow
+## Processing paths
 
-```
-upload (.zip / files)
-  → safe extraction + magic/tag validation
-  → series grouping and scoring
-  → human confirmation if ambiguous
-  → PHI removal + UID remap
-  → pixel decode + rescale to HU
-  → LPS→RAS + isotropic resampling
-  → preview volume (uint8 + real huRange)
-  → segmentation mask
-  → marching cubes → GLB
-  → deterministic measurements
-  → template report draft
-  → clinician approval + audit event
-```
+**DICOM:** inspect/group/score uploaded series → confirm selection when needed →
+de-identify retained metadata/remap UIDs → decode pixels and rescale to HU →
+reorient voxel axes/resample → preview → segmentation when available →
+meshes/measurements → deterministic template draft.
 
-Job states are monotonic:
+Synthetic studies use fixture ground-truth masks, not inference. Real uploads
+use the explicitly selected TotalSegmentator adapter or record segmentation as
+skipped and unsupported measurements as `not_computed`. The adapter implements
+`heartchambers_highres`, requires the upstream task license/runtime resources,
+and checks required output masks. Installed package metadata does not establish
+available weights, successful inference or clinical validation.
 
-```
-queued → validating → anonymizing → building_volume → segmenting
-       → meshing → computing_metrics → drafting_report → succeeded | failed
-```
+**Public NIfTI:** validate image/annotation geometry → preserve native labels and
+geometry → resample for display → native-label surfaces/volumes → optional
+explicitly named coronary-mask analysis → template draft. The importer records
+input hashes and user-declared dataset provenance; it does not run DICOM
+de-identification, verify dataset licensing or infer coronary anatomy from label
+value 1. See [public-data.md](public-data.md).
 
-## 4. Data model
+**Reports:** both pipelines initially use templates. The separate
+`POST /api/studies/{id}/ai/report-draft` endpoint implements optional Claude
+language generation from structured facts. Missing configuration, service errors
+or invalid output produce a labelled template fallback. Recorded mock-SDK tests
+have not validated a real cloud/model call. Editing, AI regeneration and
+approval append version snapshots. Both approval URLs use the same version/hash
+and review-flag checks. See [ai-reporting.md](ai-reporting.md) and
+[report versions](report-version-review-handoff.md).
+
+Jobs expose state, stage, progress and errors. `202 Accepted` does not mean
+processing succeeded; a ready study can still contain unavailable measurements.
+
+## Report language and API text
+
+HTTP requests that generate reports accept `?lang=en` or `?lang=zh`.
+The default is `en`; `Accept-Language` does not
+select the report language. This applies to upload, demo creation, series
+selection, pipeline reruns, AI drafting and public NIfTI import. Jobs retain the
+requested language. Values other than en/zh, including zh-CN, return HTTP 400
+with detail `{"code":"INVALID_LANG","params":{"lang":"<value>"}}`.
+
+New templates, AI drafts and template fallbacks store the selected language in
+`content.lang` and `content.provenance.lang`. The saved report/version keeps that
+language; reads, approval and UI-language changes do not translate the content.
+Regeneration may select another language for a new version without translating
+previous snapshots. Legacy `content.language` fields and documents without lang
+are returned as stored, without automatic migration or language inference.
+
+API presentation messages use `{"code","params"}` where mapped, for frontend
+localization. Unknown legacy strings remain compatible. This presentation
+localization is separate from the persisted report text; source metadata and
+custom labels are not guaranteed to be translated.
+
+## Data model
 
 | Entity | Purpose |
 | --- | --- |
-| `Subject` | pseudonymous research subject; no name in the database |
-| `Study` | one uploaded study; `source = upload \| demo \| public_dataset` |
-| `Series` | DICOM series metadata and candidate score |
-| `VolumeRecord` | dims, spacing, affine, HU range, preview data path |
-| `Segmentation` | label map, model id/version, validation status |
-| `MeshRecord` | GLB per structure, scene transform, provenance |
-| `Measurement` | value + unit + method + source + status + reason |
-| `Report` | structured content, generator, approval |
-| `Job` | pipeline state and progress |
-| `AuditEvent` | append-only hash chain per study |
+| Subject / Study / Series | Pseudonymous subject, study source and series selection |
+| VolumeRecord | Preview data, spacing, physical geometry and HU mapping |
+| Segmentation / MeshRecord | Labels, structures, surfaces, transforms and provenance |
+| Measurement | Value/unit/method/source, validation status, availability and reason |
+| Report / ReportVersion | Current content/approval and appended snapshots |
+| Comparison | Prior/current registration, comparability and warnings |
+| Job / AuditEvent | Progress and per-study audit hash chain |
 
-`Measurement.status === "not_computed"` is a first-class result. A missing value
-must never be replaced by a demo number.
+`not_computed` must not be replaced by a reference/demo number. Pipeline reruns
+replace derived records, including Report; version snapshots are not a guarantee
+of cross-rerun archival retention or a substitute for backups.
 
-## 5. Volume contract
+## Physical, preview and reference coordinates
 
-The frontend expects:
+- DICOM and SimpleITK physical metadata use **LPS millimetres**.
+  `DICOMOrient(image, "RAS")` reorders/flips voxel axes toward RAS while preserving
+  the physical LPS representation. It does not convert every stored coordinate
+  into RAS.
+- The stored affine maps XYZ voxel indices to LPS mm:
+  `origin + direction @ (index_xyz * spacing_xyz)`. Arrays are ZYX; API dimensions
+  and spacing are XYZ.
+- Volume responses expose origin, direction, spacing, boundsMin/Max, huRange,
+  stats and dataUrl. The affine is persisted server-side. Bounds are centred
+  display extents, not patient physical bounding boxes.
+- The browser uses a centred preview-index frame and scaled scene units. Public
+  GLB vertices are transformed from native-label geometry into this preview
+  frame before centring/scaling. Interpret them with sceneTransform and preview
+  geometry, rather than treating them as native patient coordinates.
+- Atlas targets use `patient_preview_centered_mm`:
+  `(index_xyz + 0.5 - dims_xyz / 2) * spacing_xyz`. Patient origin/direction are
+  not applied in this frame; it is neither native LPS nor native RAS.
+- Reference organs use the separate `RAS_ORGAN_REFERENCE` frame.
+- MPR uses physical spacing. The uint8 preview is clipped/quantized display
+  data. Public label volumes and coronary analysis use native labels/spacing,
+  not the downsampled display mask.
 
-```js
-{
-  data: Uint8Array,          // length = nx*ny*nz, x-fastest
-  dims: [nx, ny, nz],
-  spacing: [sx, sy, sz],     // millimetres
-  huRange: [lo, hi],         // linear mapping of uint8 → HU
-  bounds: { min: [3], max: [3] }, // scene units for rendering
-  defaultSlices: { x, y, z },
-  markers: [{ voxel, worldMm, label, provenance }]
-}
-```
+## Research registration and comparison
 
-Quantitative work always uses the resampled HU volume server-side. The uint8
-preview is for display only; its quantization error is roughly
-`(hi - lo) / 255` HU.
+Atlas registration requires at least three explicit, non-collinear chamber
+landmarks and fits reference targets to preview-mask centroids. RMS is an
+in-sample fit residual; target accuracy is `not_evaluated`. Mapped targets are
+reference anatomy, not detected lesions. Invalid inputs produce `not_computed`.
 
-## 6. Coordinates
+Longitudinal comparison requires different ready studies from the same subject
+and a valid earlier acquisition date. It registers preview images using physical
+LPS geometry, then checks measurement comparability. Optimizer/coverage checks
+are engineering checks, not anatomical accuracy validation. Failed registration
+quality or comparability checks withhold longitudinal deltas.
 
-- DICOM physical space is LPS.
-- The backend canonicalises to **RAS** (`+x` right, `+y` anterior, `+z` superior).
-- Volume and mesh share one affine. `bounds` in the API are millimetres; the
-  frontend scales them to scene units for the existing camera framing.
-- GLB coordinates are exported in scene units; `scene_transform` records the
-  mm → scene mapping.
-- MPR aspect ratios use physical spacing, not voxel counts.
+## Runtime capability declarations
 
-## 7. Frontend modes
+`GET /api/health` includes `capabilities` from `server/app/capabilities.py`.
+It reads configuration/package metadata only; it does not contact a provider,
+load weights or execute inference.
 
-- `demo` — no network calls; local procedural volume and teaching anatomy.
-- `api` — workbench, study context, server volume/mesh/report.
-- Mode selection: `?mode=demo|api`, `VITE_DATA_MODE`, or `/api/health` probe.
-- The single-file build (`npm run build`) remains the offline demo artifact.
-- `npm run build:cloud` produces a normal, code-split cloud build.
+| Field / configuration | Status | Meaning |
+| --- | --- | --- |
+| reportDraft, no nonblank credential | template_only | No report-service credential configured |
+| reportDraft, credential present | configured_unverified | Connectivity/output unverified |
+| imageSegmentation, synthetic_ground_truth | synthetic_only | Fixture truth, not raw-image inference |
+| imageSegmentation, TotalSegmentator package absent | dependency_missing | Selected adapter dependency absent |
+| imageSegmentation, TotalSegmentator package detected | configured_unverified | Weights/license/execution unverified |
+| imageSegmentation, unknown adapter | unsupported | Adapter cannot be treated as available |
 
-## 8. Security posture
+Actual per-run results and provenance remain necessary.
 
-Local-lite is intentionally unauthenticated. Before real data:
+## Frontend, reference assets and deployment
 
-- OIDC + PKCE, MFA, RBAC (`viewer/analyst/clinician/admin`);
-- TLS/HSTS, same-origin API, httpOnly cookies;
-- private object storage + short-lived signed URLs;
-- encryption at rest and in transit;
-- upload limits, zip traversal/bomb checks, quarantine;
-- structured logs without PHI, request IDs;
-- audit export, retention and deletion jobs;
-- DPIA / IRB / data-use agreements and vendor DPAs.
+`demo` uses procedural/reference content; `api` uses study bundles and server
+results. Mode selection uses `?mode=demo|api`, `VITE_DATA_MODE` or a health probe.
+`npm run build` creates the single-file artifact; `npm run build:cloud` creates
+the separate-asset build.
 
-## 9. Standard organ library
+Shared definitions live in `shared/organ_library.json`, `shared/organ_targets.json`
+and `shared/coronary_model.json`: 19 organs, 109 targets, 17 coronary segments and
+17 myocardial territories. Their teaching geometry/reference QCA values are
+not patient measurements. See [asset attribution](../src/assets/organs/ATTRIBUTION.md).
 
-`shared/organ_library.json` is the single source of truth for reference organ
-codes, systems, colours, canonical placement and cardiac label mappings.
+Use `npm run server:dev` and `npm run dev:api` locally; `docker compose up --build`
+describes the local API/web container stack. The current prototype lacks
+production authentication/RBAC. Actor/reviewer names are supplied labels, not
+authenticated signatures. Clinical deployment, production security, data
+governance and validated model performance require separate acceptance.
 
-- Anatomical reference meshes live in `src/assets/organs/*.glb` and are loaded
-  by `OrganLibraryEngine` via `import.meta.glob`; the GLB vertices are already
-  in the shared `RAS_ORGAN_REFERENCE` frame.
-- Sources: BodyParts3D 4.0 (heart, stomach, gallbladder, aorta, IVC, trachea,
-  spine) and HuBMAP HRA v1.1 (liver, lungs, kidneys, spleen, pancreas), both
-  CC BY 4.0. The HRA organs are aligned to the BodyParts3D frame with a uniform
-  scale + translation solved from shared landmarks.
-- Each organ also has a `<CODE>_detail.glb` with named sub-structures. The
-  engine loads it on demand, exposes per-part visibility/focus, and supports
-  axial/coronal/sagittal clipping through a selected target.
-- `shared/coronary_model.json` defines 17 coronary segments, AHA 1–17
-  myocardial territories, C-arm projections and reference QCA values. The
-  AngioView reads it directly; `GET /api/coronary-model` exposes it.
-- `shared/organ_targets.json` defines 109 reference targets in the same frame.
-  The engine builds a target marker, a straight approach path, a virtual needle,
-  and reports path length, depth and approximate structure intersections.
-- `src/three/organGeometry.js` remains as a procedural fallback for missing
-  assets; it is explicitly labelled reference geometry.
-- Backend: `server/app/organ_library.py` and `server/app/organ_targets.py` load
-  and validate the same JSON; `GET /api/organs` and `GET /api/organ-targets`
-  expose them; segmentation provenance includes `standard_label_map` (for
-  example `LV → HEART_LV`).
-- The catalog is versioned (`organ-atlas/v2`). Changing a published code is a
-  breaking change; bump the version and keep the mapping stable.
-- The organ GLBs are CC BY 4.0 and are not covered by the repository MIT licence.
-  See `src/assets/organs/ATTRIBUTION.md`.
 
-## 10. Public NIfTI research path
+## Existing SQLite databases
 
-`POST /api/public/import` accepts a NIfTI image and label map, resamples both,
-builds a preview volume, extracts label surfaces and writes a draft report.
-
-- It is marked `source=public_dataset` and does not run the clinical DICOM
-  de-identification path.
-- It uses `server/app/imaging/nifti.py` and `server/app/public_import.py`.
-- It produces label volumes only; stenosis/FFR/EF/calcium/AHA remain
-  `not_computed`.
-- Public and clinical paths must remain separate in the UI, storage and audit.
-
-## 11. Deployment path
-
-1. **Local-lite** (current): `uv run uvicorn` + `npm run dev:api`.
-2. **Container**: `docker compose up --build` (API + web, SQLite volume).
-3. **Cloud**: managed Postgres, S3-compatible storage, Redis/RQ worker, GPU
-   inference worker, CDN/static hosting, secrets manager, monitoring.
-
-The storage/queue interfaces are deliberately narrow so the production
-implementations can be added without changing the imaging pipeline.
+Startup runs a small additive schema upgrade before creating missing tables.
+Older databases receive the nullable `jobs.payload` column; old rows remain null
+and existing reports are not rewritten. Startup upgrades are idempotent and
+serialized for SQLite. Back up local data before an upgrade; deployment to other
+database engines still requires a dedicated migration/deployment review.

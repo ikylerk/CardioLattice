@@ -1,4 +1,5 @@
 import React from 'react'
+import { useI18n } from './i18n.js'
 import { CircleAlert } from 'lucide-react'
 import TopBar from './components/TopBar.jsx'
 import SideRail, { MODULES } from './components/SideRail.jsx'
@@ -12,6 +13,7 @@ import EchoView from './components/EchoView.jsx'
 import AnalysisView from './components/AnalysisView.jsx'
 import StudyWorkbench from './components/StudyWorkbench.jsx'
 import OrganLibraryView from './components/OrganLibraryView.jsx'
+import ComparisonView from './components/ComparisonView.jsx'
 import { StudyProvider, useStudy } from './study/StudyContext.jsx'
 
 const VIEWS = {
@@ -22,6 +24,7 @@ const VIEWS = {
   echo: EchoView,
   analysis: AnalysisView,
   organs: OrganLibraryView,
+  comparison: ComparisonView,
 }
 
 const MODULE_IDS = new Set(MODULES.map((item) => item.id))
@@ -34,18 +37,15 @@ function moduleFromHash() {
 }
 
 function UnavailableModule({ active, onNavigate }) {
-  const label = active === 'angio' ? '冠脉造影' : '心脏超声'
+  const { t } = useI18n()
   return (
     <div className="module-view">
       <div className="empty-module">
         <CircleAlert size={24} />
-        <h2>{label}尚未接入该检查</h2>
-        <p>
-          当前 API 模式只接入了 CCTA DICOM。造影与超声的真实数据接入属于后续里程碑；
-          演示模式仍可查看原有界面。
-        </p>
+        <h2>{active === 'angio' ? t('unavailable.angioTitle') : t('unavailable.echoTitle')}</h2>
+        <p>{t('unavailable.body')}</p>
         <button type="button" className="btn btn-outline btn-sm" onClick={() => onNavigate('workbench')}>
-          返回检查工作台
+          {t('unavailable.back')}
         </button>
       </div>
     </div>
@@ -53,6 +53,7 @@ function UnavailableModule({ active, onNavigate }) {
 }
 
 function AppShell() {
+  useI18n()
   const { isApi, study } = useStudy()
   const [active, setActive] = React.useState(moduleFromHash)
   const [bpm, setBpm] = React.useState(72)
@@ -82,6 +83,7 @@ function AppShell() {
   React.useEffect(() => () => window.clearTimeout(toastTimer.current), [])
 
   React.useEffect(() => {
+    if (active === 'angio' && moduleFromHash() === 'angio' && window.location.hash.includes('=')) return
     const nextHash = `#${active}`
     if (window.location.hash !== nextHash) {
       window.history.replaceState(null, '', nextHash)

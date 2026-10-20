@@ -1,3 +1,5 @@
+import { t, useI18n, serverText, measurementLabel } from '../i18n.js'
+import { tImaging } from '../i18n-imaging.js'
 import React from 'react'
 import {
   Activity,
@@ -12,30 +14,56 @@ import ViewHeader from './ViewHeader.jsx'
 import { Badge, Button, Section, Stat } from './ui.jsx'
 import { useStudy } from '../study/StudyContext.jsx'
 
+const CORONARY_ANALYSIS_CODES = new Set([
+  'CORONARY_CENTERLINE_LENGTH',
+  'CORONARY_TOTAL_LENGTH',
+  'CORONARY_MEAN_DIAMETER',
+  'CORONARY_MIN_DIAMETER',
+  'CORONARY_REFERENCE_DIAMETER',
+  'CORONARY_STENOSIS_CANDIDATES',
+])
+
+function isComputedNumber(item) {
+  return item?.status === 'computed' && typeof item.value === 'number' && Number.isFinite(item.value)
+}
+
 function MeasurementCard({ item }) {
-  const computed = item.status === 'computed' && item.value !== null && item.value !== undefined
+  const computed = isComputedNumber(item)
   return (
     <div className={`analysis-metric ${computed ? '' : 'not-computed'}`}>
-      <span>{item.label}</span>
+      <span>{measurementLabel(item)}</span>
       <strong>
         {computed ? item.value : '—'}
         {computed && item.unit ? <small>{item.unit}</small> : null}
       </strong>
-      <em>{computed ? `${item.method} · ${item.validationStatus}` : '未计算'}</em>
-      {!computed && item.reason ? <p>{item.reason}</p> : null}
+      <em>{computed ? `${item.method} · ${item.source || tImaging('common.sourceUnknown')} · ${item.validationStatus}` : t('common.notComputed')}</em>
+      {!computed && item.reason ? <p>{serverText(item.reason)}</p> : null}
     </div>
   )
 }
 
 export default function StudyAnalysisView({ onNavigate }) {
+  useI18n()
   const { study, measurements } = useStudy()
-  const computed = measurements.filter((item) => item.status === 'computed' && item.value !== null)
-  const notComputed = measurements.filter((item) => item.status !== 'computed')
-  const coronary = measurements.filter(
-    (item) => item.code.startsWith('CORONARY_') && item.status === 'computed' && item.value !== null,
-  )
-  const candidateMeasurement = measurements.find((item) => item.code === 'CORONARY_STENOSIS_CANDIDATES')
-  const stenosisCandidates = candidateMeasurement?.provenance?.candidates || []
+  const computed = measurements.filter(isComputedNumber)
+  const notComputed = measurements.filter((item) => !isComputedNumber(item))
+  const coronaryMeasurements = measurements.filter((item) => CORONARY_ANALYSIS_CODES.has(item.code))
+  const coronary = coronaryMeasurements.filter(isComputedNumber)
+  const coronaryFailures = measurements.filter((item) => (
+    CORONARY_ANALYSIS_CODES.has(item.code) || /^CORONARY_(?:[A-Z0-9]+_)*CENTERLINE$/.test(item.code || '')
+  ) && !isComputedNumber(item))
+  const hasCoronaryInput = measurements.some((item) => /^CORONARY_/.test(item.code || ''))
+  const candidateMeasurement = coronaryMeasurements.find((item) => item.code === 'CORONARY_STENOSIS_CANDIDATES')
+  const stenosisCandidates = Array.isArray(candidateMeasurement?.provenance?.candidates)
+    ? candidateMeasurement.provenance.candidates
+    : []
+  const candidateCountValid = isComputedNumber(candidateMeasurement)
+    && Number.isInteger(candidateMeasurement.value) && candidateMeasurement.value >= 0
+  const coronaryComplete = candidateCountValid && coronaryFailures.length === 0
+    && (candidateMeasurement.value !== 0 || stenosisCandidates.length === 0)
+  const coronaryIncompleteReason = !candidateCountValid
+    ? tImaging('analysis.countIncomplete')
+    : tImaging('analysis.inconsistent')
   const registration = measurements.find((item) => item.code === 'ATLAS_REGISTRATION_RMS')
   const registrationTargets = registration?.provenance?.targets || []
   const segmentation = study?.segmentations?.[0]
@@ -47,26 +75,24 @@ export default function StudyAnalysisView({ onNavigate }) {
       <ViewHeader
         index="05"
         eyebrow="QUANTITATIVE ANALYSIS"
-        title="定量分析"
+        title={t('nav.analysis')}
         titleSuffix="TRACEABLE METRICS"
-        description="只展示由分割掩膜或已验证模型产生、带方法与来源的测量；未计算项保持为空。"
+        description={t('studyAnalysis.description')}
         meta={
           <>
-            <span>{computed.length} 已计算</span>
+            <span>{t('studyAnalysis.computedCount', { count: computed.length })}</span>
             <i />
-            <span>{notComputed.length} 未计算</span>
+            <span>{t('studyAnalysis.notComputedCount', { count: notComputed.length })}</span>
             <i />
-            <span>{segmentation?.modelId || '无分割模型'}</span>
+            <span>{segmentation?.modelId || t('studyAnalysis.noModel')}</span>
           </>
         }
         actions={
           <>
             <Badge tone={synthetic ? 'amber' : 'teal'} dot>
-              {synthetic ? '含合成测量' : '研究测量'}
+              {synthetic ? t('studyAnalysis.syntheticBadge') : t('studyAnalysis.researchBadge')}
             </Badge>
-            <Button variant="outline" size="sm" icon={<FolderOpen size={14} />} onClick={() => onNavigate?.('workbench')}>
-              检查工作台
-            </Button>
+            <Button variant="outline" size="sm" icon={<FolderOpen size={14} />} onClick={() => onNavigate?.('workbench')}>{t('nav.workbench')}</Button>
           </>
         }
       />
@@ -74,13 +100,13 @@ export default function StudyAnalysisView({ onNavigate }) {
       <div className="module-body analysis-body">
         <div className="analysis-main">
           <div className="analysis-strip">
-            <Stat label="可追溯测量" value={computed.length} hint="带 method / source" />
-            <Stat label="未计算" value={notComputed.length} accent="amber" hint="不使用演示数值" />
-            <Stat label="分割模型" value={segmentation?.modelId || '—'} hint={segmentation?.modelVersion || '未运行'} />
-            <Stat label="验证状态" value={synthetic ? 'SYNTHETIC' : segmentation?.provenance?.validation_status || 'RESEARCH'} hint="非临床" />
+            <Stat label={t('studyAnalysis.traceable')} value={computed.length} hint={t('studyAnalysis.withMethod')} />
+            <Stat label={t('common.notComputed')} value={notComputed.length} accent="amber" hint={t('studyAnalysis.noDemoNumbers')} />
+            <Stat label={t('studyAnalysis.model')} value={segmentation?.modelId || '—'} hint={segmentation?.modelVersion || t('workbench.modelNotRun')} />
+            <Stat label={t('studyAnalysis.validation')} value={synthetic ? 'SYNTHETIC' : segmentation?.provenance?.validation_status || 'RESEARCH'} hint={t('studyAnalysis.notClinical')} />
           </div>
 
-          <Section title="测量结果" code="MEASUREMENTS" right={<BarChart3 size={13} />}>
+          <Section title={t('studyAnalysis.results')} code="MEASUREMENTS" right={<BarChart3 size={13} />}>
             {computed.length ? (
               <div className="analysis-metric-grid">
                 {computed.map((item) => <MeasurementCard key={item.id} item={item} />)}
@@ -88,29 +114,44 @@ export default function StudyAnalysisView({ onNavigate }) {
             ) : (
               <div className="analysis-empty">
                 <CircleAlert size={16} />
-                <b>尚无已计算测量</b>
-                <span>请先在检查工作台运行流水线。未计算项不会以数字形式出现。</span>
+                <b>{t('common.noComputedMeasurements')}</b>
+                <span>{t('studyAnalysis.emptyBody')}</span>
               </div>
             )}
           </Section>
 
-          {coronary.length ? (
-            <Section title="冠脉中心线分析（研究）" code="CORONARY MASK ANALYSIS" right={<Activity size={13} />}>
+          {hasCoronaryInput ? (
+            <Section title={tImaging('analysis.coronaryTitle')} code="CORONARY MASK ANALYSIS" right={<Activity size={13} />}>
               <div className="analysis-metric-grid">
                 {coronary.map((item) => <MeasurementCard key={item.id} item={item} />)}
               </div>
-              <p className="analysis-research-note">
-                基于冠脉标签掩膜的骨架化、距离变换和半径剖面计算；不是经过验证的 QCA，不能用于临床狭窄分级。
-              </p>
-              {stenosisCandidates.length ? (
+              <p className="analysis-research-note">{tImaging('analysis.coronaryScope')}</p>
+              {!coronaryComplete ? (
+                <div className="analysis-placeholder">
+                  <CircleAlert size={16} />
+                  <div>
+                    <b>{tImaging('analysis.incomplete')}</b>
+                    {coronaryFailures.length ? coronaryFailures.map((item, index) => (
+                      <p key={item.id || `${item.code}-${index}`}>
+                        {serverText(item.reason) || tImaging('analysis.metricIncomplete')}
+                        <br />
+                        <small>{item.code} · {item.method || tImaging('common.methodUnknown')} · {item.source || tImaging('common.sourceUnknown')}</small>
+                      </p>
+                    )) : <span>{coronaryIncompleteReason}</span>}
+                  </div>
+                </div>
+              ) : candidateMeasurement.value > 0 ? (
                 <div className="coronary-candidate-table">
                   <div className="coronary-candidate-head">
-                    <span>候选狭窄（研究）</span>
-                    <b>{stenosisCandidates.length} 个</b>
+                    <span>{tImaging('analysis.candidates')}</span>
+                    <b>{candidateMeasurement.value}{' '}{tImaging('common.countUnit')}</b>
                   </div>
+                  {stenosisCandidates.length !== candidateMeasurement.value ? (
+                    <p className="analysis-research-note">{tImaging('analysis.missingCandidates')}</p>
+                  ) : null}
                   <table>
                     <thead>
-                      <tr><th>位置 (mm)</th><th>管径</th><th>参考管径</th><th>管径减少</th><th>路径位置</th></tr>
+                      <tr><th>{tImaging('analysis.position')}</th><th>{tImaging('analysis.diameter')}</th><th>{tImaging('analysis.referenceDiameter')}</th><th>{tImaging('analysis.diameterReduction')}</th><th>{tImaging('analysis.pathPosition')}</th></tr>
                     </thead>
                     <tbody>
                       {stenosisCandidates.map((candidate, index) => (
@@ -129,52 +170,50 @@ export default function StudyAnalysisView({ onNavigate }) {
                 <div className="analysis-placeholder">
                   <CircleAlert size={16} />
                   <div>
-                    <b>未检出半径剖面候选</b>
-                    <span>没有局部管径明显减低的骨架段；该结果不代表不存在病变。</span>
+                    <b>{tImaging('analysis.zeroCandidates')}</b>
+                    <span>{tImaging('analysis.zeroScope')}</span>
                   </div>
                 </div>
               )}
             </Section>
           ) : null}
 
-          <Section title="参考图谱配准" code="ATLAS REGISTRATION" right={<ShieldCheck size={13} />}>
-            {registration?.status === 'computed' ? (
+          <Section title={tImaging('registration.title')} code="ATLAS REGISTRATION" right={<ShieldCheck size={13} />}>
+            {isComputedNumber(registration) ? (
               <>
                 <div className="analysis-metric-grid">
                   <div className="analysis-metric">
-                    <span>配准残差</span>
+                    <span>{tImaging('registration.residual')}</span>
                     <strong>{registration.value}<small>mm</small></strong>
                     <em>chamber_centroid_umeyama_similarity</em>
                   </div>
                   <div className="analysis-metric">
-                    <span>尺度</span>
+                    <span>{tImaging('registration.scale')}</span>
                     <strong>{registration.provenance?.scale ?? '—'}</strong>
                     <em>reference → patient</em>
                   </div>
                   <div className="analysis-metric">
-                    <span>映射靶点</span>
-                    <strong>{registrationTargets.length}<small>个</small></strong>
-                    <em>参考解剖，不是病灶</em>
+                    <span>{tImaging('registration.targets')}</span>
+                    <strong>{registrationTargets.length}<small>{tImaging('common.countUnit')}</small></strong>
+                    <em>{tImaging('registration.referenceOnly')}</em>
                   </div>
                 </div>
-                <p className="analysis-research-note">
-                  基于四心腔质心的 Umeyama 相似配准（尺度 + 旋转 + 平移）；未做外部验证。映射靶点来自参考图谱，不是患者病灶，不能用于诊断或操作导航。
-                </p>
+                <p className="analysis-research-note">{tImaging('registration.scope')}</p>
                 {registrationTargets.length ? (
                   <div className="coronary-candidate-table">
                     <div className="coronary-candidate-head">
-                      <span>患者级参考靶点</span>
-                      <b>{registrationTargets.length} 个</b>
+                      <span>{tImaging('registration.patientTargets')}</span>
+                      <b>{registrationTargets.length}{' '}{tImaging('common.countUnit')}</b>
                     </div>
                     <table>
                       <thead>
-                        <tr><th>靶点</th><th>类别</th><th>参考坐标 (mm)</th><th>患者坐标 (mm)</th></tr>
+                        <tr><th>{tImaging('registration.target')}</th><th>{tImaging('registration.category')}</th><th>{tImaging('registration.referenceCoords')}</th><th>{tImaging('registration.patientCoords')}</th></tr>
                       </thead>
                       <tbody>
                         {registrationTargets.map((target) => (
                           <tr key={target.id}>
-                            <td>{target.name}</td>
-                            <td>{target.category}</td>
+                            <td>{serverText(target.name)}</td>
+                            <td>{serverText(target.category)}</td>
                             <td>{target.referenceMm?.join(' / ')}</td>
                             <td>{target.patientMm?.join(' / ')}</td>
                           </tr>
@@ -187,33 +226,33 @@ export default function StudyAnalysisView({ onNavigate }) {
             ) : registration ? (
               <div className="analysis-empty">
                 <CircleAlert size={16} />
-                <b>未完成配准</b>
-                <span>{registration.reason || '需要至少 3 个心腔分割标签。'}</span>
+                <b>{tImaging('registration.incomplete')}</b>
+                <span>{serverText(registration.reason) || tImaging('registration.requiredLabels')}</span>
               </div>
             ) : (
               <div className="analysis-placeholder">
                 <ShieldCheck size={16} />
                 <div>
-                  <b>尚未运行参考图谱配准</b>
-                  <span>运行带心腔标签的分割后，可将参考心腔与靶点映射到患者坐标系。</span>
+                  <b>{tImaging('registration.notRun')}</b>
+                  <span>{tImaging('registration.runHint')}</span>
                 </div>
               </div>
             )}
           </Section>
 
-          <Section title="未计算项与原因" code="NOT COMPUTED" right={<CircleAlert size={13} />}>
+          <Section title={t('studyAnalysis.reasons')} code="NOT COMPUTED" right={<CircleAlert size={13} />}>
             <div className="analysis-not-computed">
               {notComputed.length ? notComputed.map((item) => (
                 <div key={item.id}>
-                  <b>{item.label}</b>
-                  <span>{item.reason || '缺少已验证的输入或模型。'}</span>
+                  <b>{measurementLabel(item)}</b>
+                  <span>{serverText(item.reason) || t('common.missingInput')}</span>
                 </div>
-              )) : <div className="wb-empty-line">没有未计算项</div>}
+              )) : <div className="wb-empty-line">{t('studyAnalysis.noneMissing')}</div>}
             </div>
           </Section>
 
           <div className="analysis-grid">
-            <Section title="AHA 17 段" code="MYOCARDIAL MAP" right={<Activity size={13} />}>
+            <Section title={t('studyAnalysis.aha')} code="MYOCARDIAL MAP" right={<Activity size={13} />}>
               <div className="analysis-placeholder">
                 <div className="aha-placeholder-ring">
                   {Array.from({ length: 17 }, (_, index) => (
@@ -221,30 +260,31 @@ export default function StudyAnalysisView({ onNavigate }) {
                   ))}
                 </div>
                 <div>
-                  <b>未计算</b>
-                  <span>AHA 段灌注与存活心肌需要灌注/代谢数据，不能仅由 CTA 推断。</span>
+                  <b>{t('common.notComputed')}</b>
+                  <span>{t('studyAnalysis.ahaBody')}</span>
                 </div>
               </div>
             </Section>
 
-            <Section title="FFR-CT 回撤" code="PHYSIOLOGY" right={<Activity size={13} />}>
+            <Section title={t('studyAnalysis.ffr')} code="PHYSIOLOGY" right={<Activity size={13} />}>
               <div className="analysis-placeholder">
                 <div className="ffr-placeholder">
                   <i /><i /><i /><i /><i /><i />
                 </div>
                 <div>
-                  <b>未计算</b>
-                  <span>需要经过验证的 CFD 或血流动力学模型；当前不绘制合成回撤曲线。</span>
+                  <b>{t('common.notComputed')}</b>
+                  <span>{t('studyAnalysis.ffrBody')}</span>
                 </div>
               </div>
             </Section>
 
-            <Section title="纵向对比" code="LONGITUDINAL" right={<GitCompare size={13} />}>
+            <Section title={t('nav.comparison')} code="LONGITUDINAL" right={<GitCompare size={13} />}>
               <div className="analysis-placeholder">
                 <GitCompare size={22} />
                 <div>
-                  <b>M3 里程碑</b>
-                  <span>既往检查配准与 delta 分析尚未实现；不会以「预测」名义展示无数据支撑的结论。</span>
+                  <b>{tImaging('analysis.comparisonTitle')}</b>
+                  <span>{tImaging('analysis.comparisonScope')}</span>
+                  <Button size="sm" variant="outline" icon={<GitCompare size={14} />} onClick={() => onNavigate?.('comparison')}>{tImaging('analysis.openComparison')}</Button>
                 </div>
               </div>
             </Section>
@@ -260,39 +300,34 @@ export default function StudyAnalysisView({ onNavigate }) {
             <div className="selection-title">
               <span className="structure-swatch swatch-great" />
               <div>
-                <h2>{current?.subject?.pseudonym || '未选择检查'}</h2>
-                <small>{current?.description || '—'}</small>
+                <h2>{current?.subject?.pseudonym || t('topbar.noStudy')}</h2>
+                <small>{serverText(current?.description) || '—'}</small>
               </div>
             </div>
-            <p>
-              每条测量都绑定分割模型、方法与验证状态。合成夹具的测量明确标记为 synthetic；
-              研究模型的输出标记为 research，均需医生复核。
-            </p>
+            <p>{tImaging('analysis.provenance')}</p>
           </div>
 
-          <Section title="数据来源" code="PROVENANCE" right={<ShieldCheck size={13} />}>
+          <Section title={t('studyAnalysis.provenance')} code="PROVENANCE" right={<ShieldCheck size={13} />}>
             <div className="scan-params">
-              <div><span>检查来源</span><b>{current?.source || '—'}</b></div>
-              <div><span>分割任务</span><b>{segmentation?.task || '—'}</b></div>
-              <div><span>模型版本</span><b>{segmentation?.modelVersion || '—'}</b></div>
-              <div><span>标签</span><b>{segmentation?.labelMap ? Object.keys(segmentation.labelMap).join(', ') : '—'}</b></div>
-              <div><span>测量数量</span><b>{measurements.length}</b></div>
-              <div><span>审计</span><b>见工作台</b></div>
+              <div><span>{t('studyAnalysis.studySource')}</span><b>{current?.source || '—'}</b></div>
+              <div><span>{t('studyAnalysis.task')}</span><b>{segmentation?.task || '—'}</b></div>
+              <div><span>{t('studyAnalysis.modelVersion')}</span><b>{segmentation?.modelVersion || '—'}</b></div>
+              <div><span>{t('studyAnalysis.labels')}</span><b>{segmentation?.labelMap ? Object.keys(segmentation.labelMap).join(', ') : '—'}</b></div>
+              <div><span>{t('studyAnalysis.count')}</span><b>{measurements.length}</b></div>
+              <div><span>{t('studyAnalysis.audit')}</span><b>{t('studyAnalysis.seeWorkbench')}</b></div>
             </div>
           </Section>
 
-          <Section title="快捷入口" code="NAVIGATION" right={<FileStack size={13} />}>
+          <Section title={t('studyAnalysis.shortcuts')} code="NAVIGATION" right={<FileStack size={13} />}>
             <div className="workbench-open-actions">
-              <Button size="sm" onClick={() => onNavigate?.('cta')} disabled={!study?.volumes?.length}>查看 CT</Button>
-              <Button size="sm" onClick={() => onNavigate?.('anatomy')} disabled={!study?.meshes?.length}>查看 3D</Button>
-              <Button size="sm" onClick={() => onNavigate?.('workbench')}>工作台</Button>
+              <Button size="sm" onClick={() => onNavigate?.('cta')} disabled={!study?.volumes?.length}>{t('workbench.viewCt')}</Button>
+              <Button size="sm" onClick={() => onNavigate?.('anatomy')} disabled={!study?.meshes?.length}>{t('workbench.view3d')}</Button>
+              <Button size="sm" onClick={() => onNavigate?.('workbench')}>{t('patient.workbench')}</Button>
             </div>
           </Section>
 
           <div className="cta-disclaimer">
-            <CircleAlert size={12} />
-            研究原型。所有测量与模型输出需医生复核；不用于临床诊断或治疗决策。
-          </div>
+            <CircleAlert size={12} />{t('studyAnalysis.disclaimer')}</div>
         </aside>
       </div>
     </div>

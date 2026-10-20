@@ -12,7 +12,7 @@ pathway. This document records the current gap explicitly.
 | Capability | Current state | Evidence / limitation | Needed for clinical use |
 | --- | --- | --- | --- |
 | DICOM upload, de-identification, volume build | Implemented (research profile) | Synthetic fixture E2E; PHI removal tested | Validated de-identification, DPA/ethics, audit |
-| MPR / VRT / standard views | Implemented | Browser rendering; spacing-aware | Display validation, diagnostic review |
+| MPR / VRT / standard views | Implemented | Direction/spacing-aware; 48 signed axis permutations tested; synthetic browser checks | Display validation, diagnostic review |
 | Segmentation | Synthetic ground truth; TotalSegmentator optional | No external validation; model licences task-specific | Validated, versioned model with external test set |
 | Chamber volume measurements | Computed from masks | Method is deterministic, but not clinically validated | Validation vs reference standard, QC |
 | Stenosis / plaque / FFR-CT | `not_computed` | No validated lumen/flow model | Dedicated validated model |
@@ -24,9 +24,9 @@ pathway. This document records the current gap explicitly.
 | Reference targets and simulation | Implemented (109 targets) | Straight-ray teaching demo, no tissue model | Patient-specific planning, safety margins, validated instruments |
 | Coronary reference model / QCA | Implemented | 17 reference segments, synthetic FFR, reference values | Patient-specific centerline/lumen model, QCA validation |
 | Coronary label analysis | Implemented (research) | Skeleton centerline, diameter profile, candidate lesions | Validated QCA agreement, external test set |
-| Public NIfTI import | Implemented (research) | NIfTI + labels, label volumes, coronary centerline metrics | Validated public-data segmentation and comparison |
+| Public NIfTI import | Implemented (research) | Native labels preserved, physical-grid alignment, high label IDs and multi-component meshes; synthetic browser checks | Actual public-data inference and external validation |
 | LLM report drafting | Implemented (research draft) | Structured facts only, evidence refs, numeric guardrail, template fallback, clinician approval | Clinical validation of workflow and wording |
-| Longitudinal comparison | Not implemented | M3 roadmap | Registration, comparable acquisitions |
+| Longitudinal comparison | Implemented (research) | Rigid registration QC, dates/subject/provenance/phase checks; incompatible results suppress deltas; synthetic browser checks | Anatomical registration accuracy and acquisition-specific validation |
 | Prediction | Not implemented | No validated longitudinal model | Validated risk/progression model |
 | Regulatory status | None | Not NMPA/FDA/CE cleared | Clinical evaluation + registration |
 

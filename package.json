@@ -8,6 +8,7 @@
     "dev:api": "VITE_DATA_MODE=api vite --host 127.0.0.1 --port 5183",
     "server:dev": "uv run --directory server uvicorn app.main:app --reload --port 8000",
     "test:server": "uv run --directory server pytest",
+    "test:frontend": "node --test src/three/*.test.js src/*.test.js src/api/*.test.js",
     "build": "vite build",
     "build:cloud": "vite build --config vite.cloud.config.js",
     "preview": "vite preview --host 127.0.0.1 --port 5184"
