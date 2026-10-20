@@ -56,8 +56,8 @@ def test_ai_generation_rejects_a_report_edited_while_model_was_running(monkeypat
 
     original_generate = ai.generate_report_draft
 
-    def interrupted(db, study):
-        content = original_generate(db, study)
+    def interrupted(db, study, lang):
+        content = original_generate(db, study, lang)
         # Simulate a different request committing during the model call.
         with SessionLocal() as other:
             report = other.query(Report).filter_by(study_id=study.id).first()

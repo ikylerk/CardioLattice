@@ -8,6 +8,7 @@ import trimesh
 from scipy import ndimage
 from skimage import measure
 
+from ..codes import CodedError
 from .dicom import PreviewVolume
 from .segmentation import LABELS
 
@@ -22,13 +23,13 @@ COLORS = {
 }
 
 STRUCTURE_NAMES = {
-    "LV": "左心室",
-    "RV": "右心室",
-    "LA": "左心房",
-    "RA": "右心房",
-    "AO": "主动脉",
-    "MYO": "心肌",
-    "CALC": "钙化",
+    "LV": "Left ventricle",
+    "RV": "Right ventricle",
+    "LA": "Left atrium",
+    "RA": "Right atrium",
+    "AO": "Aorta",
+    "MYO": "Myocardium",
+    "CALC": "Calcification",
 }
 
 
@@ -58,7 +59,7 @@ def build_glb(
 ) -> tuple[list[MeshInfo], dict]:
     """Extract isosurfaces from label masks and export one GLB with named nodes.
 
-    Coordinates: RAS millimetres -> scene units. The largest physical dimension
+    Coordinates: preview index-axis millimetres -> scene units. The largest physical dimension
     of the preview is mapped to 3.0 scene units so the existing camera framing
     remains usable. The same transform is returned as provenance.
     """
@@ -109,14 +110,14 @@ def build_glb(
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     if len(scene.geometry) == 0:
-        raise ValueError("no labelled structures found; mesh not created")
+        raise CodedError("NO_LABELLED_STRUCTURES")
     scene.export(str(out_path), file_type="glb")
     transform = {
         "scale": scale,
         "center_mm": center.tolist(),
         "source": "preview_index_axis_mm",
         "target": "scene_units",
-        "note": "GLB coordinates are already in scene units.",
+        "note": "NOTE_GLB_SCENE_UNITS",
     }
     return infos, transform
 
@@ -190,7 +191,7 @@ def build_structure_glb(
             bbox=np.asarray(mesh.bounds, dtype=float).round(4).tolist(),
         ))
     if not scene.geometry:
-        raise ValueError("no labelled structures found; mesh not created")
+        raise CodedError("NO_LABELLED_STRUCTURES")
     out_path.parent.mkdir(parents=True, exist_ok=True)
     scene.export(str(out_path), file_type="glb")
     return infos, {
@@ -198,6 +199,7 @@ def build_structure_glb(
         "source": "preview_index_axis_mm", "target": "scene_units",
         "physicalCoordinateSystem": "LPS", "previewOrigin": preview.origin,
         "previewDirection": preview.direction, "sourceGeometry": source_geometry,
-        "note": "GLB vertices are centered scene units. All label components retained; no surface smoothing.",
+        "note": "NOTE_GLB_SCENE_UNITS",
+        "allLabelComponentsRetained": True, "surfaceSmoothing": False,
     }
 

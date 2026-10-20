@@ -154,3 +154,23 @@ def test_skeleton_component_loss_preserves_models_but_suppresses_analysis(tmp_pa
         assert "CORONARY_CENTERLINE_LENGTH" not in measurements
         assert "CORONARY_MIN_DIAMETER" not in measurements
         assert "CORONARY_STENOSIS_CANDIDATES" not in measurements
+
+
+def test_public_import_report_language_default_explicit_and_invalid(tmp_path):
+    image_path, labels_path = _write_case(tmp_path)
+    files = {
+        "image": ("image.nii.gz", image_path.read_bytes(), "application/gzip"),
+        "labels": ("labels.nii.gz", labels_path.read_bytes(), "application/gzip"),
+    }
+    with TestClient(app) as client:
+        for query, expected in (("", "en"), ("?lang=en", "en"), ("?lang=zh", "zh")):
+            response = client.post("/api/public/import" + query, files=files)
+            assert response.status_code == 202, response.text
+            content = response.json()["study"]["reports"][0]["content"]
+            assert content["lang"] == expected
+            assert content["provenance"]["lang"] == expected
+        before = len(client.get("/api/studies").json()["items"])
+        invalid = client.post("/api/public/import?lang=fr", files=files)
+        assert invalid.status_code == 400
+        assert invalid.json()["detail"]["code"] == "INVALID_LANG"
+        assert len(client.get("/api/studies").json()["items"]) == before

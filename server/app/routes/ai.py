@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .. import audit
 from ..ai.report_generator import PROMPT_VERSION, generate_report_draft
+from ..codes import CodedError, coded, http_error, require_lang
 from ..config import settings
 from ..db import get_db
 from ..models import Report, Study
@@ -16,10 +17,14 @@ router = APIRouter(prefix="/api")
 
 
 @router.post("/studies/{study_id}/ai/report-draft")
-def generate_ai_report_draft(study_id: str, db: Session = Depends(get_db)):
+def generate_ai_report_draft(study_id: str, lang: str | None = Query(default=None), db: Session = Depends(get_db)):
+    try:
+        language = require_lang(lang)
+    except CodedError as exc:
+        raise http_error(exc) from exc
     study = db.get(Study, study_id)
     if study is None:
-        raise HTTPException(status_code=404, detail="study not found")
+        raise HTTPException(status_code=404, detail=coded("STUDY_NOT_FOUND"))
     # Capture the state BEFORE the potentially slow external model call.
     report = db.scalars(
         select(Report).where(Report.study_id == study_id)
@@ -31,7 +36,7 @@ def generate_ai_report_draft(study_id: str, db: Session = Depends(get_db)):
     baseline_version = current_version(db, report_id)
     baseline_hash = content_hash(report.content)
     baseline_status = report.status
-    content, generator, model = generate_report_draft(db, study)
+    content, generator, model = generate_report_draft(db, study, language)
     # End the read transaction before taking the write lock (also releases a
     # SQLite WAL read snapshot). Concurrency is checked again under that lock.
     db.rollback()

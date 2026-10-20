@@ -1,19 +1,26 @@
 # Standard organ library
 
+[中文](organ-library.zh-CN.md)
+
 The organ library is the shared, versioned reference catalog used by both the
 React frontend and the FastAPI backend. It provides:
 
 - a common coordinate frame and units;
 - stable organ codes for UI, measurements, segmentation labels and exports;
-- anatomically derived reference meshes for orientation, teaching and atlas
-  placeholders.
+- anatomically derived reference meshes for orientation, teaching and research registration.
 
 The single source of truth is [`shared/organ_library.json`](../shared/organ_library.json).
-The backend exposes it at `GET /api/organs`; the frontend imports it and loads
-the GLBs in `src/assets/organs/`.
+That file still carries display names for the frontend bundle, which loads the
+GLBs in `src/assets/organs/`. `GET /api/organs` returns the same geometry and
+identifiers, with stable `{"code", "params"}` display fields.
+The route ignores `Accept-Language`.
 
 > These are **reference anatomy**, not patient anatomy. They must not be used to
 > diagnose, measure a patient, or replace a validated segmentation model.
+
+The current catalogue contains **19 organs**, **14 named-detail assets** and
+**109 reference targets**. These counts describe reference content, not patient
+findings or validated clinical coverage.
 
 ## Coordinate frame
 
@@ -27,6 +34,18 @@ the GLBs in `src/assets/organs/`.
 The meshes are centred together; relative organ positions are preserved. The
 frontend uses a z-up scene and standard views. In the anterior view, patient
 right appears on the viewer's left (radiological convention).
+
+Patient image metadata instead uses **LPS physical millimetres**. Reordering
+voxel axes toward RAS does not turn SITK metadata into RAS. Patient meshes use
+a centered preview display frame, with `center_mm = (dims - 1) * spacing / 2`.
+An explicit transform is required between patient LPS, centered preview and
+`RAS_ORGAN_REFERENCE`; the atlas origin is not a patient image origin.
+
+Cardiac atlas registration is implemented for research using explicit chamber
+semantics. Observed landmarks and mapped reference points remain separate;
+invalid/duplicate labels and degenerate geometry fail closed. Landmark fit RMS
+is not target accuracy, which remains `not_evaluated`. A mapped target is still
+a reference point, not a detected lesion. See [registration](atlas-registration.md).
 
 ## Sources and licence
 
@@ -45,31 +64,32 @@ MIT licence. See [`src/assets/organs/ATTRIBUTION.md`](../src/assets/organs/ATTRI
 
 | Code | Organ | System | Source |
 | --- | --- | --- | --- |
-| `BRAIN` | 脑 | nervous | BodyParts3D |
-| `HEART` | 心脏 | cardiovascular | BodyParts3D |
-| `LUNG_R` | 右肺 | respiratory | HRA |
-| `LUNG_L` | 左肺 | respiratory | HRA |
-| `TRACHEA` | 气管 | respiratory | BodyParts3D |
-| `SMALL_INTESTINE` | 小肠 | digestive | BodyParts3D |
-| `LARGE_INTESTINE` | 大肠 | digestive | BodyParts3D |
-| `URINARY_BLADDER` | 膀胱 | urinary | BodyParts3D |
-| `ESOPHAGUS` | 食管 | digestive | BodyParts3D |
-| `LIVER` | 肝脏 | digestive | HRA |
-| `GALLBLADDER` | 胆囊 | digestive | BodyParts3D |
-| `STOMACH` | 胃 | digestive | BodyParts3D |
-| `SPLEEN` | 脾脏 | digestive | HRA |
-| `PANCREAS` | 胰腺 | digestive | HRA |
-| `KIDNEY_R` | 右肾 | urinary | HRA |
-| `KIDNEY_L` | 左肾 | urinary | HRA |
-| `AORTA` | 主动脉 | cardiovascular | BodyParts3D |
-| `IVC` | 下腔静脉 | cardiovascular | BodyParts3D |
-| `SPINE` | 脊柱 | skeletal | BodyParts3D |
+| `BRAIN` | Brain | nervous | BodyParts3D |
+| `HEART` | Heart | cardiovascular | BodyParts3D |
+| `LUNG_R` | Right lung | respiratory | HRA |
+| `LUNG_L` | Left lung | respiratory | HRA |
+| `TRACHEA` | Trachea | respiratory | BodyParts3D |
+| `SMALL_INTESTINE` | Small intestine | digestive | BodyParts3D |
+| `LARGE_INTESTINE` | Large intestine | digestive | BodyParts3D |
+| `URINARY_BLADDER` | Urinary bladder | urinary | BodyParts3D |
+| `ESOPHAGUS` | Esophagus | digestive | BodyParts3D |
+| `LIVER` | Liver | digestive | HRA |
+| `GALLBLADDER` | Gallbladder | digestive | BodyParts3D |
+| `STOMACH` | Stomach | digestive | BodyParts3D |
+| `SPLEEN` | Spleen | digestive | HRA |
+| `PANCREAS` | Pancreas | digestive | HRA |
+| `KIDNEY_R` | Right kidney | urinary | HRA |
+| `KIDNEY_L` | Left kidney | urinary | HRA |
+| `AORTA` | Aorta | cardiovascular | BodyParts3D |
+| `IVC` | Inferior vena cava | cardiovascular | BodyParts3D |
+| `SPINE` | Spine | skeletal | BodyParts3D |
 
 ## Detailed sub-structures
 
-Each organ has a `<CODE>_detail.glb` with named sub-structures. The frontend
-loads it on demand, exposes a structure tree, and lets the user toggle or focus
-individual parts.
+Fourteen organs have a `<CODE>_detail.glb` with named sub-structures. The frontend
+loads details on demand and supports part visibility and focus. Trachea, stomach,
+gallbladder, urinary bladder and esophagus currently have whole-organ surfaces
+without a separate named-detail catalogue.
 
 | Organ | Detail parts | Examples |
 | --- | --- | --- |
@@ -85,24 +105,24 @@ individual parts.
 | SPINE | 23 | cervical, thoracic, lumbar vertebrae and sacrum |
 | SMALL_INTESTINE | 3 | duodenum, jejunum, ileum |
 | LARGE_INTESTINE | 4 | ascending, transverse, descending colon, rectum |
-| STOMACH / GALLBLADDER / TRACHEA / URINARY_BLADDER / ESOPHAGUS | 1 | whole-organ surface |
+| STOMACH / GALLBLADDER / TRACHEA / URINARY_BLADDER / ESOPHAGUS | no named details | whole-organ surface |
 
 ## Targets and simulation
 
-`shared/organ_targets.json` defines 109 reference targets. Each target has:
+`shared/organ_targets.json` defines 109 reference targets. The following illustrates target fields; display text is shown in English:
 
 ```json
 {
   "id": "CHAMBER_LV",
   "organ": "HEART",
-  "name": "左心室腔",
+  "name": "Left ventricular cavity",
   "category": "chamber",
   "partCode": "HEART_PART_006",
   "coordinateMm": [-45.3, 18.6, 99.0],
   "standardView": "anterior",
   "approach": "anterior",
   "reference": "BodyParts3D",
-  "description": "参考心腔中心"
+  "description": "Reference chamber center"
 }
 ```
 
@@ -131,22 +151,33 @@ The backend exposes the same catalogue at `GET /api/organ-targets`.
 
 ## Cardiac label mapping
 
-The cardiac segmentation adapter uses the existing 1–7 label map. The catalog
-maps those labels to stable standard codes:
+The internal cardiac segmentation adapter retains its 1–7 project label map.
+External label IDs do not imply anatomy: imported masks require explicit codes,
+and TotalSegmentator filenames are mapped by semantic structure. Its
+`pulmonary_artery` output must not become the project's `CALC` label. The catalog
+maps semantic labels to stable standard codes:
 
 | Label | Standard code | Structure |
 | --- | --- | --- |
-| `LV` | `HEART_LV` | 左心室腔 |
-| `RV` | `HEART_RV` | 右心室腔 |
-| `LA` | `HEART_LA` | 左心房腔 |
-| `RA` | `HEART_RA` | 右心房腔 |
-| `AO` | `AORTA` | 主动脉 |
-| `MYO` | `HEART_MYOCARDIUM` | 心肌 |
-| `CALC` | `CORONARY_CALCIFICATION` | 冠脉钙化 |
+| `LV` | `HEART_LV` | Left ventricular cavity |
+| `RV` | `HEART_RV` | Right ventricular cavity |
+| `LA` | `HEART_LA` | Left atrial cavity |
+| `RA` | `HEART_RA` | Right atrial cavity |
+| `AO` | `AORTA` | Aorta |
+| `MYO` | `HEART_MYOCARDIUM` | Myocardium |
+| `CALC` | `CORONARY_CALCIFICATION` | Coronary calcification |
 
 The API exposes the mapping on each segmentation as `standardLabelMap`.
 
-## JSON schema
+## JSON file and API
+
+The file keeps display strings for the frontend import. `GET /api/organs`
+replaces them. A system name uses the system id as `code`. An organ name uses
+the organ code. A standard-structure name uses that structure code. Notes and
+sources, licences, and institutions use their own codes. `params` is `{}`
+unless a field has no dedicated code, in which case `params.code` is the organ
+code (or `params.id` is the source id). The response comes from
+`public_catalog()` and does not include the file's display sentences.
 
 ```json
 {
@@ -154,28 +185,37 @@ The API exposes the mapping on each segmentation as `standardLabelMap`.
   "frame": {
     "name": "RAS_ORGAN_REFERENCE",
     "units": "mm",
-    "description": "Origin at the centre of the reference organ set..."
+    "description": {"code": "FRAME_RAS_ORGAN_REFERENCE", "params": {}}
   },
-  "systems": [{ "id": "cardiovascular", "name": "心血管", "en": "Cardiovascular", "color": "#c45258" }],
+  "systems": [{
+    "id": "cardiovascular",
+    "name": {"code": "cardiovascular", "params": {}},
+    "color": "#c45258"
+  }],
   "organs": [{
     "code": "HEART",
-    "name": "心脏",
-    "en": "Heart",
+    "name": {"code": "HEART", "params": {}},
     "system": "cardiovascular",
     "color": "#c45258",
     "centerMm": [-25.1, 21.2, 110.3],
     "sizeMm": [115.6, 106.3, 104.6],
     "mesh": { "type": "glb", "asset": "organs/HEART.glb" },
     "detailAsset": "organs/HEART_detail.glb",
-    "parts": [{ "code": "HEART_PART_006", "name": "Cavity of left ventricle", "kind": "chamber", "node": "HEART_PART_006", "centerMm": [-45.3, 18.6, 99.0], "sizeMm": [64, 66, 72] }],
+    "parts": [{ "code": "HEART_PART_006", "name": {"code": "HEART_PART_006", "params": {}}, "kind": "chamber", "node": "HEART_PART_006", "centerMm": [-45.3, 18.6, 99.0], "sizeMm": [64, 66, 72] }],
     "renderable": true,
     "segLabels": ["LV", "RV", "LA", "RA", "MYO"],
-    "source": "BodyParts3D 4.0 (DBCLS, CC BY 4.0); selected surfaces, simplified",
-    "note": "Anatomical reference surface; not patient-specific."
+    "source": {"code": "SOURCE_BODYPARTS3D", "params": {}},
+    "note": {"code": "NOTE_ANATOMICAL_REFERENCE", "params": {}}
   }],
-  "segLabelMap": { "LV": "HEART_LV" },
-  "standardCodes": { "HEART_LV": { "name": "左心室腔", "system": "cardiovascular" } },
-  "sources": [{ "id": "bodyparts3d", "license": "CC BY 4.0" }]
+  "standardCodes": {
+    "HEART_LV": {"name": {"code": "HEART_LV", "params": {}}, "system": "cardiovascular"}
+  },
+  "sources": [{
+    "id": "bodyparts3d",
+    "name": {"code": "SOURCE_NAME_BODYPARTS3D", "params": {}},
+    "institution": {"code": "INSTITUTION_DBCLS", "params": {}},
+    "license": {"code": "LICENSE_CC_BY_4_0", "params": {}}
+  }]
 }
 ```
 
@@ -233,7 +273,13 @@ attribution file.
 
 - Add more reference structures (e.g., biliary tree, coronary tree, abdominal
   vessels) as separately labelled meshes.
-- Atlas-to-patient registration for orientation and left/right sanity checks.
+- Externally validate the implemented cardiac atlas-to-patient research registration; fit residual is not target accuracy.
 - Patient-specific case linking: map measured lesions to the reference targets
   without ever presenting the reference anatomy as patient anatomy.
 - Keep all additions licensed and provenance-tracked.
+
+Implemented software and synthetic/mock acceptance do not establish clinical accuracy.
+The AI report interface is implemented but acceptance has no real API key/cloud call;
+real model-weight inference is also unverified. Report version/hash approval and
+longitudinal comparison are implemented; individual event prediction is absent.
+See [roadmap](roadmap.md) and [clinical boundaries](clinical-boundaries.md).

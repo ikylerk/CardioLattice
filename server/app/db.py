@@ -22,5 +22,12 @@ def get_db() -> Generator[Session, None, None]:
 
 def init_db() -> None:
     from . import models  # noqa: F401  (register mappers)
+    from .migrations import upgrade_legacy_schema
 
-    models.Base.metadata.create_all(bind=engine)
+    with engine.begin() as connection:
+        if connection.dialect.name == "sqlite":
+            # Serialize inspection and DDL across concurrent application starts.
+            # Explicit BEGIN also makes SQLite schema changes transactional.
+            connection.exec_driver_sql("BEGIN IMMEDIATE")
+        upgrade_legacy_schema(connection)
+        models.Base.metadata.create_all(bind=connection)

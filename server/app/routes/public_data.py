@@ -4,10 +4,11 @@ import hashlib
 from pathlib import Path
 from uuid import uuid4
 
-from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile, Query
 from sqlalchemy.orm import Session
 
 from .. import audit
+from ..codes import CodedError, http_error, require_lang
 from ..config import settings
 from ..db import get_db
 from ..ingest import new_study_id
@@ -31,6 +32,7 @@ def import_public_case(
     labels: UploadFile = File(...),
     dataset: str = Form("public_dataset"),
     label_map: str = Form(""),
+    lang: str | None = Query(default=None),
     db: Session = Depends(get_db),
 ):
     """Import a public NIfTI case (for example ImageCAS / ASOCA).
@@ -38,6 +40,10 @@ def import_public_case(
     This is a research-only path and is marked `source=public_dataset`. It does
     not run the clinical DICOM de-identification pipeline.
     """
+    try:
+        language = require_lang(lang)
+    except CodedError as exc:
+        raise http_error(exc) from exc
     if not _extension_ok(image.filename) or not _extension_ok(labels.filename):
         raise HTTPException(status_code=400, detail="image and labels must be .nii or .nii.gz")
     study_id = new_study_id()
@@ -87,6 +93,7 @@ def import_public_case(
         job = Job(
             study_id=study_id,
             type="public_import",
+            payload={"lang": language},
             state="queued",
             stage="queued",
             message="Queued public NIfTI import",

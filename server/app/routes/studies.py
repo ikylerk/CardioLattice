@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
-from pathlib import Path
+from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Query, UploadFile
 from fastapi.responses import StreamingResponse
@@ -14,10 +14,11 @@ from .. import audit
 from ..config import settings
 from ..capabilities import get_runtime_capabilities
 from ..db import SessionLocal, get_db
+from ..codes import CodedError, coded, http_error, require_lang
 from ..ingest import create_study_from_paths, enqueue_pipeline, new_study_id, prepare_upload
-from ..models import AuditEvent, Job, Report, Study, utcnow
-from ..pipeline import PIPELINE_VERSION
-from ..schemas import job_out, report_out, study_bundle, study_summary
+from ..models import AuditEvent, Job, Report, Study
+from ..pipeline import PIPELINE_VERSION, make_pipeline_job
+from ..schemas import job_out, study_bundle, study_summary
 from ..storage import storage
 from .reports import VersionApproval, approve_report_version
 
@@ -32,10 +33,18 @@ class ApproveRequest(VersionApproval):
     pass
 
 
+def generation_lang(lang: Annotated[str | None, Query()] = None) -> str:
+    """Report language for a request that creates a draft. Omitted means English."""
+    try:
+        return require_lang(lang)
+    except CodedError as exc:
+        raise http_error(exc) from exc
+
+
 def _bundle(db: Session, study_id: str):
     study = db.get(Study, study_id)
     if study is None:
-        raise HTTPException(status_code=404, detail="study not found")
+        raise HTTPException(status_code=404, detail=coded("STUDY_NOT_FOUND"))
     return study_bundle(study)
 
 
@@ -63,6 +72,7 @@ def list_studies(
 @router.post("/studies", status_code=202)
 def upload_study(
     background_tasks: BackgroundTasks,
+    lang: Annotated[str, Depends(generation_lang)],
     files: list[UploadFile] = File(...),
     db: Session = Depends(get_db),
 ):
@@ -77,15 +87,16 @@ def upload_study(
             source="upload",
             fixture_meta=None,
             background_tasks=background_tasks,
+            lang=lang,
         )
-    except ValueError as exc:
+    except CodedError as exc:
         db.rollback()
         storage.delete_study(study_id)
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise http_error(exc) from exc
     except Exception as exc:  # noqa: BLE001
         db.rollback()
         storage.delete_study(study_id)
-        raise HTTPException(status_code=500, detail=f"ingest failed: {exc}") from exc
+        raise HTTPException(status_code=500, detail=coded("INGEST_FAILED", detail=str(exc))) from exc
     job_id = job.id if job else None
     db.expire_all()
     study = db.get(Study, study_id)
@@ -96,6 +107,7 @@ def upload_study(
 @router.post("/studies/demo", status_code=202)
 def create_demo_study(
     background_tasks: BackgroundTasks,
+    lang: Annotated[str, Depends(generation_lang)],
     db: Session = Depends(get_db),
 ):
     """Generate a synthetic DICOM fixture server-side and run the real pipeline.
@@ -119,15 +131,16 @@ def create_demo_study(
             source="demo",
             fixture_meta={"labels_path": meta["labels_path"], "kind": meta["kind"]},
             background_tasks=background_tasks,
+            lang=lang,
         )
-    except ValueError as exc:
+    except CodedError as exc:
         db.rollback()
         storage.delete_study(study_id)
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise http_error(exc) from exc
     except Exception as exc:  # noqa: BLE001
         db.rollback()
         storage.delete_study(study_id)
-        raise HTTPException(status_code=500, detail=f"demo fixture failed: {exc}") from exc
+        raise HTTPException(status_code=500, detail=coded("DEMO_FAILED", detail=str(exc))) from exc
     job_id = job.id if job else None
     db.expire_all()
     study = db.get(Study, study_id)
@@ -145,18 +158,19 @@ def select_series(
     study_id: str,
     body: SeriesSelection,
     background_tasks: BackgroundTasks,
+    lang: Annotated[str, Depends(generation_lang)],
     db: Session = Depends(get_db),
 ):
     study = db.get(Study, study_id)
     if study is None:
-        raise HTTPException(status_code=404, detail="study not found")
+        raise HTTPException(status_code=404, detail=coded("STUDY_NOT_FOUND"))
     chosen = next((item for item in study.series if item.id == body.seriesId), None)
     if chosen is None:
-        raise HTTPException(status_code=404, detail="series not found in this study")
+        raise HTTPException(status_code=404, detail=coded("SERIES_NOT_FOUND"))
     for item in study.series:
         item.is_selected = item.id == chosen.id
     study.status = "queued"
-    job = Job(study_id=study.id, type="pipeline", state="queued", stage="queued", message="Queued")
+    job = make_pipeline_job(study.id, lang)
     db.add(job)
     audit.record(
         db,
@@ -174,15 +188,16 @@ def select_series(
 def rerun_pipeline(
     study_id: str,
     background_tasks: BackgroundTasks,
+    lang: Annotated[str, Depends(generation_lang)],
     db: Session = Depends(get_db),
 ):
     study = db.get(Study, study_id)
     if study is None:
-        raise HTTPException(status_code=404, detail="study not found")
+        raise HTTPException(status_code=404, detail=coded("STUDY_NOT_FOUND"))
     if not any(item.is_selected for item in study.series):
-        raise HTTPException(status_code=400, detail="no series selected")
+        raise HTTPException(status_code=400, detail=coded("NO_SERIES_SELECTED"))
     study.status = "queued"
-    job = Job(study_id=study.id, type="pipeline", state="queued", stage="queued", message="Queued")
+    job = make_pipeline_job(study.id, lang)
     db.add(job)
     audit.record(db, study_id=study.id, actor=settings.default_actor, action="pipeline_requested")
     db.commit()
@@ -194,7 +209,7 @@ def rerun_pipeline(
 def get_job(job_id: str, db: Session = Depends(get_db)):
     job = db.get(Job, job_id)
     if job is None:
-        raise HTTPException(status_code=404, detail="job not found")
+        raise HTTPException(status_code=404, detail=coded("JOB_NOT_FOUND"))
     return job_out(job)
 
 
@@ -274,7 +289,7 @@ def get_registration(study_id: str, db: Session = Depends(get_db)):
 def delete_study(study_id: str, db: Session = Depends(get_db)):
     study = db.get(Study, study_id)
     if study is None:
-        raise HTTPException(status_code=404, detail="study not found")
+        raise HTTPException(status_code=404, detail=coded("STUDY_NOT_FOUND"))
     db.query(AuditEvent).filter(AuditEvent.study_id == study_id).delete()
     db.delete(study)
     db.commit()
@@ -292,11 +307,11 @@ def approve_report(
     """Compatibility URL with the same exact-version review contract."""
     report = db.get(Report, report_id)
     if report is None or report.study_id != study_id:
-        raise HTTPException(status_code=404, detail="report not found")
+        raise HTTPException(status_code=404, detail=coded("REPORT_NOT_FOUND"))
     return approve_report_version(report_id, body, db)
 
 
 @router.get("/studies/{study_id}/files/{relative_path:path}")
 def forbid_raw_files(study_id: str, relative_path: str):
     # Raw DICOM is deliberately not exposed. Only derived assets have routes.
-    raise HTTPException(status_code=404, detail="not found")
+    raise HTTPException(status_code=404, detail=coded("NOT_FOUND"))

@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 
 from .. import audit
+from ..codes import coded
 from .. import report_models  # noqa: F401  (register ReportVersion with Base.metadata)
 from ..config import settings
 from ..db import get_db
@@ -58,7 +59,7 @@ def version_out(version: ReportVersion) -> dict:
 def get_report(report_id: str, db: Session = Depends(get_db)):
     report = db.get(Report, report_id)
     if report is None:
-        raise HTTPException(status_code=404, detail="report not found")
+        raise HTTPException(status_code=404, detail=coded("REPORT_NOT_FOUND"))
     return {**report_out(report), "version": current_version(db, report_id),
             "contentHash": content_hash(report.content)}
 
@@ -67,7 +68,7 @@ def get_report(report_id: str, db: Session = Depends(get_db)):
 def get_report_versions(report_id: str, db: Session = Depends(get_db)):
     report = db.get(Report, report_id)
     if report is None:
-        raise HTTPException(status_code=404, detail="report not found")
+        raise HTTPException(status_code=404, detail=coded("REPORT_NOT_FOUND"))
     versions = list_versions(db, report_id)
     return {
         "reportId": report_id,
@@ -83,7 +84,7 @@ def patch_report(report_id: str, body: ReportPatch, db: Session = Depends(get_db
     """Edit a draft only when the editor's version is still current."""
     with report_write(db, report_id, body.baseVersion, body.baseContentHash) as report:
         if report.status == "approved":
-            raise HTTPException(status_code=409, detail="approved reports must be amended, not overwritten")
+            raise HTTPException(status_code=409, detail=coded("APPROVED_IMMUTABLE"))
         version = amend_version(
             db, report, body.content, actor=body.actor, reason=body.reason or "edited",
         )

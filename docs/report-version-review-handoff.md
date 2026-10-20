@@ -1,38 +1,109 @@
-# 报告版本与复核修复交接
+# 报告版本与复核使用说明
 
-本次仅修改报告版本、报告/AI 路由、AI 草稿生成器、两个专属测试文件、StructuredReport 及专属样式和本文档。未修改共享 schemas/models/main、studies 路由、共享 API 包装层；未提交或推送。
+本文说明当前版本、编辑、批准及冲突处理契约。报告用于研究流程；
+人工批准不等于临床有效性验证，也不是经过身份认证的电子签名。
 
-## 已实现的行为
+## 当前稿、历史快照和版本号
 
-- 首次编辑或重生成前保留原稿快照；编辑、修订、AI 重生成及新批准入口追加新快照。内容按排序键的 JSON 计算 SHA-256；拒绝 NaN/Infinity，恢复历史版本时校验哈希并恢复模型和提示词元数据。
-- 修订和 AI 重生成清除当前批准人/时间，历史批准快照保持原内容及哈希；人工修订的顶层生成方式为 human，模型与提示词字段清空。
-- PATCH `/api/reports/{id}` 和 POST `/api/reports/{id}/amend` 必须携带整数 `baseVersion`，可同时携带 `baseContentHash`。版本读取后在数据库行写锁下复查；冲突返回 409 并回滚。修订原因必填、不可为空白。
-- GET `/api/reports/{id}` 返回真实 `version` 和 `contentHash`。尚无快照时真实版本为 0；首次写入保存基线 v1 和新稿 v2。
-- 新批准入口 POST `/api/reports/{id}/approve` 必须提供 `baseVersion`、`baseContentHash`，可提供 `approvedBy`。批准绑定精确版本与内容；未解决的 `needs_review` 不允许批准。StructuredReport 已接入此入口。
-- AI 生成前记录版本/哈希/状态，生成后重新锁定并复查。生成期间有医生修改或出现更新报告时返回 409。没有流水线报告时返回 409，避免并发首次创建多个报告。
-- AI 返回结构在服务端实际校验；未知/缺失证据、未计算测量被当作有效测量、非法建议类别或格式错误时使用模板。回退原因为固定安全文案，原始服务错误不进入报告。有效调用才使用 claude 标记；模板回退保持 template、model=null。
-- 数字检查覆盖摘要、所见、局限、印象、建议，支持符号、小数和科学计数；允许两位小数舍入而非旧的 0.5/2% 宽容差。异常标记保留为 needs_review，供人工处理。
-- AI 草稿和模板回退均保存生成时的测量快照，界面优先使用该快照展示引用值。
-- 界面支持实际逐条编辑、填写原因、显式核对待复核项；保存后即刻显示服务端返回的新稿，其他数据刷新失败会提示。过期或加载失败时禁用保存/批准。跨报告切换后的迟到响应不能替换当前报告。
+Report 保存当前正文、生成方式、状态与批准信息；ReportVersion 保存
+报告操作追加的历史快照。
 
-## 共享集成完成（2026-10-20）
+| 接口 | 结果 |
+| --- | --- |
+| GET /api/reports/{id} | 当前稿、真实 version、contentHash、批准信息 |
+| GET /api/reports/{id}/versions | currentVersion、当前 contentHash/status、版本升序的 items |
+| GET /api/studies/{study_id} | bundle 中 reports 使用相同的真实版本/哈希序列化 |
 
-1. 旧的 study-scoped 批准路由已统一调用版本批准服务，校验所属检查、版本、哈希及待复核项；缺少版本的旧请求返回 422，过期请求返回 409。
-2. `schemas.report_out` 已返回真实版本和内容哈希，bundle 与报告详情保持一致。
-3. 共享 API 包装层、StudyContext 和旧 ReportDrawer 批准入口均传递所见稿件的版本与哈希；缺少 baseVersion 的编辑请求返回 422。
-4. 全应用浏览器通过真实本地 API 走通批准 v2 → 人工编辑 v3 → 当前批准清除 → 待重新复核，历史基线/批准稿/修订稿均可读取。数据来自明确标记的合成 NIfTI 夹具。
+尚无快照的初始报告为 **v0**。首次编辑、修订、AI 重生成或批准前，
+先保存原稿为 v1，再追加结果为 v2，随后按操作追加版本。例如：
+初稿 v0 → 批准稿 v2 → 人工修订稿 v3 → 再批准稿 v4。
+对已批准的当前版本重复批准不追加快照；提交旧版本仍返回冲突。
 
-## 验证及边界
+contentHash 是正文按排序键、紧凑 JSON 编码计算的 SHA-256，不包含
+顶层批准状态、批准人或版本号。因此批准可增加版本号而不改变正文哈希。
+哈希不能代替版本号，也不是数字签名。
 
-专属测试命令：`server/.venv/bin/python -m pytest server/tests/test_report_versions.py server/tests/test_ai_report.py -q`。
+历史项包含正文、生成方式/模型、editedBy、reason、contentHash、createdAt。
+编辑和批准不会覆盖旧快照。该保证限于报告工作流：当前流水线重跑会
+替换派生记录及 Report，不能据此承诺跨重跑永久留存，也不能替代备份
+或长期病例归档。
 
-涵盖版本/哈希一致性、基线保存、批准后修订、过期拒绝、同版本双并发写只接受一个、生成过程中医生修订、证据异常回退、外部错误隐私、数字检查和人工复核门禁。AI 测试采用模拟服务响应，未调用真实云模型，不代表模型准确性或临床有效性验证。
+## 生成语言与历史兼容
 
-临时浏览器验收页与脚本位于 `/tmp/cardioscope-report-ui/`，使用隔离浏览器与模拟 API 验证组件；不能替代整应用与真实服务器联调。测试数据库来自 pytest 的临时目录，未使用用户已有病例。
+生成报告的 HTTP 请求支持查询参数 `?lang=en` 或 `?lang=zh`，省略时默认 en，
+不读取 `Accept-Language`。适用上传、演示检查、选择序列、流水线重跑、
+AI 草稿以及公开 NIfTI 导入；后台任务会保存本次选择的语言。
+其他值（包括 zh-CN）返回 HTTP 400，detail 为
+`{"code":"INVALID_LANG","params":{"lang":"<value>"}}`。
 
-### agent 专属验收及主集成补充
+新模板、AI 草稿及 AI 失败后的模板回退均写入 `content.lang` 和
+`content.provenance.lang`。语言及正文在生成保存的版本中固定；读取、
+批准或切换界面语言不会重新翻译。重新生成可以显式选择另一种语言，
+其结果成为新版本，旧快照仍保留原文及语言。
 
-- 两个专属测试文件：初始 **10 passed**；加入 Sonnet 5.5 请求契约测试后 **14 passed**（现有 skimage/NumPy 弃用警告）。
-- 最新前端构建：**通过**，临时输出 `/tmp/cardioscope-report-build-final`，没有覆盖主 agent 的构建产物。
-- 独立浏览器组件测试页出现 `Unexpected token '<'`，未完成交互断言；随后主 agent 重启本地服务，以实际应用和真实本地 API 完成上述报告交互验收，未出现控制台错误。
-- 真实云模型未调用，所有 AI 成功/失败路径均为模拟测试。SDK 请求契约已验证自动工具选择、禁止参数缺省及无结构化输出时的显式模板回退。
+既有报告的 legacy `content.language` 字段兼容保留；读取不会删除、
+自动重命名或据此补写 lang。没有语言字段的旧正文也按保存内容返回。
+新生成使用 lang，不再额外生成旧 language 字段。
+修订接口提交完整正文时，应连同原文保留既有语言/来源元数据；它不是翻译接口。
+语言字段属于 content，受内容哈希及快照约束，不能仅切换标签便将旧正文
+当作另一语言的新稿。自定义名称、来源元数据和人工文字也不保证自动翻译。
+
+## 写入契约
+
+请求为 JSON；版本号必须是非负整数，哈希若提供必须为 64 位小写十六进制。
+
+| 接口 | 必填字段 | 可选字段及规则 |
+| --- | --- | --- |
+| PATCH /api/reports/{id} | content、baseVersion | baseContentHash、actor、reason；已批准稿禁止直接覆盖 |
+| POST /api/reports/{id}/amend | content、baseVersion、reason | baseContentHash、actor；原因去空白后不可为空，最长 1000 字符 |
+| POST /api/reports/{id}/approve | baseVersion、baseContentHash | approvedBy；缺省使用服务端 DEFAULT_ACTOR |
+| POST /api/studies/{study_id}/reports/{id}/approve | 同上 | 先校验检查归属，再调用同一批准服务 |
+
+编辑/修订接口的哈希在服务端为可选，客户端应同时传递版本与哈希；
+批准两者均必填，兼容 URL 也不接受缺少版本参数的旧请求。
+content 是完整正文对象，不是局部补丁。不要把报告响应的 status、version、
+approvedBy 等字段混入编辑请求。
+
+客户端应把**用户实际查看的正文**及对应版本/哈希一起保存为编辑基线。
+不能仅刷新版本号就继续提交旧正文。冲突后重新读取当前稿，让用户核对、
+合并修改，再使用新基线重试。
+
+## 状态与复核
+
+- 模板和 AI 新稿为 draft。
+- 人工编辑/修订为 clinician_reviewed，表示已编辑，仍需批准。顶层
+  generator 为 human，model/promptVersion 清空。
+- 修订和 AI 重生成清除当前 approvedBy/approvedAt；历史批准快照保留。
+- sections、impression、recommendations 中仍有 needs_review 时禁止批准。
+- 界面支持逐条修改、填写修订原因及显式核对证据；修改文字不会自动
+  消除待复核标记。
+- actor/approvedBy 是研究客户端提供的标签，缺省使用配置值，不是已认证
+  医生身份。历史快照/审计链不构成防篡改存储或临床签名保证。
+
+AI 生成前记录版本/哈希/状态，保存时复查；期间出现修改、批准或更新报告
+则返回 409。没有已有流水线报告时也返回 409。模板回退同样是新草稿，
+需重新复核。参见 [AI 报告说明](ai-reporting.md)。
+
+## 错误处理
+
+| 状态码 | 常见原因 | 处理 |
+| --- | --- | --- |
+| 400 | 生成请求的 lang 不是 en/zh | 使用合法查询值，或省略以采用 en |
+| 404 | 报告不存在或检查归属不符 | 重新选择检查/报告 |
+| 422 | 必填字段缺失、格式错误、原因或批准人为空白 | 修正请求 |
+| 409 | 版本/哈希过期、并发冲突、已批准稿被 PATCH、复核项未解决 | 读取 detail，刷新并核对；修改批准稿使用 amend |
+
+写入在数据库写锁内复查版本及提供的哈希，正文、快照和审计一起提交，
+冲突时回滚。保存成功后界面先采用返回的新稿；其他数据刷新失败会单独
+提示，不能继续把旧批准状态视作当前状态。
+
+## 验证与研究边界
+
+server/tests/test_report_versions.py 覆盖基线/哈希、批准后修订、过期与并发
+写保护及复核门禁；server/tests/test_api.py 覆盖兼容批准与 bundle 一致性；
+server/tests/test_ai_report.py 覆盖生成冲突、证据校验、回退和 SDK 请求契约；
+server/tests/test_i18n.py 覆盖语言选择、默认值、非法值及已存报告的读取行为。
+
+这些验证软件行为。AI 服务使用模拟响应，未验证真实云模型调用；掩膜测量、
+参考配准、模型准确性和临床结论需要独立验证。测试通过、界面批准或研究
+标签都不能作为临床可用性证明。

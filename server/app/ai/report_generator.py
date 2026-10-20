@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from ..config import settings
 from ..models import Measurement, Study
-from ..reporting import template_report
+from ..reporting import disclaimer, template_report
 
 PROMPT_VERSION = "report_v2"
 
@@ -19,7 +19,7 @@ SYSTEM_PROMPT = """你是 CardioScope Pro 研究原型的结构化报告助手�
 每条陈述必须引用一个或多个 measurement ID（evidence_refs）。
 不要把 not_computed 的项目写成数值；只能在 limitations 中说明原因。
 不要输出患者姓名；只使用 pseudonym。
-输出中文（zh-CN）。
+按照 report_language 指定的语言输出（en 英语，zh 简体中文）。
 必须通过 submit_report 工具返回结果，不要输出自由文本。
 """
 
@@ -195,7 +195,7 @@ def _numeric_guardrail(content: dict, measurements: list[Measurement]) -> list[s
     return flagged
 
 
-def _build_content(study: Study, tool: dict[str, Any], model: str, measurements: list[Measurement]) -> dict:
+def _build_content(study: Study, tool: dict[str, Any], model: str, measurements: list[Measurement], lang: str = "zh") -> dict:
     subject = study.subject
     findings = []
     for index, item in enumerate(tool.get("findings", []), start=1):
@@ -219,7 +219,7 @@ def _build_content(study: Study, tool: dict[str, Any], model: str, measurements:
     sections = [
         {
             "id": "summary",
-            "title": "检查摘要",
+            "title": "检查摘要" if lang == "zh" else "Study summary",
             "claims": [
                 {
                     "id": "c_summary",
@@ -229,14 +229,14 @@ def _build_content(study: Study, tool: dict[str, Any], model: str, measurements:
                 }
             ],
         },
-        {"id": "findings", "title": "影像所见", "claims": findings},
-        {"id": "limitations", "title": "局限与未计算项", "claims": limitations},
+        {"id": "findings", "title": "影像所见" if lang == "zh" else "Findings", "claims": findings},
+        {"id": "limitations", "title": "局限与未计算项" if lang == "zh" else "Limitations and items not computed", "claims": limitations},
     ]
     content = {
         "schema_version": "report/v1",
         "study_id": study.id,
         "status": "draft",
-        "language": "zh-CN",
+        "lang": lang,
         "subject": {
             "pseudonym": subject.pseudonym if subject else None,
             "sex": subject.sex if subject else None,
@@ -268,12 +268,13 @@ def _build_content(study: Study, tool: dict[str, Any], model: str, measurements:
             for index, item in enumerate(tool.get("recommendations", []), start=1)
         ],
         "limitations": [
-            "AI 辅助草稿：仅对结构化测量进行语言化，所有数值需医生逐条核对。",
-            "研究原型，不可用于临床诊断或治疗决策。",
+            ("AI 辅助草稿：仅对结构化测量进行语言化，所有数值需医生逐条核对。" if lang == "zh" else "AI-assisted draft based only on structured measurements. A physician must verify every value."),
+            ("研究原型，不可用于临床诊断或治疗决策。" if lang == "zh" else "Research prototype. Not for clinical diagnosis or treatment decisions."),
         ],
-        "disclaimer": "Research prototype. AI-generated draft. Not for clinical diagnosis or treatment decisions.",
+        "disclaimer": disclaimer(lang),
         "provenance": {
             "generator": "claude",
+            "lang": lang,
             "model": model,
             "prompt_version": PROMPT_VERSION,
             "measurement_ids": [item.id for item in measurements],
@@ -284,12 +285,12 @@ def _build_content(study: Study, tool: dict[str, Any], model: str, measurements:
     content["provenance"]["evidence_validation"] = "needs_review" if flagged else "references_checked"
     if flagged:
         content["limitations"].append(
-            f"有 {len(flagged)} 条陈述的数字未能与引用测量对应，已标记为待复核。"
+            (f"有 {len(flagged)} 条陈述的数字未能与引用测量对应，已标记为待复核。" if lang == "zh" else f"{len(flagged)} claims contain numbers that could not be matched to cited measurements and require review.")
         )
     return content
 
 
-def generate_report_draft(db: Session, study: Study) -> tuple[dict, str, str | None]:
+def generate_report_draft(db: Session, study: Study, lang: str = "zh") -> tuple[dict, str, str | None]:
     measurements = list(
         db.scalars(select(Measurement).where(Measurement.study_id == study.id)).all()
     )
@@ -297,17 +298,19 @@ def generate_report_draft(db: Session, study: Study) -> tuple[dict, str, str | N
     if settings.anthropic_api_key:
         try:
             facts = build_facts(study, measurements)
+            facts["report_language"] = lang
             tool = _validate_tool(_call_claude(facts), measurements)
-            content = _build_content(study, tool, settings.anthropic_model, measurements)
+            content = _build_content(study, tool, settings.anthropic_model, measurements, lang)
             content["provenance"]["measurement_snapshot"] = facts["measurements"]
             return content, "claude", settings.anthropic_model
         except Exception:  # Model/schema failures must not leak raw service errors or credentials.
             fallback_code = "generation_or_validation_failed"
-    content = template_report(study, measurements)
+    content = template_report(study, measurements, lang)
     content["provenance"]["measurement_snapshot"] = build_facts(study, measurements)["measurements"]
     content["provenance"]["fallback_code"] = fallback_code
-    content["provenance"]["fallback_reason"] = (
-        "未配置 AI 服务，已使用确定性模板。" if fallback_code == "not_configured"
-        else "AI 调用或结果校验失败，已使用确定性模板。"
-    )
+    fallback_messages = {
+        "zh": {"not_configured": "未配置 AI 服务，已使用确定性模板。", "generation_or_validation_failed": "AI 调用或结果校验失败，已使用确定性模板。"},
+        "en": {"not_configured": "AI service is not configured; a deterministic template was used.", "generation_or_validation_failed": "AI generation or validation failed; a deterministic template was used."},
+    }
+    content["provenance"]["fallback_reason"] = fallback_messages[lang][fallback_code]
     return content, "template", None

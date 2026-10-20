@@ -1,106 +1,124 @@
 # Clinical boundaries and safety
 
-> This is a research prototype. It is not a medical device and must not be used
-> for diagnosis, treatment decisions, triage, or legal purposes.
+[中文](clinical-boundaries.zh-CN.md)
 
-## 1. Human-in-the-loop
+> **Research prototype, not a medical device.** This project is not certified by NMPA / FDA / CE, and outputs must not be used for clinical diagnosis, treatment decisions, or medico-legal purposes. All data in demo mode is procedurally synthesized.
 
-Every clinically meaningful output is advisory:
+## Implemented software and evidence status
 
-- measurements carry `method`, `source` and `validationStatus`;
-- the report is a **draft** until a clinician approves it;
-- approval writes an audit event with actor and timestamp;
-- AI-generated text (M2) must cite measurement IDs; numbers without a citation
-  are forced to `needs_review`.
+As of the 2026-10-20 integration, DICOM/NIfTI ingest, original-label geometry,
+reference anatomy, research registration, longitudinal comparison, AI report
+interfaces, and report revision/approval workflows are implemented. Synthetic
+known-answer tests and mocked SDK/model calls verify software contracts. They
+are not external accuracy studies or clinical validation. No real AI API key
+has been connected for acceptance, and real cloud calls and model-weight
+inference remain unverified in this environment.
+
+## 1. Human review and report integrity
+
+- Measurements record `method`, `source`, `validationStatus` and provenance.
+- Template and AI reports begin as drafts. Evidence/numeric checks and the
+  `needs_review` gate are implemented; unresolved review flags block approval.
+- Editing, amendment, restoration and approval append report versions.
+  Approval requires both `baseVersion` and `baseContentHash`; stale submissions
+  are rejected. Edits and AI regeneration invalidate the current approval.
+- The SHA-256 `contentHash` identifies the report body; approval binds the
+  reviewed version and hash and records an actor/time audit event. A hash is
+  not a digital signature, and the research actor label is not authenticated
+  clinician identity.
+- History is preserved within the report workflow. Pipeline reprocessing can
+  replace derived reports; this is not permanent archival or tamper-proof storage.
+- Report language is captured as `lang=en|zh` when a job/draft is created and
+  retained in `content.lang` and `content.provenance.lang`. Reading a report
+  does not translate or rewrite it. API status/label messages use stable codes.
+
+See [report version and approval contract](report-version-review-handoff.md)
+and [AI reporting](ai-reporting.md).
 
 ## 2. What can and cannot be computed
 
-| Output | Status | Basis / caveat |
+| Output | Current status | Basis / limit |
 | --- | --- | --- |
-| Chamber cavity volume at the acquired phase | Computable | voxel count × voxel volume; label the phase |
-| LV myocardial mass | Conditional | only if a myocardium label exists; 1.05 g/mL assumption |
-| EDV / ESV / EF / SV | **Not from single-phase CTA** | requires ED and ES phases |
-| Agatston calcium score | **Not from contrast CCTA** | requires a non-contrast calcium-scoring series |
-| Aortic / PA diameters | Later | requires centerline and normal cross-sections |
-| Coronary centerline length / vessel mask volume | Descriptive only | coarse model; not stenosis |
-| Diameter stenosis / MLA | **Not computed** | requires a validated lumen model |
-| FFR-CT | **Not computed** | requires a validated CFD or ML pressure model |
-| AHA 17-segment perfusion / viability | **Not computed** | requires perfusion/metabolism data, not CTA alone |
-| SYNTAX / MACE risk | **Not computed** | requires a validated risk model and complete inputs |
-| Longitudinal change | M3 | requires registration and comparable acquisitions |
-| Individual event prediction | **Not provided** | no validated longitudinal model; show trends only |
+| Chamber or supplied-label volume | Implemented research measurement | Voxel count × voxel volume; acquisition phase must be explicit for comparison |
+| Public NIfTI label volume and coronary mask analysis | Implemented on original label grid | Original geometry and hashes retained; display downsampling does not define the measurement grid |
+| DICOM model-derived volume | Implemented on its segmentation grid | Do not describe every input path as native-grid quantification |
+| Coronary length, branches and diameter summaries | Descriptive research output | All original components must retain connected skeletons; displayed centerline/diameters describe the longest path, not full clinical QCA |
+| LV myocardial mass | No validated output | A myocardium label and an assumed density alone do not establish a validated measurement |
+| EDV / ESV / EF / SV | Not from single-phase CTA | Requires appropriate ED/ES phases |
+| Agatston calcium score | Not from contrast CCTA | Requires a non-contrast calcium-scoring series |
+| Aortic / pulmonary-artery diameters | Further implementation/validation needed | Requires suitable centerlines and normal cross-sections |
+| Stenosis percentage / MLA / FFR-CT | Not provided as validated outputs | Requires validated lumen/pressure models and independent reference measurements |
+| AHA perfusion / viability, SYNTAX / MACE risk | Not computed | Required data and validated models are absent |
+| Longitudinal comparison | Implemented research workflow | Same subject, valid ordered study dates, registration QC and measurement comparability gates; failed gates suppress deltas |
+| Individual event prediction | Not implemented | Comparison is not prediction |
 
-## 3. Standard organ atlas
+Invalid, empty or semantically unmapped masks cannot establish successful
+registration. Coronary skeleton loss or fragmentation produces an explicit
+failure instead of partial-success analysis. See [imaging geometry](imaging-geometry.md)
+and [comparison contract](longitudinal-comparison.md).
 
-The built-in organ library (`shared/organ_library.json`) contains **anatomically
-derived reference meshes** for orientation, teaching, registration placeholders
-and UI standardisation. They come from BodyParts3D 4.0 and the HuBMAP Human
-Reference Atlas (both CC BY 4.0), are not derived from the patient, and must
-never be displayed as patient anatomy. The only patient-specific 3D mesh is the
-one produced by the segmentation pipeline and stored in `MeshRecord`.
+## 3. Reference atlas, coordinates and registration
 
-Standard codes such as `HEART_LV` or `AORTA` are internal catalogue identifiers,
-not a certified terminology binding. Do not claim SNOMED/RadLex/FMA compliance
-unless the mapping has been reviewed and licensed separately.
+The library contains **19 reference organs**, named detail structures and
+**109 reference targets**, adapted from BodyParts3D 4.0 and HuBMAP HRA v1.1.
+They are not patient anatomy or lesions. Patient meshes come from supplied or
+model-derived patient masks and carry their own provenance. Internal codes
+such as `HEART_LV` are catalogue identifiers, not certified SNOMED/RadLex/FMA
+bindings. `GET /api/organs` exposes stable identifiers and `code`/`params`
+display fields; the bundled catalogue retains frontend display names.
 
-### Detailed sub-structures and targets
+Patient image metadata uses **LPS physical millimetres**. The reference library
+uses **RAS_ORGAN_REFERENCE**. RAS voxel-axis ordering does not convert SITK
+physical metadata into RAS. The centered patient preview is a separate display
+frame: `center_mm = (dims - 1) * spacing / 2`. None of these frames may be
+substituted for another without an explicit transform.
 
-The sub-structure meshes and the 109 reference targets are **reference anatomy**,
-not patient-specific anatomy or lesions. Target coordinates are derived from
-reference part centroids or simple morphological landmarks (for example organ
-poles); they do not represent a patient's pathology and must not be used for
-diagnosis or targeting.
+Cardiac atlas registration is implemented as a research similarity fit using
+explicit chamber semantics, with separate observed landmarks and mapped
+reference points. Missing/duplicate labels and degenerate geometry fail closed.
+The fitted landmark RMS is an in-sample residual, **not target accuracy**;
+`targetAccuracyStatus` remains `not_evaluated`. A displayed mapped target is
+still a reference target. See [registration contract](atlas-registration.md).
 
-The target-simulation view is an educational workflow demonstration:
+The target-simulation view supports reference targets, approach directions,
+needle/depth animation, clipping planes and simple ray/surface intersections.
+It models neither tissue deformation, respiration nor validated safety margins.
+It is not surgical navigation, biopsy/ablation planning or robotic guidance and
+must not guide a real procedure.
 
-- the approach path is a straight ray, not a patient-specific trajectory;
-- collision detection is a simple ray cast against reference surfaces, with no
-  tissue deformation, respiration, motion or safety margins;
-- it is **not** a surgical navigation, biopsy-planning, ablation-planning or
-  robotic guidance system;
-- it must not be used to plan or perform a real procedure.
+## 4. Model governance and licences
 
-Any future patient-specific targeting feature requires registered patient
-imaging, validated registration accuracy, clinician review, and the applicable
-regulatory pathway.
+Research calculations may be shown with their research status. Unsupported
+clinical outputs remain `not_computed`. Clinical use would separately require
+model/version/weights provenance, task licensing, external validation,
+robustness assessment, a model card and the applicable review process.
 
-## 4. Model governance
+The optional TotalSegmentator adapter requires explicit selection, checks
+supported output names and nonempty masks, preserves physical geometry and
+records the installed package version. That version is not a verified weights
+version. Mock calls with real NIfTI files verify the adapter contract only.
+TotalSegmentator code is Apache-2.0; its official documentation lists
+`heartchambers_highres` and `coronary_arteries` as licensed tasks. Follow the
+[official task licence requirements](https://github.com/wasserth/TotalSegmentator#subtasks).
+Do not infer commercial rights from the software licence.
 
-A model may only produce a displayed clinical measurement after:
+ASOCA/ImageCAS imports do not establish dataset provenance or redistribution
+permission; retain the actual source and comply with its distribution agreement.
+Reference organ meshes, details and derived targets retain CC BY 4.0 attribution,
+separate from repository MIT code: see [full attribution](../src/assets/organs/ATTRIBUTION.md).
 
-1. a model-registry entry (name, version, weights hash, intended use, training
-   data, known failure modes, regulatory status);
-2. an external validation set (segmentation: Dice/HD95; stenosis: agreement with
-   QCA/IVUS; FFR-CT: agreement with invasive FFR);
-3. robustness checks (calcium, motion, stents, grafts, contrast timing, scanner
-   and kernel variation);
-4. a documented model card and a research/clinical status flag.
+## 5. Data governance and regulatory status
 
-Until then the output is `not_computed` and the UI explains why.
-
-### Licensing note
-
-- TotalSegmentator code is Apache-2.0, but task weights such as
-  `heartchambers_highres` and `coronary_arteries` are not uniformly cleared for
-  commercial use. Verify each task before commercial deployment.
-- The ASOCA challenge data agreement restricts use (including commercial use);
-  check the exact distribution terms.
-- ImageCAS is catalogued as Apache-2.0 in several lists, but the download page
-  terms must be verified before redistribution.
-
-## 5. Data governance
-
-- Do not upload identifiable patient data to this prototype without an approved
-  protocol, ethics/IRB review, and data-use agreement.
-- De-identification removes common PHI tags and remaps UIDs, but cannot reliably
-  remove burned-in annotations. Real data requires an operator attestation.
-- Raw uploads are retained locally under the study directory for reprocessing;
-  add a retention/deletion policy before any shared deployment.
+- Identifiable patient data requires an approved protocol, ethics/IRB review
+  and data-use agreement; the prototype does not supply that governance.
+- De-identification removes common PHI tags and remaps UIDs, but does not
+  reliably remove burned-in annotations. Operator review is still required.
+- Original uploads are retained for reprocessing. Shared deployment needs
+  retention/deletion rules, access control, backups and audit review.
 - Logs must not contain PHI or raw DICOM tags.
 
-## 6. Regulatory
-
-Clinical deployment requires a separate regulatory pathway (for example NMPA
-software registration in China, or FDA/CE equivalent) including software life
-cycle, risk management, clinical evaluation, and post-market surveillance.
-Nothing in this repository substitutes for that process.
+Clinical deployment requires its own software lifecycle, risk management,
+clinical evaluation and applicable regulatory process. Test success, report
+approval and a research QC pass do not establish certification or clinical safety.
+The full disclaimer above is retained in English reports; Chinese reports retain
+the full Chinese wording in the [Chinese edition](clinical-boundaries.zh-CN.md).

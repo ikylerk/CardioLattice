@@ -325,7 +325,7 @@ def run_public_import(study_id: str, job_id: str) -> None:
         report = Report(
             study_id=study.id,
             status="draft",
-            content=template_report(study, measurements),
+            content=template_report(study, measurements, (job.payload or {}).get("lang", "en")),
             generator="template",
         )
         db.add(report)

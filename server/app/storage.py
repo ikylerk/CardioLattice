@@ -3,6 +3,7 @@ from __future__ import annotations
 import shutil
 from pathlib import Path
 
+from .codes import CodedError
 from .config import settings
 
 
@@ -22,7 +23,7 @@ class LocalStorage:
     def path_for(self, relative: str) -> Path:
         path = (self.root / relative).resolve()
         if self.root.resolve() not in path.parents and path != self.root.resolve():
-            raise ValueError("storage path escapes storage root")
+            raise CodedError("STORAGE_ESCAPE")
         return path
 
     def relative(self, absolute: Path) -> str:
